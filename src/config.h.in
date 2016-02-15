@@ -1,0 +1,5 @@
+#cmakedefine HAVE_PTHREAD_H 1
+
+#cmakedefine HAVE_PTHREAD_SETAFFINITY_NP 1
+#cmakedefine HAVE_PTHREAD_SETNAME_NP 1
+#cmakedefine HAVE_PTHREAD_GETNAME_NP 1
