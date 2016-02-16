@@ -28,15 +28,23 @@ namespace DCF {
         size_t m_size;
 
     public:
-        template <typename T, typename = std::enable_if_t<is_valid_type<T>::value>> Element(const T &&value) : m_value(value), m_type(is_valid_type<T>::type), m_size(sizeof(value)) {
-        }
-
-//        template <typename T, typename = std::enable_if_t<is_valid_type<T>::value && std::is_same<T, std::string>::value>> Element(const T &&value) : m_value(value), m_type(is_valid_type<T>::type), m_size(sizeof(value)) {
+//        template <typename T, typename = std::enable_if_t<is_valid_type<T>::value>> Element(const T &value) : m_value(value), m_type(is_valid_type<T>::type), m_size(sizeof(value)) {
+//        }
+//
+////        template <typename T, typename = std::enable_if_t<is_valid_type<T>::value && std::is_same<T, std::string>::value>> Element(const T &&value) : m_value(value), m_type(is_valid_type<T>::type), m_size(sizeof(value)) {
+////        }
+//
+//        Element(const void *value, const size_t size) : m_value(value), m_type(is_valid_type<void *>::type), m_size(size) {
 //        }
 
-        Element(const void *value, const size_t size) : m_value(value), m_type(is_valid_type<void *>::type), m_size(size) {
+        template <typename T> void setValue(const T &value) {
+            m_value = value;
+            m_type = is_valid_type<T>::type;
         }
 
+        void setValue(const char *value);
+
+        void setValue(const void *data, const size_t size);
 
 //        std::enable_if< std::is_same< X, T >::value
 //        template <> Element(const std::string &&value) : m_value(value), m_type(is_valid_type<std::string>::type), m_size(value.size()) {
@@ -62,6 +70,9 @@ namespace DCF {
 
         }
     };
+
+    template <> void Element::setValue(const std::string &value);
+    template <> const bool Element::get(std::string &value) const;
 }
 
 #endif //TFDCF_ELEMENT_H

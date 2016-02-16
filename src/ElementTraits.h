@@ -16,6 +16,7 @@ namespace DCF {
 
     template <typename T> struct is_valid_type {
         static const bool value = false;
+        static const StorageType type = StorageType::unknown;
     };
 
     template <> struct is_valid_type<bool> {

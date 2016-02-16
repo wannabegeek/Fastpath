@@ -10,6 +10,7 @@ typedef double float64_t;
 
 namespace DCF {
     typedef enum {
+        unknown,
         string,
         boolean,
         uint8,

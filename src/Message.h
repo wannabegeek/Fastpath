@@ -40,7 +40,7 @@ namespace DCF {
 
     class Message : public Encoder, Decoder {
     private:
-        typedef std::array<Element *, std::numeric_limits<uint16_t>::max() - 1> PayloadContainer;
+        typedef std::array<std::shared_ptr<Element>, std::numeric_limits<uint16_t>::max() - 1> PayloadContainer;
         typedef std::map<std::string, std::vector<uint16_t>> KeyMappingsContainer;
 
         int m_flags;
@@ -54,7 +54,7 @@ namespace DCF {
 
         KeyMappingsContainer m_keys;
 
-        const uint16_t findIdentifierByName(const std::string &field, const int instance = 0) const {
+        const uint16_t findIdentifierByName(const std::string &field, const size_t instance = 0) const {
             auto it = m_keys.find(field);
             if (it != m_keys.end()) {
                 if (instance < it->second.size()) {
@@ -66,7 +66,7 @@ namespace DCF {
         }
 
         const bool refExists(const short &field) const {
-            size_t t = m_payload.size();
+//            size_t t = m_payload.size();
             return m_payload[field] != nullptr;
         }
 
@@ -82,7 +82,9 @@ namespace DCF {
             if (refExists(field)) {
                 ThrowException(TF::Exception, "Ref already exists in message");
             }
-//            m_payload[field] = std::move(value);
+            std::shared_ptr<Element> e = std::make_shared<Element>();
+            e->setValue(value);
+            m_payload[field] = e;
         }
 
         bool removeField(const uint16_t &field) {
@@ -95,9 +97,8 @@ namespace DCF {
 
         template <typename T> bool getField(const uint16_t &field, T &value) const {
             if (field != _NO_FIELD && field <= m_maxRef) {
-                const Element *element = m_payload[field];
-                value = element;
-                return true;
+                const std::shared_ptr<Element> element = m_payload[field];
+                return element.get()->get(value);
             }
             return false;
         }
@@ -116,11 +117,11 @@ namespace DCF {
             this->addField(ref, value);
         }
 
-        template <typename T> bool getField(const std::string &field, T &value, const int instance = 0) const {
+        template <typename T> bool getField(const std::string &field, T &value, const size_t instance = 0) const {
             return this->getField(findIdentifierByName(field, instance), value);
         }
 
-        bool removeField(const std::string &field, const int instance = 0) {
+        bool removeField(const std::string &field, const size_t instance = 0) {
             auto it = m_keys.find(field);
             if (it != m_keys.end()) {
                 auto &list = it->second;
@@ -140,12 +141,28 @@ namespace DCF {
             return out;
         }
 
+        void detach();
+
         // from Encoder
         void encode() override {};
 
         // from Decoder
         void decode() override {};
     };
+
+//    template <> void Message::addField(const std::string &field, const std::string &value) {
+//        const uint16_t ref = m_maxRef++;
+//        auto it = m_keys.find(field);
+//        if (it == m_keys.end()) {
+//            auto t = std::pair<KeyMappingsContainer::key_type, KeyMappingsContainer::value_type>(field, KeyMappingsContainer::value_type());
+//            m_keys.emplace(t);
+//        } else {
+//            m_keys[field].push_back(ref);
+//        }
+//
+//        this->addField(ref, value);
+//    }
+
 }
 
 #endif //TFDCF_MESSAGE_H
