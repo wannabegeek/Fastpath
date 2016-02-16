@@ -5,10 +5,17 @@
 #ifndef TFDCF_TYPES_H
 #define TFDCF_TYPES_H
 
+typedef float float32_t;
+typedef double float64_t;
+
 namespace DCF {
     typedef enum {
         string,
         boolean,
+        uint8,
+        uint16,
+        uint32,
+        uint64,
         int8,
         int16,
         int32,

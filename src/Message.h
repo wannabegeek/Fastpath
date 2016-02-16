@@ -5,11 +5,12 @@
 #ifndef TFDCF_MESSAGE_H
 #define TFDCF_MESSAGE_H
 
-#include <stddef.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <map>
 #include <array>
+#include <limits>
 #include "Encoder.h"
 #include "Element.h"
 #include "Decoder.h"
@@ -39,21 +40,21 @@ namespace DCF {
 
     class Message : public Encoder, Decoder {
     private:
-        typedef std::array<Element *, sizeof(int16_t)> PayloadContainer;
-        typedef std::map<std::string, std::vector<int16_t>> KeyMappingsContainer;
+        typedef std::array<Element *, std::numeric_limits<uint16_t>::max() - 1> PayloadContainer;
+        typedef std::map<std::string, std::vector<uint16_t>> KeyMappingsContainer;
 
         int m_flags;
         std::string m_msgSubject;
 
-        static const short _NO_FIELD = -1;
+        static const uint16_t _NO_FIELD = std::numeric_limits<uint16_t>::max();
 
 
         PayloadContainer m_payload;
-        short m_maxRef;
+        uint16_t m_maxRef;
 
         KeyMappingsContainer m_keys;
 
-        const short findIdentifierByName(const std::string &field, const int instance = 0) const {
+        const uint16_t findIdentifierByName(const std::string &field, const int instance = 0) const {
             auto it = m_keys.find(field);
             if (it != m_keys.end()) {
                 if (instance < it->second.size()) {
@@ -65,23 +66,26 @@ namespace DCF {
         }
 
         const bool refExists(const short &field) const {
-            return m_payload[field] == nullptr;
+            size_t t = m_payload.size();
+            return m_payload[field] != nullptr;
         }
 
     public:
-        Message() : m_maxRef(0) {}
+        Message() : m_maxRef(0) {
+            m_payload.fill(nullptr);
+        }
 
         virtual ~Message() {};
 
-        template <typename T> void addField(const int16_t &field, const T &value) {
+        template <typename T> void addField(const uint16_t &field, const T &value) {
             m_maxRef = std::max(m_maxRef, field);
             if (refExists(field)) {
                 ThrowException(TF::Exception, "Ref already exists in message");
             }
-            m_payload[field] = value;
+//            m_payload[field] = std::move(value);
         }
 
-        bool removeField(const int16_t &field) {
+        bool removeField(const uint16_t &field) {
             if (field != _NO_FIELD && field <= m_maxRef) {
                 m_payload[field] = nullptr;
                 return true;
@@ -89,7 +93,7 @@ namespace DCF {
             return false;
         }
 
-        template <typename T> bool getField(const int16_t &field, T &value) const {
+        template <typename T> bool getField(const uint16_t &field, T &value) const {
             if (field != _NO_FIELD && field <= m_maxRef) {
                 const Element *element = m_payload[field];
                 value = element;
@@ -100,7 +104,7 @@ namespace DCF {
 
 
         template <typename T> void addField(const std::string &field, const T &value) {
-            const int16_t ref = m_maxRef++;
+            const uint16_t ref = m_maxRef++;
             auto it = m_keys.find(field);
             if (it == m_keys.end()) {
                 auto t = std::pair<KeyMappingsContainer::key_type, KeyMappingsContainer::value_type>(field, KeyMappingsContainer::value_type());

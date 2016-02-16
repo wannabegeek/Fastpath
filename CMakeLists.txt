@@ -24,7 +24,9 @@ set(BOOST_INCLUDE_DIR "/Users/tom/Projects/boost_1_60_0/")
 
 CONFIGURE_FILE(src/config.h.in src/config.h)
 
-include_directories(${BOOST_INCLUDE_DIR})
+include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/src)
+
+add_subdirectory(tests)
 
 set(SOURCE_FILES
         src/Message.cpp
@@ -39,5 +41,5 @@ set(SOURCE_FILES
         src/Decoder.h
         src/Exception.h
         src/MessageBuffer.cpp
-        src/MessageBuffer.h)
+        src/MessageBuffer.h src/ElementTraits.h)
 add_executable(TFDCF ${SOURCE_FILES})

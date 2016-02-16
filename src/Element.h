@@ -7,9 +7,11 @@
 
 #include <stddef.h>
 #include <string>
+#include <type_traits>
 #include <boost/any.hpp>
 #include "Types.h"
 #include "Encoder.h"
+#include "ElementTraits.h"
 
 /**
  * Binary Format:
@@ -18,22 +20,27 @@
  */
 
 namespace DCF {
+
     class Element : Encoder {
     private:
+        boost::any m_value;
         StorageType m_type;
-        std::string m_field;
         size_t m_size;
 
-        boost::any m_payload;
-
     public:
-        template <typename T> Element(const std::string &field, const T value) : m_field(field) {
-            m_type = StorageType::string;
+        template <typename T, typename = std::enable_if_t<is_valid_type<T>::value>> Element(const T &&value) : m_value(value), m_type(is_valid_type<T>::type), m_size(sizeof(value)) {
         }
 
-        template <typename T> Element(const std::string &&field, const T value) : m_field(field) {
-            m_type = StorageType::string;
+//        template <typename T, typename = std::enable_if_t<is_valid_type<T>::value && std::is_same<T, std::string>::value>> Element(const T &&value) : m_value(value), m_type(is_valid_type<T>::type), m_size(sizeof(value)) {
+//        }
+
+        Element(const void *value, const size_t size) : m_value(value), m_type(is_valid_type<void *>::type), m_size(size) {
         }
+
+
+//        std::enable_if< std::is_same< X, T >::value
+//        template <> Element(const std::string &&value) : m_value(value), m_type(is_valid_type<std::string>::type), m_size(value.size()) {
+//        }
 
         ~Element() {}
 
@@ -41,7 +48,15 @@ namespace DCF {
             return m_type;
         }
 
+        template <typename T> const bool get(T &value) const {
+            try {
+                value = boost::any_cast<T>(m_value);
+            } catch(const boost::bad_any_cast &) {
+                return false;
+            }
 
+            return true;
+        }
 
         void encode() override {
 
