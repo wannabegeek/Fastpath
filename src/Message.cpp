@@ -17,13 +17,34 @@ namespace DCF {
         return _NO_FIELD;
     }
 
-    const bool Message::refExists(const short &field) const {
+    const bool Message::refExists(const uint16_t &field) const {
 //            size_t t = m_payload.size();
         return m_payload[field] != nullptr;
     }
 
-    void Message::addRawField(const void *data, const size_t size) {
+    const uint16_t Message::createRefForString(const std::string &field) {
+        const uint16_t ref = ++m_maxRef;
+        auto it = m_keys.find(field);
+        if (it == m_keys.end()) {
+            m_keys.emplace(std::make_pair(field, KeyMappingsContainer::mapped_type()));
+        }
+        m_keys[field].push_back(ref);
+        return ref;
+    }
 
+    void Message::addField(const uint16_t &field, const byte *value, const size_t size) {
+        m_maxRef = std::max(m_maxRef, field);
+        if (refExists(field)) {
+            ThrowException(TF::Exception, "Ref already exists in message");
+        }
+        std::shared_ptr<Field> e = std::make_shared<Field>();
+        e->setValue(value, size);
+        m_payload[field] = e;
+    }
+
+    void Message::addField(const std::string &field, const byte *value, const size_t size) {
+        const uint16_t ref = createRefForString(field);
+        this->addField(ref, value, size);
     }
 
     bool Message::removeField(const uint16_t &field) {
@@ -49,4 +70,7 @@ namespace DCF {
         return this->removeField(findIdentifierByName(field, instance));
     }
 
+    void Message::detach() {
+
+    }
 }

@@ -8,7 +8,7 @@ namespace DCF {
 
 
     void Field::setValue(const char *value) {
-        m_storage.storeData(reinterpret_cast<const byte *>(value), strlen(value));
+        m_storage.storeData(reinterpret_cast<const byte *>(value), strlen(value) + 1);
         m_type = is_valid_type<const char *>::type;
         m_size = m_storage.size();
     }

@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <array>
 #include <limits>
 #include "Encoder.h"
@@ -41,7 +41,7 @@ namespace DCF {
     class Message : public Encoder, Decoder {
     private:
         typedef std::array<std::shared_ptr<Field>, std::numeric_limits<uint16_t>::max() - 1> PayloadContainer;
-        typedef std::map<std::string, std::vector<uint16_t>> KeyMappingsContainer;
+        typedef std::unordered_map<std::string, std::vector<uint16_t>> KeyMappingsContainer;
 
         int m_flags;
         std::string m_msgSubject;
@@ -56,7 +56,8 @@ namespace DCF {
 
         const uint16_t findIdentifierByName(const std::string &field, const size_t instance = 0) const;
 
-        const bool refExists(const short &field) const;
+        const bool refExists(const uint16_t &field) const;
+        const uint16_t createRefForString(const std::string &field);
 
     public:
         Message() : m_maxRef(0) {
@@ -75,6 +76,8 @@ namespace DCF {
             m_payload[field] = e;
         }
 
+        void addField(const uint16_t &field, const byte *value, const size_t size);
+
         bool removeField(const uint16_t &field);
 
         template <typename T> bool getField(const uint16_t &field, T &value) const {
@@ -87,19 +90,11 @@ namespace DCF {
 
 
         template <typename T> void addField(const std::string &field, const T &value) {
-            const uint16_t ref = m_maxRef++;
-            auto it = m_keys.find(field);
-            if (it == m_keys.end()) {
-                auto t = std::pair<KeyMappingsContainer::key_type, KeyMappingsContainer::value_type>(field, KeyMappingsContainer::value_type());
-                m_keys.emplace(t);
-            } else {
-                m_keys[field].push_back(ref);
-            }
-
+            const uint16_t ref = createRefForString(field);
             this->addField(ref, value);
         }
 
-        void addRawField(const void *data, const size_t size);
+        void addField(const std::string &field, const byte *value, const size_t size);
 
         template <typename T> bool getField(const std::string &field, T &value, const size_t instance = 0) const {
             return this->getField(findIdentifierByName(field, instance), value);
