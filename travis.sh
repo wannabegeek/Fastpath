@@ -2,6 +2,7 @@
 set -evx
 env | sort
 
+mkdir external || true
 wget -qO- https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.gz/download | tar xvz -C external/
 export BOOST_ROOT=external/boost_1_60_0/
 
