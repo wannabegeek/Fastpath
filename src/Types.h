@@ -5,8 +5,12 @@
 #ifndef TFDCF_TYPES_H
 #define TFDCF_TYPES_H
 
+#include <cstdint>
+
 typedef float float32_t;
 typedef double float64_t;
+
+typedef uint8_t byte;
 
 namespace DCF {
     typedef enum {

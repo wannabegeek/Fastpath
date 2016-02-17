@@ -11,8 +11,9 @@
 #include <boost/any.hpp>
 #include "Types.h"
 #include "Encoder.h"
-#include "ElementTraits.h"
+#include "FieldTraits.h"
 #include "MessageBuffer.h"
+#include "ByteStorage.h"
 
 /**
  * Binary Format:
@@ -22,22 +23,23 @@
 
 namespace DCF {
 
-    class Element : Encoder {
+    class Field : Encoder {
     private:
         boost::any m_value;
         StorageType m_type;
         size_t m_size;
 
+        ByteStorage m_storage;
+
     public:
+
         template <typename T> void setValue(const T &value) {
             m_value = value;
             m_type = is_valid_type<T>::type;
             m_size = sizeof(T);
         }
-
         void setValue(const char *value);
-
-        void setValue(const void *data, const size_t size);
+        void setValue(const byte *data, const size_t size);
 
         const StorageType type() const {
             return m_type;
@@ -52,15 +54,16 @@ namespace DCF {
 
             return true;
         }
-
         const bool get(const char **value) const;
+        const bool get(const byte **value, size_t &size) const;
 
         void encode() override {
 
         }
     };
 
-    template <> void Element::setValue(const std::string &value);
+    template <> void Field::setValue(const std::string &value);
+    template <> const bool Field::get(std::string &value) const;
 
 }
 

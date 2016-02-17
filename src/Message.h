@@ -12,7 +12,7 @@
 #include <array>
 #include <limits>
 #include "Encoder.h"
-#include "Element.h"
+#include "Field.h"
 #include "Decoder.h"
 #include "Exception.h"
 
@@ -40,7 +40,7 @@ namespace DCF {
 
     class Message : public Encoder, Decoder {
     private:
-        typedef std::array<std::shared_ptr<Element>, std::numeric_limits<uint16_t>::max() - 1> PayloadContainer;
+        typedef std::array<std::shared_ptr<Field>, std::numeric_limits<uint16_t>::max() - 1> PayloadContainer;
         typedef std::map<std::string, std::vector<uint16_t>> KeyMappingsContainer;
 
         int m_flags;
@@ -70,7 +70,7 @@ namespace DCF {
             if (refExists(field)) {
                 ThrowException(TF::Exception, "Ref already exists in message");
             }
-            std::shared_ptr<Element> e = std::make_shared<Element>();
+            std::shared_ptr<Field> e = std::make_shared<Field>();
             e->setValue(value);
             m_payload[field] = e;
         }
@@ -79,7 +79,7 @@ namespace DCF {
 
         template <typename T> bool getField(const uint16_t &field, T &value) const {
             if (field != _NO_FIELD && field <= m_maxRef) {
-                const std::shared_ptr<Element> element = m_payload[field];
+                const std::shared_ptr<Field> element = m_payload[field];
                 return element.get()->get(value);
             }
             return false;

@@ -18,8 +18,8 @@ set(SOURCE_FILES
         Message.cpp
         Message.h
         Encoder.h
-        Element.cpp
-        Element.h
+        Field.cpp
+        Field.h
         Types.h
         concurrentqueue.h
         tfpool.h
@@ -28,6 +28,6 @@ set(SOURCE_FILES
         Exception.h
         MessageBuffer.cpp
         MessageBuffer.h
-        ElementTraits.h)
+        FieldTraits.h ByteStorage.cpp ByteStorage.h)
 
 add_library(TFDCF ${SOURCE_FILES})
