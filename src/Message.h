@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <array>
 #include <limits>
+#include <memory>
 #include "Encoder.h"
 #include "Field.h"
 #include "Decoder.h"
