@@ -40,3 +40,16 @@ TEST(Message, AddMixedDuplicateField) {
     ASSERT_FLOAT_EQ(1.4, t);
 
 }
+
+TEST(Message, RemoveFieldByString) {
+    DCF::Message msg;
+    float32_t t = 22.0;
+    msg.addField("TEST", t);
+    ASSERT_TRUE(msg.getField("TEST", t));
+    ASSERT_FLOAT_EQ(22, t);
+
+    ASSERT_EQ(1, msg.size());
+
+    ASSERT_TRUE(msg.removeField("TEST"));
+    ASSERT_EQ(0, msg.size());
+}

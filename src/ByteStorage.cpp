@@ -40,6 +40,6 @@ namespace DCF {
 
     const size_t ByteStorage::retreiveData(const byte **data) const {
         *data = m_storage.first;
-        return m_storage.second;
+        return m_storedLength;
     }
 }

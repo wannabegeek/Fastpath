@@ -40,16 +40,19 @@ namespace DCF {
 
     class Message : public Encoder, Decoder {
     private:
-        typedef std::array<std::shared_ptr<Field>, std::numeric_limits<uint16_t>::max() - 1> PayloadContainer;
+        typedef std::vector<std::shared_ptr<Field>> PayloadContainer;
+        typedef std::array<uint16_t, std::numeric_limits<uint16_t>::max() - 1> PayloadMapper;
         typedef std::unordered_map<std::string, std::vector<uint16_t>> KeyMappingsContainer;
 
+        size_t m_size;
         int m_flags;
         std::string m_msgSubject;
 
-        static const uint16_t _NO_FIELD = std::numeric_limits<uint16_t>::max();
+        static constexpr uint16_t _NO_FIELD = std::numeric_limits<uint16_t>::max();
 
 
         PayloadContainer m_payload;
+        PayloadMapper m_mapper;
         uint16_t m_maxRef;
 
         KeyMappingsContainer m_keys;
@@ -60,20 +63,26 @@ namespace DCF {
         const uint16_t createRefForString(const std::string &field);
 
     public:
-        Message() : m_maxRef(0) {
-            m_payload.fill(nullptr);
+        Message() : m_size(0), m_flags(-1), m_maxRef(0) {
+            m_mapper.fill(_NO_FIELD);
         }
 
         virtual ~Message() {};
 
+        const size_t size() const { return m_size; }
+
         template <typename T> void addField(const uint16_t &field, const T &value) {
-            m_maxRef = std::max(m_maxRef, field);
             if (refExists(field)) {
                 ThrowException(TF::Exception, "Ref already exists in message");
             }
+            m_maxRef = std::max(m_maxRef, field);
+
+            m_mapper[field] = m_payload.size();
+
             std::shared_ptr<Field> e = std::make_shared<Field>();
             e->setValue(value);
-            m_payload[field] = e;
+            m_payload.emplace_back(e);
+            m_size++;
         }
 
         void addField(const uint16_t &field, const byte *value, const size_t size);
@@ -82,12 +91,11 @@ namespace DCF {
 
         template <typename T> bool getField(const uint16_t &field, T &value) const {
             if (field != _NO_FIELD && field <= m_maxRef) {
-                const std::shared_ptr<Field> element = m_payload[field];
+                const std::shared_ptr<Field> element = m_payload[m_mapper[field]];
                 return element.get()->get(value);
             }
             return false;
         }
-
 
         template <typename T> void addField(const std::string &field, const T &value) {
             const uint16_t ref = createRefForString(field);
@@ -115,20 +123,6 @@ namespace DCF {
         // from Decoder
         void decode() override {};
     };
-
-//    template <> void Message::addField(const std::string &field, const std::string &value) {
-//        const uint16_t ref = m_maxRef++;
-//        auto it = m_keys.find(field);
-//        if (it == m_keys.end()) {
-//            auto t = std::pair<KeyMappingsContainer::key_type, KeyMappingsContainer::value_type>(field, KeyMappingsContainer::value_type());
-//            m_keys.emplace(t);
-//        } else {
-//            m_keys[field].push_back(ref);
-//        }
-//
-//        this->addField(ref, value);
-//    }
-
 }
 
 #endif //TFDCF_MESSAGE_H

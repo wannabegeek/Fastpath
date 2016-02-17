@@ -84,9 +84,9 @@ TEST(Elements, CreateData) {
     const byte *result = nullptr;
     size_t len = 0;
     ASSERT_TRUE(e.get(&result, len));
-    ASSERT_EQ(11, strlen(temp));
+    ASSERT_EQ(strlen(temp), len);
     ASSERT_NE(reinterpret_cast<const char *>(result), temp);  // Pointers can't be the same, data should have been copied
-    ASSERT_STREQ(reinterpret_cast<const char *>(result), temp);
+    ASSERT_EQ(0, strncmp(reinterpret_cast<const char *>(result), temp, strlen(temp)));
 
     std::string result2;
     ASSERT_FALSE(e.get(result2));  // this should fail since we are getting something with a different type

@@ -20,7 +20,12 @@ ENDIF (CMAKE_COMPILER_IS_GNUCXX)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -g -gdwarf-2 -DDEBUG -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -Ofast")
 
-set(BOOST_INCLUDE_DIR "/Users/tom/Projects/boost_1_60_0/")
+find_package(Boost 1.60.0)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
+
+#set(BOOST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/external/boost/any/include/")
 
 include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/src)
 

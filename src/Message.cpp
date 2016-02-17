@@ -6,6 +6,8 @@
 
 namespace DCF {
 
+    const uint16_t Message::_NO_FIELD;
+
     const uint16_t Message::findIdentifierByName(const std::string &field, const size_t instance) const {
         auto it = m_keys.find(field);
         if (it != m_keys.end()) {
@@ -18,8 +20,7 @@ namespace DCF {
     }
 
     const bool Message::refExists(const uint16_t &field) const {
-//            size_t t = m_payload.size();
-        return m_payload[field] != nullptr;
+        return m_mapper[field] != _NO_FIELD;
     }
 
     const uint16_t Message::createRefForString(const std::string &field) {
@@ -33,13 +34,16 @@ namespace DCF {
     }
 
     void Message::addField(const uint16_t &field, const byte *value, const size_t size) {
-        m_maxRef = std::max(m_maxRef, field);
         if (refExists(field)) {
             ThrowException(TF::Exception, "Ref already exists in message");
         }
+        m_maxRef = std::max(m_maxRef, field);
+        m_mapper[field] = m_payload.size();
+
         std::shared_ptr<Field> e = std::make_shared<Field>();
         e->setValue(value, size);
-        m_payload[field] = e;
+        m_payload.emplace_back(e);
+        m_size++;
     }
 
     void Message::addField(const std::string &field, const byte *value, const size_t size) {
@@ -48,14 +52,18 @@ namespace DCF {
     }
 
     bool Message::removeField(const uint16_t &field) {
-        if (field != _NO_FIELD && field <= m_maxRef) {
-            m_payload[field] = nullptr;
+        if (field != _NO_FIELD && m_mapper[field] != _NO_FIELD) {
+            m_payload[m_mapper[field]] = nullptr;
+            m_mapper[field] = _NO_FIELD;
+            m_size--;
+
             return true;
         }
         return false;
     }
 
     bool Message::removeField(const std::string &field, const size_t instance) {
+        const uint16_t ref = findIdentifierByName(field, instance);
         auto it = m_keys.find(field);
         if (it != m_keys.end()) {
             auto &list = it->second;
@@ -67,7 +75,7 @@ namespace DCF {
             }
         }
 
-        return this->removeField(findIdentifierByName(field, instance));
+        return this->removeField(ref);
     }
 
     void Message::detach() {
