@@ -24,7 +24,7 @@ add_subdirectory(${GTEST_SRC_DIR})
 #################################
 
 add_executable(tests ../src/Element.cpp MessageTests.cpp ElementTests.cpp)
-target_link_libraries(tests ${GTEST_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tests TFDCF ${GTEST_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(
         NAME tests

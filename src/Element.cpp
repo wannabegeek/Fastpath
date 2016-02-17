@@ -5,14 +5,17 @@
 #include "Element.h"
 
 namespace DCF {
-    template<> void Element::setValue(const std::string &value) {
-        m_value = value.c_str();
-        m_type = is_valid_type<std::string>::type;
-    }
 
     void Element::setValue(const char *value) {
-        m_value = value;
+        m_value = std::string(value);
         m_type = is_valid_type<const char *>::type;
+        m_size = strlen(value);
+    }
+
+    template <> void Element::setValue(const std::string &value) {
+        m_value = value;
+        m_type = is_valid_type<std::string>::type;
+        m_size = value.length();
     }
 
     void Element::setValue(const void *data, const size_t size) {
@@ -21,9 +24,10 @@ namespace DCF {
         m_type = StorageType::data;
     }
 
-    template <> const bool Element::get(std::string &value) const {
+    const bool Element::get(const char **value) const {
         try {
-            value = std::string(boost::any_cast<const char *>(m_value));
+            const std::string s = boost::any_cast<std::string>(m_value);
+            *value = s.c_str();
         } catch(const boost::bad_any_cast &) {
             return false;
         }
@@ -31,6 +35,4 @@ namespace DCF {
         return true;
 
     }
-
-
 }

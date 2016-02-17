@@ -54,21 +54,9 @@ namespace DCF {
 
         KeyMappingsContainer m_keys;
 
-        const uint16_t findIdentifierByName(const std::string &field, const size_t instance = 0) const {
-            auto it = m_keys.find(field);
-            if (it != m_keys.end()) {
-                if (instance < it->second.size()) {
-                    return it->second[instance];
-                }
-            }
+        const uint16_t findIdentifierByName(const std::string &field, const size_t instance = 0) const;
 
-            return _NO_FIELD;
-        }
-
-        const bool refExists(const short &field) const {
-//            size_t t = m_payload.size();
-            return m_payload[field] != nullptr;
-        }
+        const bool refExists(const short &field) const;
 
     public:
         Message() : m_maxRef(0) {
@@ -87,13 +75,7 @@ namespace DCF {
             m_payload[field] = e;
         }
 
-        bool removeField(const uint16_t &field) {
-            if (field != _NO_FIELD && field <= m_maxRef) {
-                m_payload[field] = nullptr;
-                return true;
-            }
-            return false;
-        }
+        bool removeField(const uint16_t &field);
 
         template <typename T> bool getField(const uint16_t &field, T &value) const {
             if (field != _NO_FIELD && field <= m_maxRef) {
@@ -117,24 +99,13 @@ namespace DCF {
             this->addField(ref, value);
         }
 
+        void addRawField(const void *data, const size_t size);
+
         template <typename T> bool getField(const std::string &field, T &value, const size_t instance = 0) const {
             return this->getField(findIdentifierByName(field, instance), value);
         }
 
-        bool removeField(const std::string &field, const size_t instance = 0) {
-            auto it = m_keys.find(field);
-            if (it != m_keys.end()) {
-                auto &list = it->second;
-                if (instance < list.size()) {
-                    list.erase(list.begin() + instance);
-                    if (list.empty()) {
-                        m_keys.erase(it);
-                    }
-                }
-            }
-
-            return this->removeField(findIdentifierByName(field, instance));
-        }
+        bool removeField(const std::string &field, const size_t instance = 0);
 
         friend std::ostream &operator<<(std::ostream &out, const Message &msg) {
             out << "[start_index: " << "This is my message";
