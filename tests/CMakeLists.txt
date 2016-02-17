@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.3)
-
 set(GTEST_SRC_DIR googletest)
 set(GTEST_LIBS gtest gtest_main)
 
