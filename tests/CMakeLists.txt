@@ -3,7 +3,6 @@ set(GTEST_LIBS gtest gtest_main)
 
 include_directories(${GTEST_SRC_DIR}/include ${GTEST_SRC_DIR})
 
-
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 
