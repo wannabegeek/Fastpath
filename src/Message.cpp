@@ -8,7 +8,7 @@ namespace DCF {
 
     const uint16_t Message::_NO_FIELD;
 
-    const uint16_t Message::findIdentifierByName(const std::string &field, const size_t instance) const {
+    const uint16_t Message::findIdentifierByName(const std::string &field, const size_t instance) const noexcept {
         auto it = m_keys.find(field);
         if (it != m_keys.end()) {
             if (instance < it->second.size()) {
@@ -19,11 +19,11 @@ namespace DCF {
         return _NO_FIELD;
     }
 
-    const bool Message::refExists(const uint16_t &field) const {
+    const bool Message::refExists(const uint16_t &field) const noexcept {
         return m_mapper[field] != _NO_FIELD;
     }
 
-    const uint16_t Message::createRefForString(const std::string &field) {
+    const uint16_t Message::createRefForString(const std::string &field) noexcept {
         const uint16_t ref = ++m_maxRef;
         auto it = m_keys.find(field);
         if (it == m_keys.end()) {
@@ -78,7 +78,30 @@ namespace DCF {
         return this->removeField(ref);
     }
 
-    void Message::detach() {
+    void Message::detach() noexcept {
 
     }
+
+    // from Encoder
+    void Message::encode(MessageBuffer &buffer) noexcept {
+        byte *b = buffer.allocate(sizeof(MsgHeader));
+
+        MsgHeader *header = reinterpret_cast<MsgHeader *>(b);
+        header->msg_length = 256;
+        header->flags = this->flags();
+        header->field_count = this->size();
+        header->subject_length = static_cast<uint16_t>(strlen(this->subject()));
+        buffer.append(reinterpret_cast<const byte *>(this->subject()), header->subject_length);
+
+        for (const std::shared_ptr<Field> &field : m_payload) {
+            field->encode(buffer);
+        }
+        return;
+    }
+
+    // from Decoder
+    void Message::decode(MessageBuffer &buffer) noexcept {
+
+    }
+
 }

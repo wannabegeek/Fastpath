@@ -5,12 +5,14 @@
 #ifndef TFDCF_ENCODER_H
 #define TFDCF_ENCODER_H
 
+#include "MessageBuffer.h"
+
 namespace DCF {
     class Encoder {
     public:
         virtual ~Encoder() {}
 
-        virtual void encode() = 0;
+        virtual void encode(MessageBuffer &buffer) noexcept = 0;
     };
 }
 

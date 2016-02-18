@@ -20,7 +20,11 @@ add_subdirectory(${GTEST_SRC_DIR})
 
 #################################
 
-add_executable(tests ../src/Field.cpp MessageTests.cpp ElementTests.cpp)
+add_executable(tests
+        MessageTests.cpp
+        ElementTests.cpp
+        MessageBufferTests.cpp MessageCodec.cpp)
+
 target_link_libraries(tests TFDCF ${GTEST_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(
@@ -28,19 +32,3 @@ add_test(
         COMMAND tests
 )
 
-
-#set(SOURCE_FILES
-#        src/Message.cpp
-#        src/Message.h
-#        src/Encoder.h
-#        src/Element.cpp
-#        src/Element.h
-#        src/Types.h
-#        src/concurrentqueue.h
-#        src/tfpool.h
-#        src/tfspinlock.h
-#        src/Decoder.h
-#        src/Exception.h
-#        src/MessageBuffer.cpp
-#        src/MessageBuffer.h)
-#add_executable(TFDCF ${SOURCE_FILES})

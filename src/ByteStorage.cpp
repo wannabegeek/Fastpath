@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include "ByteStorage.h"
+#include <algorithm>
 
 namespace DCF {
     ByteStorage::ByteStorage() {
@@ -16,7 +17,7 @@ namespace DCF {
 
     void ByteStorage::storeData(const byte *data, const size_t length) {
         if (length > m_storage.second) {
-            resizeBuffer(length);
+            resizeBuffer(std::max(length, m_storage.second * 2));
         }
         memcpy(m_storage.first, data, length);
         m_storedLength = length;

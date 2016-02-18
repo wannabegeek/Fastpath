@@ -45,9 +45,9 @@ namespace DCF {
         typedef std::array<uint16_t, std::numeric_limits<uint16_t>::max() - 1> PayloadMapper;
         typedef std::unordered_map<std::string, std::vector<uint16_t>> KeyMappingsContainer;
 
-        size_t m_size;
-        int m_flags;
-        std::string m_msgSubject;
+        uint32_t m_size;
+        uint8_t m_flags;
+        char m_subject[std::numeric_limits<uint16_t>::max()];
 
         static constexpr uint16_t _NO_FIELD = std::numeric_limits<uint16_t>::max();
 
@@ -58,19 +58,32 @@ namespace DCF {
 
         KeyMappingsContainer m_keys;
 
-        const uint16_t findIdentifierByName(const std::string &field, const size_t instance = 0) const;
+        const uint16_t findIdentifierByName(const std::string &field, const size_t instance = 0) const noexcept;
 
-        const bool refExists(const uint16_t &field) const;
-        const uint16_t createRefForString(const std::string &field);
+        const bool refExists(const uint16_t &field) const noexcept;
+        const uint16_t createRefForString(const std::string &field) noexcept;
 
     public:
         Message() : m_size(0), m_flags(-1), m_maxRef(0) {
             m_mapper.fill(_NO_FIELD);
+            m_subject[0] = '\0';
         }
 
         virtual ~Message() {};
 
-        const size_t size() const { return m_size; }
+        const char *subject() const { return m_subject; }
+
+        const bool setSubject(const char *subject) {
+            if (strlen(subject) < std::numeric_limits<uint16_t>::max()) {
+                strcpy(&m_subject[0], subject);
+                return true;
+            }
+
+            return false;
+        }
+
+        const uint32_t size() const noexcept { return m_size; }
+        const uint8_t flags() const noexcept { return m_flags; }
 
         template <typename T> void addField(const uint16_t &field, const T &value) {
             if (refExists(field)) {
@@ -116,13 +129,13 @@ namespace DCF {
             return out;
         }
 
-        void detach();
+        void detach() noexcept;
 
         // from Encoder
-        void encode() override {};
+        void encode(MessageBuffer &buffer) noexcept override;
 
         // from Decoder
-        void decode() override {};
+        void decode(MessageBuffer &buffer) noexcept override;
     };
 }
 

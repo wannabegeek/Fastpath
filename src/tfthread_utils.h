@@ -1,7 +1,7 @@
 #ifndef tfthread_utils_h
 #define tfthread_utils_h
 
-#include "TFLogger.h"
+#include "logger.h"
 #include "config.h"
 
 #include <thread>

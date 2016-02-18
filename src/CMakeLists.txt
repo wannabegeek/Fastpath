@@ -25,8 +25,7 @@ set(SOURCE_FILES
         tfspinlock.h
         Decoder.h
         Exception.h
-        MessageBuffer.cpp
         MessageBuffer.h
-        FieldTraits.h ByteStorage.cpp ByteStorage.h)
+        FieldTraits.h ByteStorage.cpp ByteStorage.h MessageCodec.cpp MessageCodec.h)
 
 add_library(TFDCF ${SOURCE_FILES})

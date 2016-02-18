@@ -23,9 +23,26 @@
 
 namespace DCF {
 
+    class Message;
+
+    typedef union {
+        int8_t i8;
+        uint8_t u8;
+        int16_t i16;
+        uint16_t u16;
+        int32_t i32;
+        uint32_t u32;
+        int64_t i64;
+        uint64_t u64;
+        float32_t f32;
+        float64_t f64;
+        bool boolean;
+        byte raw[sizeof(float64_t)];
+    } DCMsgData;
+
     class Field : Encoder {
     private:
-        boost::any m_value;
+        DCMsgData m_data;
         StorageType m_type;
         size_t m_size;
 
@@ -33,38 +50,65 @@ namespace DCF {
 
     public:
 
-        template <typename T> void setValue(const T &value) {
-            m_value = value;
-            m_type = is_valid_type<T>::type;
-            m_size = sizeof(T);
-        }
+        const StorageType type() const { return m_type; }
+        const size_t size() const { return m_size; }
+
+        void setValue(const int8_t &value);
+        void setValue(const uint8_t &value);
+        void setValue(const int16_t &value);
+        void setValue(const uint16_t &value);
+        void setValue(const int32_t &value);
+        void setValue(const uint32_t &value);
+        void setValue(const int64_t &value);
+        void setValue(const uint64_t &value);
+        void setValue(const float32_t &value);
+        void setValue(const float64_t &value);
+        void setValue(const bool &value);
+
+        void setValue(const Message &value);
+        void setValue(const std::string &value);
+
         void setValue(const char *value);
         void setValue(const byte *data, const size_t size);
 
-        const StorageType type() const {
-            return m_type;
-        }
+        const bool get(int8_t &value) const;
+        const bool get(uint8_t &value) const;
+        const bool get(int16_t &value) const;
+        const bool get(uint16_t &value) const;
+        const bool get(int32_t &value) const;
+        const bool get(uint32_t &value) const;
+        const bool get(int64_t &value) const;
+        const bool get(uint64_t &value) const;
+        const bool get(float32_t &value) const;
+        const bool get(float64_t &value) const;
+        const bool get(bool &value) const;
 
-        template <typename T> const bool get(T &value) const {
-            try {
-                value = boost::any_cast<T>(m_value);
-            } catch(const boost::bad_any_cast &) {
-                return false;
-            }
+        const bool get(std::string &value) const;
 
-            return true;
-        }
         const bool get(const char **value) const;
         const bool get(const byte **value, size_t &size) const;
 
-        void encode() override {
-
+        void encode(MessageBuffer &buffer) noexcept override {
+            byte *b = buffer.allocate(sizeof(Field));
+            MsgField *field = reinterpret_cast<MsgField *>(b);
+            field->identifier = 123;
+            field->type = m_type;
+            field->data_length = m_size;
+            switch (field->type) {
+                case StorageType::string:
+                case StorageType::data: {
+                    const byte *data;
+                    const size_t size = m_storage.retreiveData(&data);
+                    buffer.append(reinterpret_cast<const byte *>(data), size);
+                    break;
+                }
+                case StorageType::message:
+                    break;
+                default:
+                    buffer.append(reinterpret_cast<const byte *>(m_data.raw), m_size);
+            }
         }
     };
-
-    template <> void Field::setValue(const std::string &value);
-    template <> const bool Field::get(std::string &value) const;
-
 }
 
 #endif //TFDCF_ELEMENT_H

@@ -17,51 +17,61 @@ namespace DCF {
     template <typename T> struct is_valid_type {
         static const bool value = false;
         static const StorageType type = StorageType::unknown;
+        static const size_t size = 0;
     };
 
     template <> struct is_valid_type<bool> {
         static const bool value = true;
         static const StorageType type = StorageType::boolean;
+        static const size_t size = sizeof(bool);
     };
 
     template <> struct is_valid_type<uint8_t> {
         static const bool value = true;
         static const StorageType type = StorageType::uint8;
+        static const size_t size = sizeof(uint8_t);
     };
 
     template <> struct is_valid_type<uint16_t> {
         static const bool value = true;
         static const StorageType type = StorageType::uint16;
+        static const size_t size = sizeof(uint16_t);
     };
 
     template <> struct is_valid_type<uint32_t> {
         static const bool value = true;
         static const StorageType type = StorageType::uint32;
+        static const size_t size = sizeof(uint32_t);
     };
 
     template <> struct is_valid_type<uint64_t> {
         static const bool value = true;
         static const StorageType type = StorageType::uint64;
+        static const size_t size = sizeof(uint64_t);
     };
 
     template <> struct is_valid_type<int8_t> {
         static const bool value = true;
         static const StorageType type = StorageType::int8;
+        static const size_t size = sizeof(int8_t);
     };
 
     template <> struct is_valid_type<int16_t> {
         static const bool value = true;
         static const StorageType type = StorageType::int16;
+        static const size_t size = sizeof(int16_t);
     };
 
     template <> struct is_valid_type<int32_t> {
         static const bool value = true;
         static const StorageType type = StorageType::int32;
+        static const size_t size = sizeof(int32_t);
     };
 
     template <> struct is_valid_type<int64_t> {
         static const bool value = true;
         static const StorageType type = StorageType::int64;
+        static const size_t size = sizeof(int64_t);
     };
 
 //    template <> struct is_valid_type<float16_t> {
@@ -72,11 +82,13 @@ namespace DCF {
     template <> struct is_valid_type<float32_t> {
         static const bool value = true;
         static const StorageType type = StorageType::float32;
+        static const size_t size = sizeof(float32_t);
     };
 
     template <> struct is_valid_type<float64_t> {
         static const bool value = true;
         static const StorageType type = StorageType::float64;
+        static const size_t size = sizeof(float64_t);
     };
 
     template <> struct is_valid_type<const char *> {

@@ -10,7 +10,7 @@
 typedef float float32_t;
 typedef double float64_t;
 
-typedef uint8_t byte;
+typedef unsigned char byte;
 
 namespace DCF {
     typedef enum {

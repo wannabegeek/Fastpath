@@ -5,6 +5,17 @@
 #include <gtest/gtest.h>
 #include <Message.h>
 
+TEST(Message, SetSubject) {
+    DCF::Message msg;
+    const char *subject = "TEST.SUBJECT";
+    ASSERT_TRUE(msg.setSubject(subject));
+
+    ASSERT_STREQ(subject, msg.subject());
+
+    ASSERT_TRUE(msg.setSubject("UPDATED.SUBJECT"));
+    ASSERT_STRNE(subject, msg.subject());
+}
+
 TEST(Message, AddStringField) {
 
     DCF::Message msg;
@@ -52,4 +63,18 @@ TEST(Message, RemoveFieldByString) {
 
     ASSERT_TRUE(msg.removeField("TEST"));
     ASSERT_EQ(0, msg.size());
+}
+
+TEST(Message, Encode) {
+    DCF::Message msg;
+    msg.setSubject("SOME.TEST.SUBJECT");
+    float32_t t = 22.0;
+    msg.addField("TEST", t);
+    msg.addField("Name", "Tom");
+    msg.addField("Name", "Zac");
+
+    DCF::MessageBuffer buffer(1024);
+    msg.encode(buffer);
+
+    std::cout << buffer << std::endl;
 }
