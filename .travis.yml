@@ -6,6 +6,9 @@
 sudo: required
 dist: trusty
 
+before_instll:
+  - sudo apt-get install -qq g++5
+
 install:
 # /usr/bin/gcc is 4.6 always, but gcc-X.Y is available.
 - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
