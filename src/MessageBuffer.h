@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <iomanip>
 
 #include "Types.h"
 
@@ -177,19 +178,41 @@ namespace DCF {
 
         friend std::ostream &operator<<(std::ostream &out, const MessageBuffer &msg) {
             const BufferDataType &data = msg.data();
-            out << "[start_index: " << msg.m_startIndex << " length: " << msg.m_msgLength << " capacity: " << msg.m_bufferLength << "]: ";
-            for (size_t i = 0; i < data.second; i++) {
-                if (i % 8 == 0) {
-                    out << std::endl;
+            out << "[start_index: " << msg.m_startIndex << " length: " << msg.m_msgLength << " capacity: " << msg.m_bufferLength << "]: " << std::endl;
+            const byte *output = nullptr;
+
+            const size_t default_block = 8;
+            size_t inc = 0;
+
+            for (int i = 0; i < data.second; i += default_block) {
+                inc = std::min(default_block, data.second - i);
+
+                output = &data.first[i];
+
+                out << std::setfill('0') << std::setw(5) << i << "   ";
+
+                for (int j = 0; j < default_block; j++) {
+                    if (j < inc) {
+                        out << std::setfill('0') << std::setw(2) << std::hex << static_cast<const int>(output[j]) << " ";
+                    } else {
+                        out << "   ";
+                    }
+                }
+                out << std::dec << "        ";
+
+                for (int j = 0; j < default_block; j++) {
+                    if (j < inc) {
+                        if (output[j] < 32 || output[j] > 127) {
+                            out << '.' << " ";
+                        } else {
+                            out << static_cast<const char>(output[j]) << " ";
+                        }
+                    } else {
+                        out << "  ";
+                    }
                 }
 
-                const byte b = data.first[i];
-                if (b < 32 || b > 127) {
-                    out << '.' << " ";
-                } else {
-                    out << static_cast<const char>(b) << " ";
-                }
-
+                out << std::endl;
             }
             return out << std::endl;
         }
