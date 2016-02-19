@@ -23,7 +23,7 @@ add_subdirectory(${GTEST_SRC_DIR})
 add_executable(tests
         MessageTests.cpp
         ElementTests.cpp
-        MessageBufferTests.cpp MessageCodec.cpp)
+        MessageBufferTests.cpp)
 
 target_link_libraries(tests TFDCF ${GTEST_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 

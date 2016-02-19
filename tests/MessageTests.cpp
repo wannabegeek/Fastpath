@@ -78,3 +78,17 @@ TEST(Message, Encode) {
 
     std::cout << buffer << std::endl;
 }
+
+TEST(Message, Decode) {
+    DCF::Message msg;
+    msg.setSubject("SOME.TEST.SUBJECT");
+    float32_t t = 22.0;
+    msg.addField("TEST", t);
+    msg.addField("Name", "Tom");
+    msg.addField("Name", "Zac");
+
+    DCF::MessageBuffer buffer(1024);
+    msg.encode(buffer);
+
+    msg.decode(buffer);
+}

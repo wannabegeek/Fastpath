@@ -87,7 +87,7 @@ namespace DCF {
         byte *b = buffer.allocate(sizeof(MsgHeader));
 
         MsgHeader *header = reinterpret_cast<MsgHeader *>(b);
-        header->msg_length = 256;
+        header->msg_length = 0;
         header->flags = this->flags();
         header->field_count = this->size();
         header->subject_length = static_cast<uint16_t>(strlen(this->subject()));
@@ -96,12 +96,26 @@ namespace DCF {
         for (const std::shared_ptr<Field> &field : m_payload) {
             field->encode(buffer);
         }
+
+        // no we know the size of the message we can go back and write it
+        header->msg_length = buffer.size();
         return;
     }
 
     // from Decoder
-    void Message::decode(MessageBuffer &buffer) noexcept {
+    const bool Message::decode(MessageBuffer &buffer) noexcept {
+        const MessageBuffer::BufferDataType data = buffer.data();
+        if (data.second > sizeof(MsgHeader)) {
+            const byte *b = data.first;
+            const MsgHeader *header = reinterpret_cast<const MsgHeader *>(b);
+            std::cout << "Size: " << header->msg_length << std::endl;
+            std::cout << "Field Count: " << header->field_count << std::endl;
+            std::cout << "Subject Len: " << header->subject_length << std::endl;
+            const char *subject = reinterpret_cast<const char *>(b[sizeof(MsgHeader)]);
+            std::cout << "Subject: " << std::string(subject, header->subject_length) << std::endl;
+        }
 
+        return false;
     }
 
 }

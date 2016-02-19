@@ -12,7 +12,7 @@ namespace DCF {
     public:
         virtual ~Decoder() {}
 
-        virtual void decode(MessageBuffer &buffer) noexcept = 0;
+        virtual const bool decode(MessageBuffer &buffer) noexcept = 0;
     };
 }
 

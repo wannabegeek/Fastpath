@@ -135,7 +135,7 @@ namespace DCF {
         void encode(MessageBuffer &buffer) noexcept override;
 
         // from Decoder
-        void decode(MessageBuffer &buffer) noexcept override;
+        const bool decode(MessageBuffer &buffer) noexcept override;
     };
 }
 
