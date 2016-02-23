@@ -1,4 +1,11 @@
 
+find_package(Threads)
+
+find_library(LIBRT_LIBRARIES rt)
+if (LIBRT_LIBRARIES)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LIBRT_LIBRARIES}")
+endif(LIBRT_LIBRARIES)
+
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 

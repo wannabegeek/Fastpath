@@ -26,7 +26,7 @@ namespace DCF {
         header->subject_length = static_cast<uint16_t>(strlen(msg->subject()));
         buffer.append(reinterpret_cast<const byte *>(msg->subject()), header->subject_length);
 
-        for (int i = 0; i < header->field_count; i++) {
+        for (size_t i = 0; i < header->field_count; i++) {
             b = buffer.allocate(sizeof(Field));
             MsgField *field = reinterpret_cast<MsgField *>(b);
             field->identifier = 123;

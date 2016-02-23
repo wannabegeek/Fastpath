@@ -31,6 +31,7 @@
 #include <cassert>
 #include <iostream>
 #include <iomanip>
+#include <cstring>
 
 #include "Types.h"
 
@@ -146,10 +147,10 @@ namespace DCF {
         }
 
         inline void advance(const size_t length = 0) noexcept {
-            byte *data = nullptr;
+//            byte *data = nullptr;
             if (length) {
-                // copy our buffer into place
-                data = allocate(length);
+                // copy our buffer into place/
+/*                data = */allocate(length);
             }
         }
 
@@ -186,14 +187,14 @@ namespace DCF {
             const size_t default_block = 8;
             size_t inc = 0;
 
-            for (int i = 0; i < data.second; i += default_block) {
+            for (size_t i = 0; i < data.second; i += default_block) {
                 inc = std::min(default_block, data.second - i);
 
                 output = &data.first[i];
 
                 out << std::setfill('0') << std::setw(5) << i << "   ";
 
-                for (int j = 0; j < default_block; j++) {
+                for (size_t j = 0; j < default_block; j++) {
                     if (j < inc) {
                         out << std::setfill('0') << std::setw(2) << std::hex << static_cast<const int>(output[j]) << " ";
                     } else {
@@ -202,7 +203,7 @@ namespace DCF {
                 }
                 out << std::dec << "        ";
 
-                for (int j = 0; j < default_block; j++) {
+                for (size_t j = 0; j < default_block; j++) {
                     if (j < inc) {
                         if (output[j] < 32 || output[j] > 127) {
                             out << '.' << " ";

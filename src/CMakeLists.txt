@@ -26,6 +26,6 @@ set(SOURCE_FILES
         Decoder.h
         Exception.h
         MessageBuffer.h
-        FieldTraits.h ByteStorage.cpp ByteStorage.h MessageCodec.cpp MessageCodec.h SharedMemoryBuffer.h)
+        FieldTraits.h MutableByteStorage.cpp MutableByteStorage.h MessageCodec.cpp MessageCodec.h SharedMemoryBuffer.h ByteStorage.cpp ByteStorage.h)
 
 add_library(TFDCF ${SOURCE_FILES})

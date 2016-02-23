@@ -59,10 +59,10 @@ TEST(Message, RemoveFieldByString) {
     ASSERT_TRUE(msg.getField("TEST", t));
     ASSERT_FLOAT_EQ(22, t);
 
-    ASSERT_EQ(1, msg.size());
+    ASSERT_EQ(1u, msg.size());
 
     ASSERT_TRUE(msg.removeField("TEST"));
-    ASSERT_EQ(0, msg.size());
+    ASSERT_EQ(0u, msg.size());
 }
 
 TEST(Message, Encode) {

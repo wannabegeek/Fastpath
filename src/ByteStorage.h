@@ -1,37 +1,38 @@
 //
-// Created by Tom Fewster on 17/02/2016.
+// Created by Tom Fewster on 23/02/2016.
 //
 
 #ifndef TFDCF_BYTESTORAGE_H
 #define TFDCF_BYTESTORAGE_H
 
-
-#include <stddef.h>
-#include <utility>
 #include "Types.h"
 
 namespace DCF {
     class ByteStorage {
-    private:
+    protected:
         using BufferDataType = std::pair<byte *, size_t>;
 
         BufferDataType m_storage;
         size_t m_storedLength;
 
-        void resizeBuffer(const size_t length);
+        bool m_no_copy;
 
-    public:
+        void allocateStorage(const size_t length);
+
         explicit ByteStorage();
 
-        ~ByteStorage();
+    public:
+        explicit ByteStorage(byte *bytes, size_t length, bool nocopy=false);
+        virtual ~ByteStorage();
 
-        void storeData(const byte *data, const size_t length);
+        const size_t bytes(const byte **data) const;
+        const size_t length() const { return m_storedLength; }
 
-        const size_t retreiveData(const byte **data) const;
+        const bool owns_copy() const { return !m_no_copy; }
 
-        const size_t size() const { return m_storedLength; }
-
-        void clear() { m_storedLength = 0; }
+        const byte operator[](const size_t index) const {
+            return m_storage.first[index];
+        }
     };
 }
 

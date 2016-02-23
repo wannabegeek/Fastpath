@@ -1,30 +1,36 @@
 //
-// Created by Tom Fewster on 17/02/2016.
+// Created by Tom Fewster on 23/02/2016.
 //
 
-#include <string.h>
-#include "ByteStorage.h"
+#include <cstring>
 #include <algorithm>
+#include "ByteStorage.h"
+#include "Types.h"
 
 namespace DCF {
-    ByteStorage::ByteStorage() {
-        resizeBuffer(256);
+    ByteStorage::ByteStorage() : m_no_copy(false) {
+        allocateStorage(256);
+    }
+
+    ByteStorage::ByteStorage(byte *bytes, size_t length, bool no_copy) : m_no_copy(no_copy) {
+        if (m_no_copy) {
+            m_storage.first = bytes;
+            m_storage.second = 0;
+            m_storedLength = length;
+        } else {
+            allocateStorage(length);
+            memcpy(m_storage.first, reinterpret_cast<const void *>(data), length);
+            m_storedLength = length;
+        }
     }
 
     ByteStorage::~ByteStorage() {
-        delete[] m_storage.first;
-    }
-
-    void ByteStorage::storeData(const byte *data, const size_t length) {
-        if (length > m_storage.second) {
-            resizeBuffer(std::max(length, m_storage.second * 2));
+        if (!m_no_copy) {
+            delete[] m_storage.first;
         }
-        memcpy(m_storage.first, data, length);
-        m_storedLength = length;
     }
 
-
-    void ByteStorage::resizeBuffer(const size_t length) {
+    void ByteStorage::allocateStorage(const size_t length) {
         // this will find the next x^2 number larger than the one provided
         m_storage.second = length;
         m_storage.second--;
@@ -39,7 +45,7 @@ namespace DCF {
 
     }
 
-    const size_t ByteStorage::retreiveData(const byte **data) const {
+    const size_t ByteStorage::bytes(const byte **data) const {
         *data = m_storage.first;
         return m_storedLength;
     }

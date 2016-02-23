@@ -14,7 +14,7 @@
 #include "Decoder.h"
 #include "FieldTraits.h"
 #include "MessageBuffer.h"
-#include "ByteStorage.h"
+#include "MutableByteStorage.h"
 
 /**
  * Binary Format:
@@ -47,7 +47,7 @@ namespace DCF {
         StorageType m_type;
         size_t m_size;
 
-        ByteStorage m_storage;
+        MutableByteStorage m_storage;
 
     public:
 
@@ -99,7 +99,7 @@ namespace DCF {
                 case StorageType::string:
                 case StorageType::data: {
                     const byte *data;
-                    const size_t size = m_storage.retreiveData(&data);
+                    const size_t size = m_storage.bytes(&data);
                     buffer.append(reinterpret_cast<const byte *>(data), size);
                     break;
                 }
@@ -112,6 +112,22 @@ namespace DCF {
 
         // from Decoder
         const bool decode(MessageBuffer &buffer) noexcept override {
+            const MessageBuffer::BufferDataType b = buffer.data();
+            const MsgField *field = reinterpret_cast<const MsgField *>(b.first);
+            m_type = static_cast<StorageType>(field->type);
+            m_size = field->data_length;
+            switch (m_type) {
+                case StorageType::string:
+                case StorageType::data: {
+                    m_storage.setData(&b.first[sizeof(MsgField) + 1], m_size);
+                    break;
+                }
+                case StorageType::message:
+                    break;
+                default:
+                    buffer.append(reinterpret_cast<const byte *>(m_data.raw), m_size);
+                    memcpy(m_data.raw, &b.first[sizeof(MsgField) + 1], m_size);
+            }
             return false;
         }
 
@@ -121,13 +137,13 @@ namespace DCF {
                     break;
                 case StorageType::string: {
                     const byte *data;
-                    const size_t size = msg.m_storage.retreiveData(&data);
+                    const size_t size = msg.m_storage.bytes(&data);
                     out << ":string=" << std::string(reinterpret_cast<const char *>(data), size - 1); // -1 for NULL
                     break;
                 }
                 case StorageType::data: {
                     const byte *data;
-                    const size_t size = msg.m_storage.retreiveData(&data);
+                    const size_t size = msg.m_storage.bytes(&data);
                     out << ":opaque=" << "[data of " << size << " bytes]";
                     break;
                 }
