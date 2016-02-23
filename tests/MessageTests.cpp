@@ -80,15 +80,19 @@ TEST(Message, Encode) {
 }
 
 TEST(Message, Decode) {
-    DCF::Message msg;
-    msg.setSubject("SOME.TEST.SUBJECT");
+    DCF::Message in;
+    in.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
-    msg.addField("TEST", t);
-    msg.addField("Name", "Tom");
-    msg.addField("Name", "Zac");
+    in.addField("TEST", t);
+    in.addField("Name", "Tom");
+    in.addField("Name", "Zac");
 
     DCF::MessageBuffer buffer(1024);
-    msg.encode(buffer);
+    in.encode(buffer);
 
-    msg.decode(buffer);
+    DCF::Message out;
+    out.decode(buffer);
+
+    std::cout << in << std::endl;
+    std::cout << out << std::endl;
 }

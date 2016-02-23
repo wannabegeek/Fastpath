@@ -109,10 +109,14 @@ namespace DCF {
             const byte *b = data.first;
             const MsgHeader *header = reinterpret_cast<const MsgHeader *>(b);
             std::cout << "Size: " << header->msg_length << std::endl;
-            std::cout << "Field Count: " << header->field_count << std::endl;
-            std::cout << "Subject Len: " << header->subject_length << std::endl;
-            const char *subject = reinterpret_cast<const char *>(b[sizeof(MsgHeader)]);
-            std::cout << "Subject: " << std::string(subject, header->subject_length) << std::endl;
+            if (header->msg_length <= buffer.size()) {
+                std::cout << "Field Count: " << header->field_count << std::endl;
+                std::cout << "Subject Len: " << header->subject_length << std::endl;
+                const char *subject = reinterpret_cast<const char *>(&b[sizeof(MsgHeader)]);
+                std::cout << "Subject: " << std::string(subject, header->subject_length) << std::endl;
+
+                return true;
+            }
         }
 
         return false;

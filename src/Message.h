@@ -124,11 +124,6 @@ namespace DCF {
 
         bool removeField(const std::string &field, const size_t instance = 0);
 
-        friend std::ostream &operator<<(std::ostream &out, const Message &msg) {
-            out << "[start_index: " << "This is my message";
-            return out;
-        }
-
         void detach() noexcept;
 
         // from Encoder
@@ -136,6 +131,24 @@ namespace DCF {
 
         // from Decoder
         const bool decode(MessageBuffer &buffer) noexcept override;
+
+        friend std::ostream &operator<<(std::ostream &out, const Message &msg) {
+            if (msg.m_subject[0] == '\0') {
+                out << "<no subject>=";
+            } else {
+                out << msg.m_subject << "=";
+            }
+            bool first = true;
+            for (const std::shared_ptr<Field> &field : msg.m_payload) {
+                if (!first) {
+                    out << ", ";
+                }
+                out << "{" << *field.get() << "}";
+                first = false;
+            }
+
+            return out;
+        }
     };
 }
 

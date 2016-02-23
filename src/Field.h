@@ -11,6 +11,7 @@
 #include <boost/any.hpp>
 #include "Types.h"
 #include "Encoder.h"
+#include "Decoder.h"
 #include "FieldTraits.h"
 #include "MessageBuffer.h"
 #include "ByteStorage.h"
@@ -40,7 +41,7 @@ namespace DCF {
         byte raw[sizeof(float64_t)];
     } DCMsgData;
 
-    class Field : Encoder {
+    class Field : public Encoder, Decoder {
     private:
         DCMsgData m_data;
         StorageType m_type;
@@ -107,6 +108,67 @@ namespace DCF {
                 default:
                     buffer.append(reinterpret_cast<const byte *>(m_data.raw), m_size);
             }
+        }
+
+        // from Decoder
+        const bool decode(MessageBuffer &buffer) noexcept override {
+            return false;
+        }
+
+        friend std::ostream &operator<<(std::ostream &out, const Field &msg) {
+            switch (msg.type()) {
+                case StorageType::unknown:
+                    break;
+                case StorageType::string: {
+                    const byte *data;
+                    const size_t size = msg.m_storage.retreiveData(&data);
+                    out << ":string=" << std::string(reinterpret_cast<const char *>(data), size - 1); // -1 for NULL
+                    break;
+                }
+                case StorageType::data: {
+                    const byte *data;
+                    const size_t size = msg.m_storage.retreiveData(&data);
+                    out << ":opaque=" << "[data of " << size << " bytes]";
+                    break;
+                }
+                case StorageType::message:
+                    break;
+                case StorageType::boolean:
+                    out << ":boolean=" << std::boolalpha << msg.m_data.boolean;
+                    break;
+                case StorageType::uint8:
+                    out << ":uint8=" << msg.m_data.u8;
+                    break;
+                case StorageType::uint16:
+                    out << ":uint16=" << msg.m_data.u16;
+                    break;
+                case StorageType::uint32:
+                    out << ":uint32=" << msg.m_data.u32;
+                    break;
+                case StorageType::uint64:
+                    out << ":uint64=" << msg.m_data.u64;
+                    break;
+                case StorageType::int8:
+                    out << ":int8=" << msg.m_data.i8;
+                    break;
+                case StorageType::int16:
+                    out << ":int16=" << msg.m_data.i16;
+                    break;
+                case StorageType::int32:
+                    out << ":int32=" << msg.m_data.i32;
+                    break;
+                case StorageType::int64:
+                    out << ":int64=" << msg.m_data.i64;
+                    break;
+                case StorageType::float32:
+                    out << ":float32=" << msg.m_data.f32;
+                    break;
+                case StorageType::float64:
+                    out << ":float64=" << msg.m_data.f64;
+                    break;
+            }
+
+            return out;
         }
     };
 }

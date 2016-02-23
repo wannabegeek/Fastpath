@@ -83,6 +83,8 @@ namespace DCF {
             m_buffer = new byte[m_bufferLength];
         }
 
+        MessageBuffer(const size_t initialAllocation, byte *buffer) noexcept : m_buffer(buffer), m_bufferLength(initialAllocation), m_msgLength(0), m_startIndex(0) {}
+
         MessageBuffer(MessageBuffer &&orig) : m_msgLength(orig.m_msgLength), m_startIndex(orig.m_startIndex) {
             m_buffer = orig.m_buffer;
             orig.m_buffer = new byte[orig.m_bufferLength];

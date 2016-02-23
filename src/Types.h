@@ -25,7 +25,7 @@ namespace DCF {
         int16,
         int32,
         int64,
-        float16,
+//        float16,
         float32,
         float64,
         data,
