@@ -9,6 +9,7 @@
 #include <string>
 #include <type_traits>
 #include <boost/any.hpp>
+#include <iostream>
 #include "Types.h"
 #include "Encoder.h"
 #include "Decoder.h"
@@ -111,24 +112,28 @@ namespace DCF {
         }
 
         // from Decoder
-        const bool decode(MessageBuffer &buffer) noexcept override {
-            const MessageBuffer::BufferDataType b = buffer.data();
-            const MsgField *field = reinterpret_cast<const MsgField *>(b.first);
+        const size_t decode(const ByteStorage &buffer) noexcept override {
+            const byte *bytes = nullptr;
+            const size_t length = buffer.bytes(&bytes);
+            const MsgField *field = reinterpret_cast<const MsgField *>(bytes);
             m_type = static_cast<StorageType>(field->type);
             m_size = field->data_length;
+
+            std::cout << "Decoding " << m_size << std::endl;
+
+            size_t offset = sizeof(MsgField);
             switch (m_type) {
                 case StorageType::string:
                 case StorageType::data: {
-                    m_storage.setData(&b.first[sizeof(MsgField) + 1], m_size);
+                    m_storage.setData(bytes, m_size);
                     break;
                 }
                 case StorageType::message:
                     break;
                 default:
-                    buffer.append(reinterpret_cast<const byte *>(m_data.raw), m_size);
-                    memcpy(m_data.raw, &b.first[sizeof(MsgField) + 1], m_size);
+                    memcpy(m_data.raw, bytes, m_size);
             }
-            return false;
+            return offset + m_size;
         }
 
         friend std::ostream &operator<<(std::ostream &out, const Field &msg) {

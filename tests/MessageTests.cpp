@@ -90,8 +90,10 @@ TEST(Message, Decode) {
     DCF::MessageBuffer buffer(1024);
     in.encode(buffer);
 
+    std::cout << buffer << std::endl;
+    std::cout << buffer.byteStorage() << std::endl;
     DCF::Message out;
-    out.decode(buffer);
+    out.decode(buffer.byteStorage());
 
     std::cout << in << std::endl;
     std::cout << out << std::endl;

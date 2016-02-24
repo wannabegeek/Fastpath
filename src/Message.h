@@ -130,7 +130,7 @@ namespace DCF {
         void encode(MessageBuffer &buffer) noexcept override;
 
         // from Decoder
-        const bool decode(MessageBuffer &buffer) noexcept override;
+        const size_t decode(const ByteStorage &buffer) noexcept override;
 
         friend std::ostream &operator<<(std::ostream &out, const Message &msg) {
             if (msg.m_subject[0] == '\0') {

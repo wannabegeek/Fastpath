@@ -9,7 +9,7 @@
 namespace DCF {
 
     std::shared_ptr<Message> MessageCodec::decode(MessageBuffer &buffer) {
-        if (buffer.size() > sizeof(MsgHeader)) {
+        if (buffer.length() > sizeof(MsgHeader)) {
 
         }
 

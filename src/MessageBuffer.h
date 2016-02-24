@@ -1,39 +1,13 @@
 //
-// Created by Tom Fewster on 15/02/2016.
+// Created by Tom Fewster on 23/02/2016.
 //
 
-#ifndef TFDCF_MESSAGEBUFFER_H
-#define TFDCF_MESSAGEBUFFER_H
+#ifndef TFDCF_MESSAGEBUFFER2_H
+#define TFDCF_MESSAGEBUFFER2_H
 
-/**
- *
- * Header
- * | Msg Length | Flags | Reserved  | Subject Length | Subject |
- * |   8 bytes  |  1 b  |  16 bytes |   4 bytes      |  Var    |
- *
- * Field Map Repeating Block
- * | Num Fields |
- * |  4 bytes   |
- *
- *      | Identifier | Offset  | Name Length | Name |
- *      |  2 bytes   | 8 bytes |  2 bytes    |  Var |
- *
- * Data Segment Repeating Block
- *      | Data Type | Field Length | Data |
- *      |   1 byte  |  8 bytes     |  Var |
- *
- */
-
-
-#include <cstdint>
-#include <memory>
-#include <algorithm>
-#include <cassert>
-#include <iostream>
+#include <assert.h>
 #include <iomanip>
-#include <cstring>
-
-#include "Types.h"
+#include "MutableByteStorage.h"
 
 namespace DCF {
 
@@ -62,135 +36,116 @@ namespace DCF {
 
     class MessageBuffer {
     private:
-        byte *m_buffer = nullptr;
-        size_t m_bufferLength = 0;
-        size_t m_msgLength = 0;
         size_t m_startIndex = 0;
 
+        MutableByteStorage m_storage;
+        const size_t visible_length() const { return m_storage.length() - m_startIndex; }
+
     public:
-        using BufferDataType = std::pair<const byte *, size_t>;
 
-        MessageBuffer(const size_t initialAllocation) noexcept : m_msgLength(0), m_startIndex(0)  {
-            // this will find the next x^2 number larger than the one provided
-            m_bufferLength = initialAllocation;
-            m_bufferLength--;
-            m_bufferLength |= m_bufferLength >> 1;
-            m_bufferLength |= m_bufferLength >> 2;
-            m_bufferLength |= m_bufferLength >> 4;
-            m_bufferLength |= m_bufferLength >> 8;
-            m_bufferLength |= m_bufferLength >> 16;
-            m_bufferLength++;
-
-            m_buffer = new byte[m_bufferLength];
+        explicit MessageBuffer(const size_t initialAllocation) noexcept : m_startIndex(0), m_storage(initialAllocation) {
         }
 
-        MessageBuffer(const size_t initialAllocation, byte *buffer) noexcept : m_buffer(buffer), m_bufferLength(initialAllocation), m_msgLength(0), m_startIndex(0) {}
+        explicit MessageBuffer(byte *buffer, const size_t initialAllocation) noexcept : m_startIndex(0), m_storage(buffer, initialAllocation) {}
 
-        MessageBuffer(MessageBuffer &&orig) : m_msgLength(orig.m_msgLength), m_startIndex(orig.m_startIndex) {
-            m_buffer = orig.m_buffer;
-            orig.m_buffer = new byte[orig.m_bufferLength];
-            m_bufferLength = orig.m_bufferLength;
-            orig.m_msgLength = 0;
+        MessageBuffer(MessageBuffer &&orig) : m_startIndex(orig.m_startIndex), m_storage(std::move(orig.m_storage)) {
             orig.m_startIndex = 0;
         }
 
         MessageBuffer(const MessageBuffer &) = delete;
         const MessageBuffer &operator=(const MessageBuffer &) = delete;
 
-        ~MessageBuffer() noexcept {
-            delete [] m_buffer;
+        virtual ~MessageBuffer() noexcept {}
+
+        byte *mutableBytes() const noexcept {
+            return &m_storage.mutableBytes()[m_startIndex];
         }
 
-        inline const byte *append(const byte *buffer, const size_t length) noexcept {
-            byte *data = nullptr;
-            if (length) {
-                // copy our buffer into place
-                data = allocate(length);
-                memcpy(data, buffer, length);
-            }
-            return data;
+        void increaseLengthBy(const size_t length) {
+            allocate(length);
+        }
+
+        const ByteStorage byteStorage() const noexcept {
+            const byte *bytes = nullptr;
+            const size_t len = m_storage.bytes(&bytes);
+            return ByteStorage(&bytes[m_startIndex], visible_length(), true);
         }
 
         inline byte *allocate(const size_t length) {
             // expand the length of our buffer if required
-            if (m_startIndex + m_msgLength + length >= m_bufferLength) {
-                size_t newLength = m_bufferLength * 2;
-                while (m_msgLength + length > newLength) {
-                    newLength *= 2;
-                }
-                byte *tmp = new byte[newLength];
-                memmove(tmp, &m_buffer[m_startIndex], m_msgLength);
-                delete [] m_buffer;
-                m_buffer = tmp;
+            const size_t previous_length = m_storage.length();
+            if (m_storage.length() + length > m_storage.capacity()) {
+                byte *bytes = m_storage.mutableBytes();
+                memmove(bytes, &bytes[m_startIndex], m_storage.length() - m_startIndex);
                 m_startIndex = 0;
-                m_bufferLength = newLength;
+                m_storage.truncate(m_storage.length() - m_startIndex);
             }
-            byte *result = &m_buffer[m_startIndex + m_msgLength];
-            m_msgLength += length;
 
-            return result;
+            m_storage.increaseLengthBy(length);
+            return &m_storage.mutableBytes()[previous_length];
+        }
+
+        void append(const byte *data, const size_t length) {
+            m_storage.append(data, length);
         }
 
         inline void erase_back(const size_t length) {
-            assert(length <= m_msgLength);
-            m_msgLength -= length;
+            assert(length <= visible_length());
+            m_storage.truncate(m_storage.length() - length);
         }
 
         inline void erase_front(const size_t length) {
-            assert(length <= m_msgLength);
-            m_msgLength -= length;
-            if (m_msgLength == 0) {
-                m_startIndex = 0;
+            assert(length <= visible_length());
+            if (length + m_startIndex >= m_storage.length()) {
+                m_storage.clear();
             } else {
-                m_startIndex += length;
+                if (m_storage.length() == 0) {
+                    m_startIndex = 0;
+                } else {
+                    m_startIndex += length;
+                }
             }
         }
 
-        inline void advance(const size_t length = 0) noexcept {
-//            byte *data = nullptr;
-            if (length) {
-                // copy our buffer into place/
-/*                data = */allocate(length);
-            }
+        inline void append(const MessageBuffer &src, const size_t length = std::numeric_limits<size_t>::max()) noexcept {
+            append(src.mutableBytes(), std::min(length, src.length()));
         }
 
-        inline void append(const MessageBuffer &src, const size_t length = 0) noexcept {
-            if (length != 0) {
-                append(&(src.m_buffer[src.m_startIndex]), length);
-            } else {
-                append(&(src.m_buffer[src.m_startIndex]), src.m_msgLength);
-            }
+        inline const size_t bytes(const byte **data) const noexcept {
+            const byte *bytes = nullptr;
+            const size_t len = m_storage.bytes(&bytes);
+            *data = &bytes[m_startIndex];
+            return len - m_startIndex;
         }
 
         inline void clear() noexcept {
-            m_msgLength = 0;
+            m_storage.clear();
             m_startIndex = 0;
         }
 
-        inline const size_t size() const noexcept {
-            return m_msgLength;
-        }
-
-        inline const BufferDataType data() const noexcept {
-            return std::move(std::make_pair(&m_buffer[m_startIndex], m_msgLength));
+        inline const size_t length() const noexcept {
+            return visible_length();
         }
 
         const byte operator[](const size_t index) const {
-            return (&m_buffer[m_startIndex])[index];
+            const byte *bytes = nullptr;
+            m_storage.bytes(&bytes);
+            return (&bytes[m_startIndex])[index];
         }
 
         friend std::ostream &operator<<(std::ostream &out, const MessageBuffer &msg) {
-            const BufferDataType &data = msg.data();
-            out << "[start_index: " << msg.m_startIndex << " length: " << msg.m_msgLength << " capacity: " << msg.m_bufferLength << "]: " << std::endl;
+            const byte *bytes = nullptr;
+            const size_t length = msg.bytes(&bytes);
+            out << "[start_index: " << msg.m_startIndex << " length: " << length << "]: " << std::endl;
             const byte *output = nullptr;
 
             const size_t default_block = 8;
             size_t inc = 0;
 
-            for (size_t i = 0; i < data.second; i += default_block) {
-                inc = std::min(default_block, data.second - i);
+            for (size_t i = 0; i < length; i += default_block) {
+                inc = std::min(default_block, length - i);
 
-                output = &data.first[i];
+                output = &bytes[i];
 
                 out << std::setfill('0') << std::setw(5) << i << "   ";
 
@@ -222,4 +177,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_MESSAGEBUFFER_H
+#endif //TFDCF_MESSAGEBUFFER2_H

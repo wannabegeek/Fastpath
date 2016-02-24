@@ -7,11 +7,14 @@
 #include <algorithm>
 
 namespace DCF {
-    MutableByteStorage::MutableByteStorage() {
+    MutableByteStorage::MutableByteStorage(const size_t allocation) : ByteStorage(allocation) {
         // call super classes protected constructor
     }
 
-    MutableByteStorage::MutableByteStorage(byte *bytes, size_t length) : ByteStorage(bytes, length, false) {
+    MutableByteStorage::MutableByteStorage(const byte *bytes, size_t length) : ByteStorage(bytes, length, false) {
+    }
+
+    MutableByteStorage::MutableByteStorage(MutableByteStorage &&orig) : ByteStorage(std::move(orig)) {
     }
 
     void MutableByteStorage::setData(const byte *data, const size_t length) {
@@ -28,7 +31,7 @@ namespace DCF {
             const byte *old_data = m_storage.first;
             const size_t old_length = m_storage.second;
             allocateStorage(m_storage.second + length);
-            memcpy(m_storage.first, old_data, old_length);
+            memmove(m_storage.first, old_data, old_length);
             delete[] old_data;
         }
         m_storedLength += length;
@@ -36,15 +39,29 @@ namespace DCF {
 
 
     void MutableByteStorage::append(const byte *buffer, const size_t length) noexcept {
+        const size_t current_length = m_storedLength;
         this->increaseLengthBy(length);
-        memcpy(m_storage.first, buffer, length);
+        memcpy(&m_storage.first[current_length], buffer, length);
     }
 
     void MutableByteStorage::append(const ByteStorage &src, const size_t length) noexcept {
-        this->increaseLengthBy(length);
+        const size_t current_length = m_storedLength;
         const byte *data = nullptr;
-        const size_t availableData = src.bytes(&data);
-        memcpy(m_storage.first, data, std::max(length, availableData));
+        const size_t copy_length = std::min(src.bytes(&data), length);
+        this->increaseLengthBy(copy_length);
+
+        memcpy(&m_storage.first[current_length], data, copy_length);
     }
 
+    const size_t MutableByteStorage::capacity() const {
+        return m_storage.second;
+    }
+
+    byte *MutableByteStorage::mutableBytes() const noexcept {
+        return m_storage.first;
+    }
+
+    void MutableByteStorage::truncate(const size_t length) {
+        m_storedLength = length;
+    }
 }

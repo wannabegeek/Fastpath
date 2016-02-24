@@ -5,6 +5,7 @@
 #ifndef TFDCF_BYTESTORAGE_H
 #define TFDCF_BYTESTORAGE_H
 
+#include <ostream>
 #include "Types.h"
 
 namespace DCF {
@@ -19,11 +20,16 @@ namespace DCF {
 
         void allocateStorage(const size_t length);
 
-        explicit ByteStorage();
+        explicit ByteStorage(const size_t allocation = 256);
 
     public:
-        explicit ByteStorage(byte *bytes, size_t length, bool nocopy=false);
-        virtual ~ByteStorage();
+        explicit ByteStorage(const byte *bytes, size_t length, bool nocopy=false);
+        ByteStorage(ByteStorage &&orig);
+
+        ByteStorage(const ByteStorage &) = delete;
+        const ByteStorage &operator=(const ByteStorage &) = delete;
+
+        virtual ~ByteStorage() noexcept;
 
         const size_t bytes(const byte **data) const;
         const size_t length() const { return m_storedLength; }
@@ -33,6 +39,8 @@ namespace DCF {
         const byte operator[](const size_t index) const {
             return m_storage.first[index];
         }
+
+        friend std::ostream &operator<<(std::ostream &out, const ByteStorage &msg);
     };
 }
 

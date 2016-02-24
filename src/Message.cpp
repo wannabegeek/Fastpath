@@ -2,6 +2,7 @@
 // Created by Tom Fewster on 12/02/2016.
 //
 
+#include <iostream>
 #include "Message.h"
 
 namespace DCF {
@@ -98,36 +99,42 @@ namespace DCF {
         }
 
         // no we know the size of the message we can go back and write it
-        header->msg_length = buffer.size();
+        header->msg_length = buffer.length();
         return;
     }
 
     // from Decoder
-    const bool Message::decode(MessageBuffer &buffer) noexcept {
-        const MessageBuffer::BufferDataType data = buffer.data();
-        if (data.second > sizeof(MsgHeader)) {
-            const byte *b = data.first;
-            const MsgHeader *header = reinterpret_cast<const MsgHeader *>(b);
+    const size_t Message::decode(const ByteStorage &buffer) noexcept {
+        const byte *bytes = nullptr;
+        const size_t length = buffer.bytes(&bytes);
+        if (length > sizeof(MsgHeader)) {
+            const MsgHeader *header = reinterpret_cast<const MsgHeader *>(bytes);
             std::cout << "Size: " << header->msg_length << std::endl;
 
             size_t read_offset = sizeof(MsgHeader);
 
-            if (header->msg_length <= buffer.size()) {
+            if (header->msg_length <= buffer.length()) {
                 std::cout << "Field Count: " << header->field_count << std::endl;
                 std::cout << "Subject Len: " << header->subject_length << std::endl;
-                const char *subject = reinterpret_cast<const char *>(&b[read_offset]);
+                const char *subject = reinterpret_cast<const char *>(&bytes[read_offset]);
                 std::cout << "Subject: " << std::string(subject, header->subject_length) << std::endl;
                 read_offset += header->subject_length;
 
+                std::cout << "Have " << header->field_count << " fields to decode" << std::endl;
                 for (size_t i = 0; i < header->field_count; i++) {
-//                    MessageBuffer()
+                    std::shared_ptr<Field> field = std::make_shared<Field>();
+                    read_offset += field->decode(ByteStorage(&bytes[read_offset], buffer.length() - read_offset));
+                    m_payload.emplace_back(field);
+                    m_size++;
+
+//                    m_maxRef = std::max(m_maxRef, field->);
                 }
 
-                return true;
+                return read_offset;
             }
         }
 
-        return false;
+        return 0;
     }
 
 }
