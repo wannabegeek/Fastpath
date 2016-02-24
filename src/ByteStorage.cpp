@@ -35,7 +35,7 @@ namespace DCF {
 
     ByteStorage::~ByteStorage() noexcept {
         if (!m_no_copy) {
-            delete[] m_storage.first;
+            storage_traits::deallocate(m_allocator, m_storage.first, m_storage.second);
         }
     }
 
@@ -50,7 +50,7 @@ namespace DCF {
         m_storage.second |= m_storage.second >> 16;
         m_storage.second++;
 
-        m_storage.first = new byte[m_storage.second];
+        m_storage.first = storage_traits::allocate(m_allocator, m_storage.second);
     }
 
     const size_t ByteStorage::bytes(const byte **data) const {

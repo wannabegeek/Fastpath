@@ -19,7 +19,7 @@ namespace DCF {
 
     void MutableByteStorage::setData(const byte *data, const size_t length) {
         if (length > m_storage.second) {
-            delete[] m_storage.first;
+            storage_traits::deallocate(m_allocator, m_storage.first, m_storage.second);
             allocateStorage(std::max(length, m_storage.second * 2));
         }
         memcpy(m_storage.first, data, length);
@@ -28,11 +28,11 @@ namespace DCF {
 
     void MutableByteStorage::increaseLengthBy(const size_t length) noexcept {
         if (m_storedLength + length > m_storage.second) {
-            const byte *old_data = m_storage.first;
+            byte *old_data = m_storage.first;
             const size_t old_length = m_storage.second;
             allocateStorage(m_storage.second + length);
             memmove(m_storage.first, old_data, old_length);
-            delete[] old_data;
+            storage_traits::deallocate(m_allocator, old_data, old_length);
         }
         m_storedLength += length;
     }

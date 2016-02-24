@@ -6,15 +6,20 @@
 #define TFDCF_BYTESTORAGE_H
 
 #include <ostream>
+#include <memory>
 #include "Types.h"
 
 namespace DCF {
     class ByteStorage {
     protected:
         using BufferDataType = std::pair<byte *, size_t>;
+        using storage_alloc = std::allocator_traits<std::allocator<byte>>::template rebind_alloc<byte>;
+        using storage_traits = std::allocator_traits<std::allocator<byte>>::template rebind_traits<byte>;
 
         BufferDataType m_storage;
         size_t m_storedLength;
+
+        storage_alloc m_allocator;
 
         bool m_no_copy;
 
