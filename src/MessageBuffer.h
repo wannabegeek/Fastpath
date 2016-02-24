@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <iomanip>
+#include <cstring>
 #include "MutableByteStorage.h"
 
 namespace DCF {
