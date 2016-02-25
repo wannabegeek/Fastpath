@@ -231,17 +231,7 @@ namespace DCF {
                 if (!first) {
                     out << ", ";
                 }
-                switch (Message::getStorageType(field->type())) {
-                    case scalar_t:
-                        out << "{" << *std::static_pointer_cast<ScalarField>(field).get() << "}";
-                        break;
-                    case data_t:
-                        out << "{" << *std::static_pointer_cast<DataField>(field).get() << "}";
-                        break;
-                    case message_t:
-                        out << "{" << "Not implemented yet" << "}";
-                        break;
-                }
+                out << "{" << *field.get() << "}";
                 first = false;
             }
 

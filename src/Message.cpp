@@ -123,12 +123,28 @@ namespace DCF {
 
                 std::cout << "Have " << header->field_count << " fields to decode" << std::endl;
                 for (size_t i = 0; i < header->field_count; i++) {
-//                    std::shared_ptr<Field> field = std::make_shared<DataField>();
-//                    read_offset += field->decode(ByteStorage(&bytes[read_offset], buffer.length() - read_offset));
-//                    m_payload.emplace_back(field);
-//                    m_size++;
+                    const byte *current_ptr = &bytes[read_offset];
+                    const MsgField *f = reinterpret_cast<const MsgField *>(current_ptr);
+                    std::shared_ptr<Field> field;
+                    switch(f->type) {
+                        case StorageType::string:
+                        case StorageType::data:
+                            field = std::make_shared<DataField>();
+                            break;
+                        case StorageType::message:
+                            break;
+                        default:
+                            field = std::make_shared<ScalarField>();
+                            break;
+                    }
 
-//                    m_maxRef = std::max(m_maxRef, field->);
+                    std::cout << "Decoding field starting at " << read_offset << std::endl;
+                    read_offset += field->decode(ByteStorage(current_ptr, buffer.length() - read_offset, true));
+                    m_payload.emplace_back(field);
+                    std::cout << "Successfully decoded " << *field.get() << std::endl;
+                    m_size++;
+
+                    m_maxRef = std::max(m_maxRef, field->identifier());
                 }
 
                 return read_offset;

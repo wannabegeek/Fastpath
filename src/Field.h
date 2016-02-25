@@ -31,6 +31,7 @@ namespace DCF {
     protected:
         uint16_t m_identifier;
 
+        constexpr const size_t FieldHeaderSize() { return sizeof(MsgField); }
     public:
         const uint16_t identifier() const { return m_identifier; }
 
@@ -39,6 +40,13 @@ namespace DCF {
 
         virtual void encode(MessageBuffer &buffer) noexcept override = 0;
         virtual const size_t decode(const ByteStorage &buffer) noexcept override = 0;
+
+        virtual std::ostream& output(std::ostream& out) const = 0;
+
+        friend std::ostream &operator<<(std::ostream &out, const Field &field) {
+            return field.output(out);
+        }
+
 
 //        void encode(MessageBuffer &buffer) noexcept override {
 //            byte *b = buffer.allocate(sizeof(Field));

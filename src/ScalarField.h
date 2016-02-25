@@ -68,46 +68,66 @@ namespace DCF {
         }
 
         void encode(MessageBuffer &buffer) noexcept override {
+            byte *b = buffer.allocate(sizeof(Field));
+            MsgField *field = reinterpret_cast<MsgField *>(b);
+            field->identifier = m_identifier;
+            field->type = m_type;
+            field->data_length = m_size;
+            buffer.append(reinterpret_cast<const byte *>(m_raw), field->data_length);
         }
 
         const size_t decode(const ByteStorage &buffer) noexcept override {
-            return 0;
+            assert(buffer.length() > FieldHeaderSize());
+            const byte *data = nullptr;
+            buffer.bytes(&data);
+            const MsgField *field = reinterpret_cast<const MsgField *>(data);
+
+            m_identifier = field->identifier;
+            m_type = static_cast<StorageType>(field->type);
+            m_size = field->data_length;
+
+            data += FieldHeaderSize();
+
+            assert(buffer.length() > FieldHeaderSize() + size);
+            memcpy(m_raw, data, m_size);
+
+            return FieldHeaderSize() + m_size;
         }
 
-        friend std::ostream &operator<<(std::ostream &out, const ScalarField &field) {
-            switch (field.type()) {
+        virtual std::ostream& output(std::ostream& out) const override {
+            switch (m_type) {
                 case StorageType::boolean:
-                    out << field.m_identifier << ":boolean=" << std::boolalpha << field.get<bool>();
+                    out << m_identifier << ":boolean=" << std::boolalpha << get<bool>();
                     break;
                 case StorageType::uint8:
-                    out << field.m_identifier << ":uint8=" << field.get<uint8_t>();
+                    out << m_identifier << ":uint8=" << get<uint8_t>();
                     break;
                 case StorageType::uint16:
-                    out << field.m_identifier << ":uint16=" << field.get<uint16_t>();
+                    out << m_identifier << ":uint16=" << get<uint16_t>();
                     break;
                 case StorageType::uint32:
-                    out << field.m_identifier << ":uint32=" << field.get<uint32_t>();
+                    out << m_identifier << ":uint32=" << get<uint32_t>();
                     break;
                 case StorageType::uint64:
-                    out << field.m_identifier << ":uint64=" << field.get<uint64_t>();
+                    out << m_identifier << ":uint64=" << get<uint64_t>();
                     break;
                 case StorageType::int8:
-                    out << field.m_identifier << ":int8=" << field.get<int8_t>();
+                    out << m_identifier << ":int8=" << get<int8_t>();
                     break;
                 case StorageType::int16:
-                    out << field.m_identifier << ":int16=" << field.get<int16_t>();
+                    out << m_identifier << ":int16=" << get<int16_t>();
                     break;
                 case StorageType::int32:
-                    out << field.m_identifier << ":int32=" << field.get<int32_t>();
+                    out << m_identifier << ":int32=" << get<int32_t>();
                     break;
                 case StorageType::int64:
-                    out << field.m_identifier << ":int64=" << field.get<int64_t>();
+                    out << m_identifier << ":int64=" << get<int64_t>();
                     break;
                 case StorageType::float32:
-                    out << field.m_identifier << ":float32=" << field.get<float32_t>();
+                    out << m_identifier << ":float32=" << get<float32_t>();
                     break;
                 case StorageType::float64:
-                    out << field.m_identifier << ":float64=" << field.get<float64_t>();
+                    out << m_identifier << ":float64=" << get<float64_t>();
                     break;
                 default:
                     // we can't handle any other message type

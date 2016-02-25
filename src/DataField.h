@@ -12,23 +12,20 @@ namespace DCF {
     private:
         MutableByteStorage m_storage;
         StorageType m_type;
-        size_t m_size;
     public:
         const StorageType type() const noexcept override { return m_type; }
-        const size_t size() const noexcept override { return m_size; }
+        const size_t size() const noexcept override { return m_storage.length(); }
 
         void set(const uint16_t identifier, const char *value) {
             m_identifier = identifier;
             m_type = field_traits<const char *>::type;
-            m_size = strlen(value) + 1; // +1 for the NULL byte
-            m_storage.setData(reinterpret_cast<const byte *>(value), m_size);
+            m_storage.setData(reinterpret_cast<const byte *>(value), strlen(value) + 1); // +1 for the NULL byte
         }
 
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> void set(const uint16_t identifier, const T *value, const size_t length) {
             m_identifier = identifier;
             m_type = field_traits<T *>::type;
-            m_size = length;
-            m_storage.setData(reinterpret_cast<const byte *>(value), m_size);
+            m_storage.setData(reinterpret_cast<const byte *>(value), length);
         }
 
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() {
@@ -52,22 +49,41 @@ namespace DCF {
         }
 
         void encode(MessageBuffer &buffer) noexcept override {
+            byte *b = buffer.allocate(sizeof(Field));
+            MsgField *field = reinterpret_cast<MsgField *>(b);
+            field->identifier = m_identifier;
+            field->type = m_type;
+            const byte *data = nullptr;
+            field->data_length = m_storage.bytes(&data);
+            buffer.append(data, field->data_length);
         }
 
         const size_t decode(const ByteStorage &buffer) noexcept override {
-            return 0;
+            assert(buffer.length() > FieldHeaderSize());
+            const byte *data = nullptr;
+            buffer.bytes(&data);
+            const MsgField *field = reinterpret_cast<const MsgField *>(data);
+
+            m_identifier = field->identifier;
+            m_type = static_cast<StorageType>(field->type);
+            const size_t size = field->data_length;
+
+            assert(buffer.length() > FieldHeaderSize() + size);
+            m_storage.setData(&data[FieldHeaderSize()], size);
+
+            return FieldHeaderSize() + size;
         }
 
-        friend std::ostream &operator<<(std::ostream &out, const DataField &field) {
-            switch (field.type()) {
+        virtual std::ostream& output(std::ostream& out) const override {
+            switch (m_type) {
                 case StorageType::string: {
                     const byte *data;
-                    const size_t size = field.m_storage.bytes(&data);
-                    out << field.m_identifier << ":string=" << std::string(reinterpret_cast<const char *>(data), size - 1); // -1 for NULL
+                    const size_t size = m_storage.bytes(&data);
+                    out << m_identifier << ":string=" << std::string(reinterpret_cast<const char *>(data), size - 1); // -1 for NULL
                     break;
                 }
                 case StorageType::data: {
-                    out << field.m_identifier << ":opaque=" << "[data of " << field.m_storage.length() << " bytes]";
+                    out << m_identifier << ":opaque=" << "[data of " << m_storage.length() << " bytes]";
                     break;
                 }
                 default:
