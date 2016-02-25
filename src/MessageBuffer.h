@@ -68,7 +68,7 @@ namespace DCF {
 
         const ByteStorage byteStorage() const noexcept {
             const byte *bytes = nullptr;
-            const size_t len = m_storage.bytes(&bytes);
+            m_storage.bytes(&bytes);
             return ByteStorage(&bytes[m_startIndex], visible_length(), true);
         }
 

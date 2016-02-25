@@ -16,6 +16,8 @@
 #include "Field.h"
 #include "Decoder.h"
 #include "Exception.h"
+#include "ScalarField.h"
+#include "DataField.h"
 
 /**
  *
@@ -38,6 +40,11 @@
 
 
 namespace DCF {
+    typedef enum {
+        scalar_t,
+        data_t,
+        message_t
+    } DataStorageType;
 
     class Message : public Encoder, Decoder {
     private:
@@ -63,6 +70,7 @@ namespace DCF {
         const bool refExists(const uint16_t &field) const noexcept;
         const uint16_t createRefForString(const std::string &field) noexcept;
 
+        static const DataStorageType getStorageType(const StorageType type);
     public:
         Message() : m_size(0), m_flags(-1), m_maxRef(0) {
             m_mapper.fill(_NO_FIELD);
@@ -85,44 +93,124 @@ namespace DCF {
         const uint32_t size() const noexcept { return m_size; }
         const uint8_t flags() const noexcept { return m_flags; }
 
-        template <typename T> void addField(const uint16_t &field, const T &value) {
+        const StorageType storageType(const uint16_t &field) const {
+            if (refExists(field)) {
+                const std::shared_ptr<Field> element = m_payload[m_mapper[field]];
+                return element->type();
+            }
+
+            return StorageType::unknown;
+        }
+
+        ////////////// ADD ///////////////
+        template <typename T> void addScalarField(const uint16_t &field, const T &value) {
             if (refExists(field)) {
                 ThrowException(TF::Exception, "Ref already exists in message");
             }
             m_maxRef = std::max(m_maxRef, field);
-
             m_mapper[field] = m_payload.size();
 
-            std::shared_ptr<Field> e = std::make_shared<Field>();
-            e->setValue(value);
+            std::shared_ptr<ScalarField> e = std::make_shared<ScalarField>();
+            e->set(field, value);
             m_payload.emplace_back(e);
             m_size++;
         }
 
-        void addField(const uint16_t &field, const byte *value, const size_t size);
+        void addDataField(const uint16_t &field, const char *value) {
+            if (refExists(field)) {
+                ThrowException(TF::Exception, "Ref already exists in message");
+            }
+            m_maxRef = std::max(m_maxRef, field);
+            m_mapper[field] = m_payload.size();
+
+            std::shared_ptr<DataField> e = std::make_shared<DataField>();
+            e->set(field, value);
+            m_payload.emplace_back(e);
+            m_size++;
+        }
+
+        void addDataField(const uint16_t &field, const std::string &value) {
+            this->addDataField(field, value.c_str());
+        }
+
+        void addDataField(const uint16_t &field, const byte *value, const size_t size);
+
+        /////
+
+        template <typename T> void addScalarField(const std::string &field, const T &value) {
+            const uint16_t ref = createRefForString(field);
+            this->addScalarField(ref, value);
+        }
+
+        void addDataField(const std::string &field, const char *value) {
+            const uint16_t ref = createRefForString(field);
+            this->addDataField(ref, value);
+        }
+
+        void addDataField(const std::string &field, const std::string value) {
+            const uint16_t ref = createRefForString(field);
+            this->addDataField(ref, value.c_str());
+        }
+
+        void addDataField(const std::string &field, const byte *value, const size_t size);
+
+        ////////////// REMOVE ///////////////
 
         bool removeField(const uint16_t &field);
 
-        template <typename T> bool getField(const uint16_t &field, T &value) const {
+        /////
+
+        bool removeField(const std::string &field, const size_t instance = 0);
+
+        ////////////// ACCESSOR ///////////////
+
+        template <typename T> bool getScalarField(const uint16_t &field, T &value) const {
             if (field != _NO_FIELD && field <= m_maxRef) {
-                const std::shared_ptr<Field> element = m_payload[m_mapper[field]];
-                return element.get()->get(value);
+                const std::shared_ptr<ScalarField> element = std::static_pointer_cast<ScalarField>(m_payload[m_mapper[field]]);
+                value = element.get()->get<T>();
+                return true;
             }
             return false;
         }
 
-        template <typename T> void addField(const std::string &field, const T &value) {
-            const uint16_t ref = createRefForString(field);
-            this->addField(ref, value);
+        bool getDataField(const uint16_t &field, const char **value, size_t &length) const {
+            if (field != _NO_FIELD && field <= m_maxRef) {
+                const std::shared_ptr<DataField> element = std::static_pointer_cast<DataField>(m_payload[m_mapper[field]]);
+                length = element.get()->get(value);
+                return true;
+            }
+            return false;
         }
 
-        void addField(const std::string &field, const byte *value, const size_t size);
-
-        template <typename T> bool getField(const std::string &field, T &value, const size_t instance = 0) const {
-            return this->getField(findIdentifierByName(field, instance), value);
+        bool getDataField(const uint16_t &field, std::string &value) const {
+            if (field != _NO_FIELD && field <= m_maxRef) {
+                const char *result = nullptr;
+                size_t length = 0;
+                bool r = this->getDataField(field, &result, length);
+                value = std::string(result, length);
+                return r;
+            }
+            return false;
         }
 
-        bool removeField(const std::string &field, const size_t instance = 0);
+        /////
+
+        template <typename T> const bool getScalarField(const std::string &field, T &value, const size_t instance = 0) const {
+            return this->getScalarField(findIdentifierByName(field, instance), value);
+        }
+
+        const bool getDataField(const std::string &field, const char **value, size_t &length, const size_t instance = 0) const {
+            return this->getDataField(findIdentifierByName(field, instance), value, length);
+        }
+
+        bool getDataField(const std::string &field, std::string &value, const size_t instance = 0) const {
+            const char *result = nullptr;
+            size_t length = 0;
+            bool r = this->getDataField(findIdentifierByName(field, instance), &result, length);
+            value = std::string(result, length);
+            return r;
+        }
+
 
         void detach() noexcept;
 
@@ -143,7 +231,17 @@ namespace DCF {
                 if (!first) {
                     out << ", ";
                 }
-                out << "{" << *field.get() << "}";
+                switch (Message::getStorageType(field->type())) {
+                    case scalar_t:
+                        out << "{" << *std::static_pointer_cast<ScalarField>(field).get() << "}";
+                        break;
+                    case data_t:
+                        out << "{" << *std::static_pointer_cast<DataField>(field).get() << "}";
+                        break;
+                    case message_t:
+                        out << "{" << "Not implemented yet" << "}";
+                        break;
+                }
                 first = false;
             }
 

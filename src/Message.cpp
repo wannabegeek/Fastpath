@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "Message.h"
+#include "DataField.h"
 
 namespace DCF {
 
@@ -34,22 +35,22 @@ namespace DCF {
         return ref;
     }
 
-    void Message::addField(const uint16_t &field, const byte *value, const size_t size) {
+    void Message::addDataField(const uint16_t &field, const byte *value, const size_t size) {
         if (refExists(field)) {
             ThrowException(TF::Exception, "Ref already exists in message");
         }
         m_maxRef = std::max(m_maxRef, field);
         m_mapper[field] = m_payload.size();
 
-        std::shared_ptr<Field> e = std::make_shared<Field>();
-        e->setValue(value, size);
+        std::shared_ptr<DataField> e = std::make_shared<DataField>();
+        e->set(field, value, size);
         m_payload.emplace_back(e);
         m_size++;
     }
 
-    void Message::addField(const std::string &field, const byte *value, const size_t size) {
+    void Message::addDataField(const std::string &field, const byte *value, const size_t size) {
         const uint16_t ref = createRefForString(field);
-        this->addField(ref, value, size);
+        this->addDataField(ref, value, size);
     }
 
     bool Message::removeField(const uint16_t &field) {
@@ -122,10 +123,10 @@ namespace DCF {
 
                 std::cout << "Have " << header->field_count << " fields to decode" << std::endl;
                 for (size_t i = 0; i < header->field_count; i++) {
-                    std::shared_ptr<Field> field = std::make_shared<Field>();
-                    read_offset += field->decode(ByteStorage(&bytes[read_offset], buffer.length() - read_offset));
-                    m_payload.emplace_back(field);
-                    m_size++;
+//                    std::shared_ptr<Field> field = std::make_shared<DataField>();
+//                    read_offset += field->decode(ByteStorage(&bytes[read_offset], buffer.length() - read_offset));
+//                    m_payload.emplace_back(field);
+//                    m_size++;
 
 //                    m_maxRef = std::max(m_maxRef, field->);
                 }
@@ -137,4 +138,19 @@ namespace DCF {
         return 0;
     }
 
+    const DataStorageType Message::getStorageType(const StorageType type) {
+        DataStorageType r = scalar_t;
+        switch (type) {
+            case StorageType::data:
+            case StorageType::string:
+                r = data_t;
+                break;
+            case StorageType::message:
+                r = message_t;
+                break;
+            default:
+                break;
+        }
+        return r;
+    }
 }

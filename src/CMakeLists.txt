@@ -17,7 +17,6 @@ set(SOURCE_FILES
         Message.cpp
         Message.h
         Encoder.h
-        Field.cpp
         Field.h
         Types.h
         concurrentqueue.h
@@ -26,6 +25,6 @@ set(SOURCE_FILES
         Decoder.h
         Exception.h
         MessageBuffer.h
-        FieldTraits.h MutableByteStorage.cpp MutableByteStorage.h MessageCodec.cpp MessageCodec.h SharedMemoryBuffer.h ByteStorage.cpp ByteStorage.h MessageBuffer.h)
+        FieldTraits.h MutableByteStorage.cpp MutableByteStorage.h MessageCodec.cpp MessageCodec.h SharedMemoryBuffer.h ByteStorage.cpp ByteStorage.h MessageBuffer.h ScalarField.h DataField.h)
 
 add_library(TFDCF ${SOURCE_FILES})

@@ -19,35 +19,35 @@ TEST(Message, SetSubject) {
 TEST(Message, AddStringField) {
 
     DCF::Message msg;
-    msg.addField(1234, "TEST");
+    msg.addDataField(1234, "TEST");
 
     std::string v;
-    ASSERT_TRUE(msg.getField(1234, v));
+    ASSERT_TRUE(msg.getDataField(1234, v));
     ASSERT_STREQ("TEST", v.c_str());
 
-    msg.addField("TEST", "AGAIN");
-    ASSERT_TRUE(msg.getField("TEST", v));
+    msg.addDataField("TEST", "AGAIN");
+    ASSERT_TRUE(msg.getDataField("TEST", v));
     ASSERT_STREQ("AGAIN", v.c_str());
 }
 
 TEST(Message, AddFloatField) {
     DCF::Message msg;
-    msg.addField("TEST", static_cast<float32_t>(1.4));
+    msg.addScalarField("TEST", static_cast<float32_t>(1.4));
     float32_t t = 0.0;
-    ASSERT_TRUE(msg.getField("TEST", t));
+    ASSERT_TRUE(msg.getScalarField("TEST", t));
     ASSERT_FLOAT_EQ(1.4, t);
 }
 
 TEST(Message, AddMixedDuplicateField) {
     DCF::Message msg;
-    msg.addField("TEST", "AGAIN");
+    msg.addDataField("TEST", "AGAIN");
 
-    msg.addField("TEST", static_cast<float32_t>(1.4));
+    msg.addScalarField("TEST", static_cast<float32_t>(1.4));
     float32_t t = 0.0;
     std::string v;
-    ASSERT_TRUE(msg.getField("TEST", v, 0));
+    ASSERT_TRUE(msg.getDataField("TEST", v, 0));
     ASSERT_STREQ("AGAIN", v.c_str());
-    ASSERT_TRUE(msg.getField("TEST", t, 1));
+    ASSERT_TRUE(msg.getScalarField("TEST", t, 1));
     ASSERT_FLOAT_EQ(1.4, t);
 
 }
@@ -55,8 +55,8 @@ TEST(Message, AddMixedDuplicateField) {
 TEST(Message, RemoveFieldByString) {
     DCF::Message msg;
     float32_t t = 22.0;
-    msg.addField("TEST", t);
-    ASSERT_TRUE(msg.getField("TEST", t));
+    msg.addScalarField("TEST", t);
+    ASSERT_TRUE(msg.getScalarField("TEST", t));
     ASSERT_FLOAT_EQ(22, t);
 
     ASSERT_EQ(1u, msg.size());
@@ -69,9 +69,9 @@ TEST(Message, Encode) {
     DCF::Message msg;
     msg.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
-    msg.addField("TEST", t);
-    msg.addField("Name", "Tom");
-    msg.addField("Name", "Zac");
+    msg.addScalarField("TEST", t);
+    msg.addDataField("Name", "Tom");
+    msg.addDataField("Name", "Zac");
 
     DCF::MessageBuffer buffer(1024);
     msg.encode(buffer);
@@ -83,9 +83,9 @@ TEST(Message, Decode) {
     DCF::Message in;
     in.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
-    in.addField("TEST", t);
-    in.addField("Name", "Tom");
-    in.addField("Name", "Zac");
+    in.addScalarField("TEST", t);
+    in.addDataField("Name", "Tom");
+    in.addDataField("Name", "Zac");
 
     DCF::MessageBuffer buffer(1024);
     in.encode(buffer);
