@@ -48,14 +48,16 @@ namespace DCF {
             return r;
         }
 
-        void encode(MessageBuffer &buffer) noexcept override {
-            byte *b = buffer.allocate(sizeof(Field));
+        const size_t encode(MessageBuffer &buffer) noexcept override {
+            byte *b = buffer.allocate(sizeof(MsgField));
             MsgField *field = reinterpret_cast<MsgField *>(b);
             field->identifier = m_identifier;
             field->type = m_type;
             const byte *data = nullptr;
             field->data_length = m_storage.bytes(&data);
             buffer.append(data, field->data_length);
+
+            return sizeof(MsgField) + field->data_length;
         }
 
         const size_t decode(const ByteStorage &buffer) noexcept override {

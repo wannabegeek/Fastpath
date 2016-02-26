@@ -10,11 +10,11 @@
 #include "Types.h"
 
 namespace DCF {
-    ByteStorage::ByteStorage(const size_t allocation) : m_no_copy(false), m_storedLength(0) {
+    ByteStorage::ByteStorage(const size_t allocation) : m_storedLength(0), m_no_copy(false) {
         allocateStorage(allocation);
     }
 
-    ByteStorage::ByteStorage(const byte *bytes, size_t length, bool no_copy) : m_no_copy(no_copy), m_storedLength(0) {
+    ByteStorage::ByteStorage(const byte *bytes, size_t length, bool no_copy) : m_storedLength(0), m_no_copy(no_copy) {
         if (m_no_copy) {
             m_storage.first = const_cast<byte *>(bytes);
             m_storage.second = 0;
@@ -26,7 +26,7 @@ namespace DCF {
         }
     }
 
-    ByteStorage::ByteStorage(ByteStorage &&orig) : m_storage(orig.m_storage), m_no_copy(orig.m_no_copy), m_storedLength(orig.m_storedLength) {
+    ByteStorage::ByteStorage(ByteStorage &&orig) : m_storage(orig.m_storage), m_storedLength(orig.m_storedLength), m_no_copy(orig.m_no_copy) {
         orig.m_storage.first = nullptr;
         orig.m_storage.second = 0;
         orig.m_storedLength = 0;

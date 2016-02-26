@@ -6,6 +6,7 @@
 #define TFDCF_TYPES_H
 
 #include <cstdint>
+#include <memory>
 
 typedef float float32_t;
 typedef double float64_t;
@@ -38,6 +39,9 @@ namespace DCF {
         Garuanted = 1 << 1
     } MessageFlags;
 
+    class Message;
+
+    using MessageType = std::shared_ptr<Message>;
 }
 
 #endif //TFDCF_TYPES_H

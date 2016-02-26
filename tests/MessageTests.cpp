@@ -5,6 +5,19 @@
 #include <gtest/gtest.h>
 #include <Message.h>
 
+
+TEST(Message, SimpleEncode) {
+    DCF::Message msg;
+    msg.setSubject("SOME.TEST.SUBJECT");
+
+    DCF::MessageBuffer buffer(1024);
+    const size_t encoded_len = msg.encode(buffer);
+    EXPECT_EQ(buffer.length(), encoded_len);
+
+    std::cout << buffer << std::endl;
+}
+
+
 TEST(Message, SetSubject) {
     DCF::Message msg;
     const char *subject = "TEST.SUBJECT";
@@ -52,6 +65,18 @@ TEST(Message, AddMixedDuplicateField) {
 
 }
 
+TEST(Message, AddMessageField) {
+    DCF::Message msg;
+    msg.addScalarField("TEST", static_cast<float32_t>(1.4));
+
+    DCF::MessageType m = std::make_shared<DCF::Message>();
+    m->addDataField("TEST2", "TOMTOMTOM");
+
+    msg.addMessageField("MSG_TEST", m);
+
+    std::cout << "Embedded msg: " << msg << std::endl;
+}
+
 TEST(Message, RemoveFieldByString) {
     DCF::Message msg;
     float32_t t = 22.0;
@@ -74,7 +99,8 @@ TEST(Message, Encode) {
     msg.addDataField("Name", "Zac");
 
     DCF::MessageBuffer buffer(1024);
-    msg.encode(buffer);
+    const size_t encoded_len = msg.encode(buffer);
+    EXPECT_EQ(buffer.length(), encoded_len);
 
     std::cout << buffer << std::endl;
 }
@@ -84,17 +110,55 @@ TEST(Message, Decode) {
     in.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
     in.addScalarField("TEST", t);
+    in.addScalarField("TEST", true);
     in.addDataField("Name", "Tom");
     in.addDataField("Name", "Zac");
 
     DCF::MessageBuffer buffer(1024);
-    in.encode(buffer);
+    const size_t encoded_len = in.encode(buffer);
+    EXPECT_EQ(buffer.length(), encoded_len);
 
     std::cout << buffer << std::endl;
     std::cout << buffer.byteStorage() << std::endl;
     DCF::Message out;
-    out.decode(buffer.byteStorage());
+    const size_t decoded_len = out.decode(buffer.byteStorage());
+    EXPECT_EQ(encoded_len, decoded_len);
 
     std::cout << in << std::endl;
     std::cout << out << std::endl;
+}
+
+TEST(Message, MultiDecode) {
+    DCF::Message in1;
+    in1.setSubject("SAMPLE.MSG.1");
+    float32_t t = 22.0;
+    in1.addScalarField("TEST", t);
+    in1.addScalarField("TEST", true);
+    in1.addDataField("Name", "Tom");
+    in1.addDataField("Name", "Zac");
+
+    DCF::Message in2;
+    in2.setSubject("SAMPLE.MSG.2");
+    t = 26.0;
+    in2.addScalarField("TEST", t);
+    in2.addScalarField("TEST", false);
+    in2.addDataField("Name", "Caroline");
+    in2.addDataField("Name", "Heidi");
+
+    DCF::MessageBuffer buffer(1024);
+    in1.encode(buffer);
+    in2.encode(buffer);
+
+    std::cout << buffer << std::endl;
+
+    std::cout << "Msg 1: " << in1 << std::endl;
+    std::cout << "Msg 2: " << in2 << std::endl;
+
+    DCF::Message out;
+    size_t offset = 0;
+    while (buffer.length() != 0 && (offset = out.decode(buffer.byteStorage())) != 0) {
+        std::cout << "Decoded: " << out << std::endl;
+        out.clear();
+        buffer.erase_front(offset);
+    }
 }

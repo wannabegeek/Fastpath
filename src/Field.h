@@ -38,7 +38,7 @@ namespace DCF {
         virtual const StorageType type() const noexcept = 0;
         virtual const size_t size() const noexcept = 0;
 
-        virtual void encode(MessageBuffer &buffer) noexcept override = 0;
+        virtual const size_t encode(MessageBuffer &buffer) noexcept override = 0;
         virtual const size_t decode(const ByteStorage &buffer) noexcept override = 0;
 
         virtual std::ostream& output(std::ostream& out) const = 0;

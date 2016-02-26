@@ -46,7 +46,7 @@ namespace DCF {
     class ScalarField : public Field {
 
     private:
-        byte m_raw[sizeof(float64_t)];
+        byte m_raw[sizeof(float64_t)] = {0};
         StorageType m_type;
         size_t m_size;
 
@@ -59,7 +59,7 @@ namespace DCF {
             m_identifier = identifier;
             m_type = field_traits<T>::type;
             m_size = field_traits<T>::size;
-           writeScalar(m_raw, value);
+            writeScalar(m_raw, value);
         }
 
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> const T get() const {
@@ -67,13 +67,14 @@ namespace DCF {
             return readScalar<T>(m_raw);
         }
 
-        void encode(MessageBuffer &buffer) noexcept override {
-            byte *b = buffer.allocate(sizeof(Field));
+        const size_t encode(MessageBuffer &buffer) noexcept override {
+            byte *b = buffer.allocate(sizeof(MsgField));
             MsgField *field = reinterpret_cast<MsgField *>(b);
             field->identifier = m_identifier;
             field->type = m_type;
             field->data_length = m_size;
             buffer.append(reinterpret_cast<const byte *>(m_raw), field->data_length);
+            return sizeof(MsgField) + field->data_length;
         }
 
         const size_t decode(const ByteStorage &buffer) noexcept override {

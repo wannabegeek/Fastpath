@@ -18,6 +18,7 @@
 #include "Exception.h"
 #include "ScalarField.h"
 #include "DataField.h"
+#include "MessageField.h"
 
 /**
  *
@@ -54,10 +55,12 @@ namespace DCF {
 
         uint32_t m_size;
         uint8_t m_flags;
+        bool m_hasAddressing;
         char m_subject[std::numeric_limits<uint16_t>::max()];
 
         static constexpr uint16_t _NO_FIELD = std::numeric_limits<uint16_t>::max();
-
+        static constexpr const uint8_t addressing_flag = 1;
+        static constexpr const uint8_t body_flag = 2;
 
         PayloadContainer m_payload;
         PayloadMapper m_mapper;
@@ -71,8 +74,12 @@ namespace DCF {
         const uint16_t createRefForString(const std::string &field) noexcept;
 
         static const DataStorageType getStorageType(const StorageType type);
+
+        const size_t encodeAddressing(MessageBuffer &buffer) noexcept;
+        const size_t decodeAddressing(const ByteStorage &buffer) noexcept;
+
     public:
-        Message() : m_size(0), m_flags(-1), m_maxRef(0) {
+        Message() : m_size(0), m_flags(-1), m_hasAddressing(true), m_maxRef(0) {
             m_mapper.fill(_NO_FIELD);
             m_subject[0] = '\0';
         }
@@ -101,6 +108,8 @@ namespace DCF {
 
             return StorageType::unknown;
         }
+
+        void clear();
 
         ////////////// ADD ///////////////
         template <typename T> void addScalarField(const uint16_t &field, const T &value) {
@@ -135,6 +144,10 @@ namespace DCF {
 
         void addDataField(const uint16_t &field, const byte *value, const size_t size);
 
+        void addMessageField(const uint16_t &field, const MessageType &msg);
+
+        void addMessageField(const MessageType &msg);
+
         /////
 
         template <typename T> void addScalarField(const std::string &field, const T &value) {
@@ -153,6 +166,8 @@ namespace DCF {
         }
 
         void addDataField(const std::string &field, const byte *value, const size_t size);
+
+        void addMessageField(const std::string &field, const MessageType &msg);
 
         ////////////// REMOVE ///////////////
 
@@ -215,16 +230,18 @@ namespace DCF {
         void detach() noexcept;
 
         // from Encoder
-        void encode(MessageBuffer &buffer) noexcept override;
+        const size_t encode(MessageBuffer &buffer) noexcept override;
 
         // from Decoder
         const size_t decode(const ByteStorage &buffer) noexcept override;
 
         friend std::ostream &operator<<(std::ostream &out, const Message &msg) {
-            if (msg.m_subject[0] == '\0') {
-                out << "<no subject>=";
-            } else {
-                out << msg.m_subject << "=";
+            if (msg.m_hasAddressing) {
+                if (msg.m_subject[0] == '\0') {
+                    out << "<no subject>=";
+                } else {
+                    out << msg.m_subject << "=";
+                }
             }
             bool first = true;
             for (const std::shared_ptr<Field> &field : msg.m_payload) {

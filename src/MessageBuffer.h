@@ -11,25 +11,29 @@
 #include "MutableByteStorage.h"
 
 namespace DCF {
-
-    struct alignas(16) MsgHeader {
-        uint64_t msg_length;     // len:8 off:0   Message Length
+    struct alignas(8) MsgAddressing {
+        uint8_t addressing_start;
         uint8_t flags;           // len:1 off:8   Flags
         uint32_t reserved;       // len:4 off:9   Reserved for future use
-        uint32_t field_count;    // len:4 off:11  Number of fields in main body
-        uint32_t mapping_count;  // len:4 off:15  Number of fields in main body
         uint16_t subject_length; // len:2 off:19  Length of subject
     };
 //  char *subject;
 
-    struct alignas(16) MsgField {
+    struct alignas(8) MsgHeader {
+        uint8_t header_start;
+        uint64_t body_length;     // len:8 off:0   Message Length
+        uint32_t field_count;    // len:4 off:11  Number of fields in main body
+        uint32_t mapping_count;  // len:4 off:15  Number of fields in main body
+    };
+
+    struct alignas(8) MsgField {
         uint16_t identifier;
         int8_t type;
         uint32_t data_length;
     };
 //  void *data;
 
-    struct alignas(16) MsgMappings {
+    struct alignas(8) MsgMappings {
         uint16_t identifier;
         uint16_t name_length;
     };
@@ -40,7 +44,7 @@ namespace DCF {
         size_t m_startIndex = 0;
 
         MutableByteStorage m_storage;
-        const size_t visible_length() const { return m_storage.length() - m_startIndex; }
+        const size_t visible_length() const { return m_storage.length() > m_startIndex ? m_storage.length() - m_startIndex : 0; }
 
     public:
 

@@ -35,6 +35,16 @@ namespace DCF {
         return ref;
     }
 
+    void Message::clear() {
+        m_size = 0;
+        m_flags = -1;
+        m_subject[0] = '\0';
+        m_payload.clear();
+        m_keys.clear();
+        m_mapper.fill(_NO_FIELD);
+        m_maxRef = 0;
+    }
+
     void Message::addDataField(const uint16_t &field, const byte *value, const size_t size) {
         if (refExists(field)) {
             ThrowException(TF::Exception, "Ref already exists in message");
@@ -48,9 +58,32 @@ namespace DCF {
         m_size++;
     }
 
+    void Message::addMessageField(const uint16_t &field, const MessageType &msg) {
+        if (refExists(field)) {
+            ThrowException(TF::Exception, "Ref already exists in message");
+        }
+        m_maxRef = std::max(m_maxRef, field);
+        m_mapper[field] = m_payload.size();
+
+        msg->m_hasAddressing = false;
+        std::shared_ptr<MessageField> e = std::make_shared<MessageField>();
+        e->set(field, msg);
+        m_payload.emplace_back(e);
+        m_size++;
+    }
+
     void Message::addDataField(const std::string &field, const byte *value, const size_t size) {
         const uint16_t ref = createRefForString(field);
         this->addDataField(ref, value, size);
+    }
+
+    void Message::addMessageField(const std::string &field, const MessageType &msg) {
+        const uint16_t ref = createRefForString(field);
+        this->addMessageField(ref, msg);
+    }
+
+    void Message::addMessageField(const MessageType &msg) {
+        this->addMessageField(msg->subject(), msg);
     }
 
     bool Message::removeField(const uint16_t &field) {
@@ -85,43 +118,89 @@ namespace DCF {
     }
 
     // from Encoder
-    void Message::encode(MessageBuffer &buffer) noexcept {
-        byte *b = buffer.allocate(sizeof(MsgHeader));
+    const size_t Message::encodeAddressing(MessageBuffer &buffer) noexcept {
+        byte *b = buffer.allocate(sizeof(MsgAddressing));
+        MsgAddressing *header = reinterpret_cast<MsgAddressing *>(b);
 
-        MsgHeader *header = reinterpret_cast<MsgHeader *>(b);
-        header->msg_length = 0;
+        size_t msgLength = sizeof(MsgAddressing);
+        header->addressing_start = addressing_flag;
         header->flags = this->flags();
-        header->field_count = this->size();
+        header->reserved = 0;
         header->subject_length = static_cast<uint16_t>(strlen(this->subject()));
         buffer.append(reinterpret_cast<const byte *>(this->subject()), header->subject_length);
+        msgLength += header->subject_length;
 
-        for (const std::shared_ptr<Field> &field : m_payload) {
-            field->encode(buffer);
+        return msgLength;
+    }
+
+    const size_t Message::encode(MessageBuffer &buffer) noexcept {
+        size_t msgLength = 0;
+        if (m_hasAddressing) {
+            msgLength += encodeAddressing(buffer);
         }
 
-        // no we know the size of the message we can go back and write it
-        header->msg_length = buffer.length();
-        return;
+        byte *b = buffer.allocate(sizeof(MsgHeader));
+        msgLength += sizeof(MsgHeader);
+
+        MsgHeader *header = reinterpret_cast<MsgHeader *>(b);
+        header->header_start = body_flag;
+        header->body_length = 0;
+        header->field_count = this->size();
+
+        for (const std::shared_ptr<Field> &field : m_payload) {
+            header->body_length += field->encode(buffer);
+        }
+
+        return msgLength + header->body_length;
     }
 
     // from Decoder
-    const size_t Message::decode(const ByteStorage &buffer) noexcept {
+    const size_t Message::decodeAddressing(const ByteStorage &buffer) noexcept {
+        size_t read_offset = 0;
+
         const byte *bytes = nullptr;
         const size_t length = buffer.bytes(&bytes);
-        if (length > sizeof(MsgHeader)) {
+        if (bytes != nullptr && length != 0) {
+            assert(bytes[0] == addressing_flag);
+            if (length > sizeof(MsgAddressing)) {
+                const MsgAddressing *addressing = reinterpret_cast<const MsgAddressing *>(bytes);
+                read_offset += sizeof(MsgAddressing);
+
+                m_flags = addressing->flags;
+//                addressing->reserved;
+
+                if (addressing->subject_length + read_offset <= length) {
+                    const char *subject = reinterpret_cast<const char *>(&bytes[read_offset]);
+                    memcpy(m_subject, subject, addressing->subject_length);
+                    m_subject[addressing->subject_length] = '\0';
+                    read_offset += addressing->subject_length;
+                }
+            }
+        }
+
+        return read_offset;
+    }
+
+    const size_t Message::decode(const ByteStorage &buffer) noexcept {
+        size_t read_offset = 0;
+        const byte *bytes = nullptr;
+        const size_t length = buffer.bytes(&bytes);
+
+        if (bytes[0] == addressing_flag) {
+            read_offset += decodeAddressing(buffer);
+            if (read_offset == 0) {
+                // We didn't have enough data to read the header
+                return 0;
+            }
+        }
+
+        if (length - read_offset > sizeof(MsgHeader)) {
+            bytes += read_offset;
             const MsgHeader *header = reinterpret_cast<const MsgHeader *>(bytes);
-            std::cout << "Size: " << header->msg_length << std::endl;
+            read_offset += sizeof(MsgHeader);
+            assert(bytes[0] == body_flag);
 
-            size_t read_offset = sizeof(MsgHeader);
-
-            if (header->msg_length <= buffer.length()) {
-                std::cout << "Field Count: " << header->field_count << std::endl;
-                std::cout << "Subject Len: " << header->subject_length << std::endl;
-                const char *subject = reinterpret_cast<const char *>(&bytes[read_offset]);
-                std::cout << "Subject: " << std::string(subject, header->subject_length) << std::endl;
-                read_offset += header->subject_length;
-
-                std::cout << "Have " << header->field_count << " fields to decode" << std::endl;
+            if (header->body_length + read_offset <= buffer.length()) {
                 for (size_t i = 0; i < header->field_count; i++) {
                     const byte *current_ptr = &bytes[read_offset];
                     const MsgField *f = reinterpret_cast<const MsgField *>(current_ptr);
@@ -138,20 +217,17 @@ namespace DCF {
                             break;
                     }
 
-                    std::cout << "Decoding field starting at " << read_offset << std::endl;
                     read_offset += field->decode(ByteStorage(current_ptr, buffer.length() - read_offset, true));
+                    m_mapper[field->identifier()] = m_payload.size();
                     m_payload.emplace_back(field);
-                    std::cout << "Successfully decoded " << *field.get() << std::endl;
                     m_size++;
 
                     m_maxRef = std::max(m_maxRef, field->identifier());
                 }
-
-                return read_offset;
             }
         }
 
-        return 0;
+        return read_offset;
     }
 
     const DataStorageType Message::getStorageType(const StorageType type) {
