@@ -11,11 +11,10 @@
 #include <boost/any.hpp>
 #include <iostream>
 #include "Types.h"
-#include "Encoder.h"
-#include "Decoder.h"
 #include "FieldTraits.h"
 #include "MessageBuffer.h"
 #include "MutableByteStorage.h"
+#include "Serializable.h"
 
 /**
  * Binary Format:
@@ -27,11 +26,9 @@ namespace DCF {
 
     class Message;
 
-    class Field : public Encoder, Decoder {
+    class Field : public Serializable {
     protected:
         uint16_t m_identifier;
-
-        constexpr const size_t FieldHeaderSize() { return sizeof(MsgField); }
     public:
         const uint16_t identifier() const { return m_identifier; }
 
@@ -39,7 +36,7 @@ namespace DCF {
         virtual const size_t size() const noexcept = 0;
 
         virtual const size_t encode(MessageBuffer &buffer) noexcept override = 0;
-        virtual const size_t decode(const ByteStorage &buffer) noexcept override = 0;
+        virtual const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override = 0;
 
         virtual std::ostream& output(std::ostream& out) const = 0;
 

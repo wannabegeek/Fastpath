@@ -33,7 +33,7 @@ namespace DCF {
             return 0;
         }
 
-        const size_t decode(const ByteStorage &buffer) noexcept override {
+        const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override {
 //            assert(buffer.length() > FieldHeaderSize());
 //            const byte *data = nullptr;
 //            buffer.bytes(&data);

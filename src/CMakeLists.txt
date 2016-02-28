@@ -16,15 +16,13 @@ include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 set(SOURCE_FILES
         Message.cpp
         Message.h
-        Encoder.h
         Field.h
         Types.h
         concurrentqueue.h
         tfpool.h
         tfspinlock.h
-        Decoder.h
         Exception.h
         MessageBuffer.h
-        FieldTraits.h MutableByteStorage.cpp MutableByteStorage.h SharedMemoryBuffer.h ByteStorage.cpp ByteStorage.h MessageBuffer.h ScalarField.h DataField.h MessageField.h MessageField.cpp)
+        FieldTraits.h MutableByteStorage.cpp MutableByteStorage.h SharedMemoryBuffer.h ByteStorage.cpp ByteStorage.h MessageBuffer.h ScalarField.h DataField.h MessageField.h MessageField.cpp Serializable.h)
 
 add_library(TFDCF ${SOURCE_FILES})

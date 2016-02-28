@@ -48,32 +48,49 @@ namespace DCF {
             return r;
         }
 
-        const size_t encode(MessageBuffer &buffer) noexcept override {
-            byte *b = buffer.allocate(sizeof(MsgField));
-            MsgField *field = reinterpret_cast<MsgField *>(b);
-            field->identifier = m_identifier;
-            field->type = m_type;
-            const byte *data = nullptr;
-            field->data_length = m_storage.bytes(&data);
-            buffer.append(data, field->data_length);
-
-            return sizeof(MsgField) + field->data_length;
+        const bool operator==(const DataField &other) const {
+            return m_identifier == other.m_identifier
+                    && m_type == other.m_type
+                    && m_storage == other.m_storage;
         }
 
-        const size_t decode(const ByteStorage &buffer) noexcept override {
-            assert(buffer.length() > FieldHeaderSize());
+        const size_t encode(MessageBuffer &buffer) noexcept override {
+            byte *b = buffer.allocate(MsgField::size());
+
+            b = writeScalar(b, static_cast<MsgField::type>(m_type));
+            b = writeScalar(b, static_cast<MsgField::identifier>(m_identifier));
+
             const byte *data = nullptr;
-            buffer.bytes(&data);
-            const MsgField *field = reinterpret_cast<const MsgField *>(data);
+            const size_t len = m_storage.bytes(&data);
+            b = writeScalar(b, static_cast<MsgField::data_length>(len));
+            buffer.append(data, len);
 
-            m_identifier = field->identifier;
-            m_type = static_cast<StorageType>(field->type);
-            const size_t size = field->data_length;
+            return MsgField::size() + len;
+        }
 
-            assert(buffer.length() > FieldHeaderSize() + size);
-            m_storage.setData(&data[FieldHeaderSize()], size);
+        const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override {
+            if (buffer.length() >= MsgField::size()) {
+                const byte *data = nullptr;
+                buffer.bytes(&data);
 
-            return FieldHeaderSize() + size;
+                m_type = static_cast<StorageType>(readScalar<MsgField::type>(data));
+                data += sizeof(MsgField::type);
+
+                m_identifier = readScalar<MsgField::identifier>(data);
+                data += sizeof(MsgField::identifier);
+
+                const size_t size = readScalar<MsgField::data_length>(data);
+                data += sizeof(MsgField::data_length);
+
+                if (buffer.length() >= MsgField::size() + size) {
+                    m_storage.setData(data, size);
+
+                    read_offset = MsgField::size() + size;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         virtual std::ostream& output(std::ostream& out) const override {

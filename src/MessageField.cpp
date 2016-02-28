@@ -17,7 +17,7 @@ namespace DCF {
 
 
     std::ostream &MessageField::output(std::ostream &out) const {
-        const Message m = *m_msg.get();
+        const Message &m = *m_msg.get();
         return out << m_identifier << ":message=" << m;
     }
 }

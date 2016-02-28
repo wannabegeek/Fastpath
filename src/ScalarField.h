@@ -9,39 +9,12 @@
 #include <type_traits>
 #include <iostream>
 #include <cassert>
+#include <algorithm>
 #include "Types.h"
 #include "FieldTraits.h"
 #include "Field.h"
 
 namespace DCF {
-    template<typename T> T endianScalar(T t) {
-#ifdef __BIG_ENDIAN__
-        if (sizeof(T) == 1) {   // Compile-time if-then's.
-            return t;
-        } else if (sizeof(T) == 2) {
-            auto r = __builtin_bswap16(*reinterpret_cast<uint16_t *>(&t));
-            return *reinterpret_cast<T *>(&r);
-        } else if (sizeof(T) == 4) {
-            auto r = __builtin_bswap32(*reinterpret_cast<uint32_t *>(&t));
-            return *reinterpret_cast<T *>(&r);
-        } else if (sizeof(T) == 8) {
-            auto r = __builtin_bswap64(*reinterpret_cast<uint64_t *>(&t));
-            return *reinterpret_cast<T *>(&r);
-        } else {
-            assert(0);
-        }
-#else
-        return t;
-#endif
-    }
-
-    template<typename T> T readScalar(const byte *p) {
-        return endianScalar(*reinterpret_cast<const T *>(p));
-    }
-
-    template<typename T> void writeScalar(byte *p, T t) {
-        *reinterpret_cast<T *>(p) = endianScalar(t);
-    }
 
     class ScalarField : public Field {
 
@@ -67,32 +40,44 @@ namespace DCF {
             return readScalar<T>(m_raw);
         }
 
-        const size_t encode(MessageBuffer &buffer) noexcept override {
-            byte *b = buffer.allocate(sizeof(MsgField));
-            MsgField *field = reinterpret_cast<MsgField *>(b);
-            field->identifier = m_identifier;
-            field->type = m_type;
-            field->data_length = m_size;
-            buffer.append(reinterpret_cast<const byte *>(m_raw), field->data_length);
-            return sizeof(MsgField) + field->data_length;
+        const bool operator==(const ScalarField &other) const {
+            return m_identifier == other.m_identifier
+                   && m_type == other.m_type
+                   && m_size == other.m_size
+                   && std::equal(std::begin(m_raw), std::end(m_raw), std::begin(other.m_raw));
         }
 
-        const size_t decode(const ByteStorage &buffer) noexcept override {
-            assert(buffer.length() > FieldHeaderSize());
-            const byte *data = nullptr;
-            buffer.bytes(&data);
-            const MsgField *field = reinterpret_cast<const MsgField *>(data);
+        const size_t encode(MessageBuffer &buffer) noexcept override {
+            byte *b = buffer.allocate(MsgField::size());
 
-            m_identifier = field->identifier;
-            m_type = static_cast<StorageType>(field->type);
-            m_size = field->data_length;
+            b = writeScalar(b, static_cast<MsgField::type>(m_type));
+            b = writeScalar(b, static_cast<MsgField::identifier>(m_identifier));
+            b = writeScalar(b, static_cast<MsgField::data_length>(m_size));
+            buffer.append(reinterpret_cast<const byte *>(m_raw), m_size);
+            return MsgField::size() + m_size;
+        }
 
-            data += FieldHeaderSize();
+        const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override {
+            if (buffer.length() >= MsgField::size()) {
+                const byte *data = nullptr;
+                buffer.bytes(&data);
 
-            assert(buffer.length() > FieldHeaderSize() + size);
-            memcpy(m_raw, data, m_size);
+                m_type = static_cast<StorageType>(readScalar<MsgField::type>(data));
+                data += sizeof(MsgField::type);
 
-            return FieldHeaderSize() + m_size;
+                m_identifier = readScalar<MsgField::identifier>(data);
+                data += sizeof(MsgField::identifier);
+
+                m_size = readScalar<MsgField::data_length>(data);
+                data += sizeof(MsgField::data_length);
+
+                if (buffer.length() >= MsgField::size() + m_size) {
+                    memcpy(m_raw, data, m_size);
+                    read_offset = MsgField::size() + m_size;
+                    return true;
+                }
+            }
+            return false;
         }
 
         virtual std::ostream& output(std::ostream& out) const override {

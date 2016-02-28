@@ -12,13 +12,13 @@
 #include <array>
 #include <limits>
 #include <memory>
-#include "Encoder.h"
+#include "Serializable.h"
 #include "Field.h"
-#include "Decoder.h"
 #include "Exception.h"
 #include "ScalarField.h"
 #include "DataField.h"
 #include "MessageField.h"
+#include "tfpool.h"
 
 /**
  *
@@ -47,7 +47,7 @@ namespace DCF {
         message_t
     } DataStorageType;
 
-    class Message : public Encoder, Decoder {
+    class Message : public Serializable, public tf::reusable {
     private:
         typedef std::vector<std::shared_ptr<Field>> PayloadContainer;
         typedef std::array<uint16_t, std::numeric_limits<uint16_t>::max() - 1> PayloadMapper;
@@ -56,7 +56,7 @@ namespace DCF {
         uint32_t m_size;
         uint8_t m_flags;
         bool m_hasAddressing;
-        char m_subject[std::numeric_limits<uint16_t>::max()];
+        char *m_subject;
 
         static constexpr uint16_t _NO_FIELD = std::numeric_limits<uint16_t>::max();
         static constexpr const uint8_t addressing_flag = 1;
@@ -76,15 +76,23 @@ namespace DCF {
         static const DataStorageType getStorageType(const StorageType type);
 
         const size_t encodeAddressing(MessageBuffer &buffer) noexcept;
-        const size_t decodeAddressing(const ByteStorage &buffer) noexcept;
+        const bool decodeAddressing(const ByteStorage &buffer, size_t &read_offset) noexcept;
 
     public:
         Message() : m_size(0), m_flags(-1), m_hasAddressing(true), m_maxRef(0) {
             m_mapper.fill(_NO_FIELD);
+            m_subject = new char[std::numeric_limits<uint16_t>::max()];
             m_subject[0] = '\0';
         }
 
-        virtual ~Message() {};
+        Message(Message &&msg) noexcept;
+
+        virtual ~Message() {
+            delete [] m_subject;
+        };
+
+        Message(const Message &msg) = delete;
+        Message& operator=(Message const&) = delete;
 
         const char *subject() const { return m_subject; }
 
@@ -229,11 +237,16 @@ namespace DCF {
 
         void detach() noexcept;
 
-        // from Encoder
-        const size_t encode(MessageBuffer &buffer) noexcept override;
+        const bool operator==(const Message &other) const;
 
-        // from Decoder
-        const size_t decode(const ByteStorage &buffer) noexcept override;
+        // from Serializable
+        const size_t encode(MessageBuffer &buffer) noexcept override;
+        const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override;
+
+        // from reusable
+        void prepareForReuse() override {
+            this->clear();
+        }
 
         friend std::ostream &operator<<(std::ostream &out, const Message &msg) {
             if (msg.m_hasAddressing) {

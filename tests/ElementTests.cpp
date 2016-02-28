@@ -69,3 +69,37 @@ TEST(Elements, CreateData) {
     ASSERT_NE(reinterpret_cast<const char *>(result), temp);  // Pointers can't be the same, data should have been copied
     ASSERT_EQ(0, strncmp(reinterpret_cast<const char *>(result), temp, strlen(temp)));
 }
+
+TEST(Elements, SerializeString) {
+    const char *temp = "Hello world";
+    DCF::DataField in;
+    in.set(0, reinterpret_cast<const byte *>(temp), strlen(temp));
+
+    DCF::MessageBuffer buffer(256);
+    const size_t len_in = in.encode(buffer);
+    EXPECT_EQ(len_in, buffer.length());
+
+    DCF::DataField out;
+    size_t len_out = 0;
+    EXPECT_TRUE(out.decode(buffer.byteStorage(), len_out));
+    EXPECT_EQ(len_in, len_out);
+
+    EXPECT_EQ(in, out);
+}
+
+TEST(Elements, SerializeScalar) {
+    const uint32_t temp = 1234567890u;
+    DCF::ScalarField in;
+    in.set(0, temp);
+
+    DCF::MessageBuffer buffer(256);
+    const size_t len_in = in.encode(buffer);
+    EXPECT_EQ(len_in, buffer.length());
+
+    DCF::ScalarField out;
+    size_t len_out = 0;
+    EXPECT_TRUE(out.decode(buffer.byteStorage(), len_out));
+    EXPECT_EQ(len_in, len_out);
+
+    EXPECT_EQ(in, out);
+}

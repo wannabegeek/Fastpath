@@ -45,6 +45,8 @@ namespace DCF {
             return m_storage.first[index];
         }
 
+        const bool operator==(const ByteStorage &other) const;
+
         friend std::ostream &operator<<(std::ostream &out, const ByteStorage &msg);
     };
 }

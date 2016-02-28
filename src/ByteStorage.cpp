@@ -58,6 +58,18 @@ namespace DCF {
         return m_storedLength;
     }
 
+    const bool ByteStorage::operator==(const ByteStorage &other) const {
+        if (m_storedLength == other.m_storedLength) {
+            for (size_t i = 0; i < m_storedLength; i++) {
+                if (m_storage.first[i] != other.m_storage.first[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     std::ostream &operator<<(std::ostream &out, const ByteStorage &msg) {
         const byte *data = nullptr;
         const size_t length = msg.bytes(&data);

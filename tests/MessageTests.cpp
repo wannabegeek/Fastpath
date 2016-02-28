@@ -5,19 +5,6 @@
 #include <gtest/gtest.h>
 #include <Message.h>
 
-
-TEST(Message, SimpleEncode) {
-    DCF::Message msg;
-    msg.setSubject("SOME.TEST.SUBJECT");
-
-    DCF::MessageBuffer buffer(1024);
-    const size_t encoded_len = msg.encode(buffer);
-    EXPECT_EQ(buffer.length(), encoded_len);
-
-    std::cout << buffer << std::endl;
-}
-
-
 TEST(Message, SetSubject) {
     DCF::Message msg;
     const char *subject = "TEST.SUBJECT";
@@ -121,11 +108,13 @@ TEST(Message, Decode) {
     std::cout << buffer << std::endl;
     std::cout << buffer.byteStorage() << std::endl;
     DCF::Message out;
-    const size_t decoded_len = out.decode(buffer.byteStorage());
+    size_t decoded_len = 0;
+    EXPECT_TRUE(out.decode(buffer.byteStorage(), decoded_len));
     EXPECT_EQ(encoded_len, decoded_len);
 
-    std::cout << in << std::endl;
-    std::cout << out << std::endl;
+    std::cout << "IN:  " << in << std::endl;
+    std::cout << "OUT: " << out << std::endl;
+    EXPECT_EQ(in, out);
 }
 
 TEST(Message, MultiDecode) {
@@ -156,9 +145,46 @@ TEST(Message, MultiDecode) {
 
     DCF::Message out;
     size_t offset = 0;
-    while (buffer.length() != 0 && (offset = out.decode(buffer.byteStorage())) != 0) {
-        std::cout << "Decoded: " << out << std::endl;
-        out.clear();
-        buffer.erase_front(offset);
+//    while (buffer.length() != 0 && (offset = out.decode(buffer.byteStorage())) != 0) {
+//        std::cout << "Decoded: " << out << std::endl;
+//        out.clear();
+//        buffer.erase_front(offset);
+//    }
+}
+
+
+TEST(Message, MultiPartialDecode) {
+    DCF::Message in1;
+    float32_t t = 22.0;
+    in1.addScalarField("TEST", t);
+    in1.addScalarField("TEST", true);
+    in1.addDataField("Name", "Tom");
+    in1.addDataField("Name", "Zac");
+
+    DCF::MessageBuffer buffer(1024);
+    char subject[256];
+    for (int i = 0; i < 10; i++) {
+        sprintf(subject, "SAMPLE.MSG.%i", i);
+        in1.setSubject(subject);
+        in1.addScalarField("id", i);
+        in1.encode(buffer);
+    }
+
+    std::cout << buffer << std::endl;
+
+    const byte *bytes = nullptr;
+    size_t len = 0;
+    DCF::Message out;
+    for (int i = 0; i < buffer.length(); i++) {
+        len += 10;
+        buffer.bytes(&bytes);
+        DCF::ByteStorage storage(bytes, std::min(len, buffer.length()));
+
+        size_t offset;
+        if (out.decode(storage, offset)) {
+            buffer.erase_front(offset);
+            std::cout << "Msg decoded: " << out << std::endl;
+            out.clear();
+        }
     }
 }
