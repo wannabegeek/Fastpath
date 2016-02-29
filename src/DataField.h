@@ -16,14 +16,14 @@ namespace DCF {
         const StorageType type() const noexcept override { return m_type; }
         const size_t size() const noexcept override { return m_storage.length(); }
 
-        void set(const uint16_t identifier, const char *value) {
-            m_identifier = identifier;
+        void set(const char *identifier, const char *value) {
+            setIdentifier(identifier);
             m_type = field_traits<const char *>::type;
             m_storage.setData(reinterpret_cast<const byte *>(value), strlen(value) + 1); // +1 for the NULL byte
         }
 
-        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> void set(const uint16_t identifier, const T *value, const size_t length) {
-            m_identifier = identifier;
+        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> void set(const char *identifier, const T *value, const size_t length) {
+            setIdentifier(identifier);
             m_type = field_traits<T *>::type;
             m_storage.setData(reinterpret_cast<const byte *>(value), length);
         }
@@ -49,7 +49,7 @@ namespace DCF {
         }
 
         const bool operator==(const DataField &other) const {
-            return m_identifier == other.m_identifier
+            return Field::operator==(other)
                     && m_type == other.m_type
                     && m_storage == other.m_storage;
         }
@@ -58,35 +58,40 @@ namespace DCF {
             byte *b = buffer.allocate(MsgField::size());
 
             b = writeScalar(b, static_cast<MsgField::type>(m_type));
-            b = writeScalar(b, static_cast<MsgField::identifier>(m_identifier));
+
+            const size_t identifier_length = strlen(m_identifier);
+            b = writeScalar(b, static_cast<MsgField::identifier_length >(identifier_length));
 
             const byte *data = nullptr;
-            const size_t len = m_storage.bytes(&data);
-            b = writeScalar(b, static_cast<MsgField::data_length>(len));
-            buffer.append(data, len);
+            const size_t data_len = m_storage.bytes(&data);
+            b = writeScalar(b, static_cast<MsgField::data_length>(data_len));
 
-            return MsgField::size() + len;
+            buffer.append(reinterpret_cast<const byte *>(m_identifier), identifier_length);
+            buffer.append(data, data_len);
+
+            return MsgField::size() + identifier_length + data_len;
         }
 
-        const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override {
-            if (buffer.length() >= MsgField::size()) {
-                const byte *data = nullptr;
-                buffer.bytes(&data);
+        const bool decode(const ByteStorage &buffer) noexcept override {
+            if (buffer.remainingReadLength() >= MsgField::size()) {
+                m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
+                buffer.advanceRead(sizeof(MsgField::type));
 
-                m_type = static_cast<StorageType>(readScalar<MsgField::type>(data));
-                data += sizeof(MsgField::type);
+                const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgField::identifier_length));
 
-                m_identifier = readScalar<MsgField::identifier>(data);
-                data += sizeof(MsgField::identifier);
+                const size_t size = readScalar<MsgField::data_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgField::data_length));
 
-                const size_t size = readScalar<MsgField::data_length>(data);
-                data += sizeof(MsgField::data_length);
-
-                if (buffer.length() >= MsgField::size() + size) {
-                    m_storage.setData(data, size);
-
-                    read_offset = MsgField::size() + size;
-                    return true;
+                if (buffer.length() >= MsgField::size() + identifier_length) {
+                    memcpy(m_identifier, buffer.readBytes(), identifier_length);
+                    m_identifier[identifier_length] = '\0';
+                    buffer.advanceRead(identifier_length);
+                    if (buffer.length() >= MsgField::size() + identifier_length + size) {
+                        m_storage.setData(buffer.readBytes(), size);
+                        buffer.advanceRead(size);
+                        return true;
+                    }
                 }
             }
 

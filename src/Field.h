@@ -28,17 +28,25 @@ namespace DCF {
 
     class Field : public Serializable {
     protected:
-        uint16_t m_identifier;
+        char m_identifier[256];
     public:
-        const uint16_t identifier() const { return m_identifier; }
+        const char *identifier() const { return m_identifier; }
 
         virtual const StorageType type() const noexcept = 0;
         virtual const size_t size() const noexcept = 0;
 
         virtual const size_t encode(MessageBuffer &buffer) noexcept override = 0;
-        virtual const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override = 0;
+        virtual const bool decode(const ByteStorage &buffer) noexcept override = 0;
+
+        void setIdentifier(const char *identifier) {
+            strncpy(m_identifier, identifier, 256);
+        }
 
         virtual std::ostream& output(std::ostream& out) const = 0;
+
+        virtual const bool operator==(const Field &other) const {
+            return strcmp(m_identifier, other.m_identifier);
+        }
 
         friend std::ostream &operator<<(std::ostream &out, const Field &field) {
             return field.output(out);

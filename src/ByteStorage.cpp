@@ -10,7 +10,7 @@
 #include "Types.h"
 
 namespace DCF {
-    ByteStorage::ByteStorage(const size_t allocation) : m_storedLength(0), m_no_copy(false) {
+    ByteStorage::ByteStorage(const size_t allocation) : m_storedLength(0), m_no_copy(false), m_read_ptr(m_storage.first) {
         allocateStorage(allocation);
     }
 
@@ -24,6 +24,7 @@ namespace DCF {
             memcpy(m_storage.first, reinterpret_cast<const void *>(bytes), length);
             m_storedLength = length;
         }
+        m_read_ptr = m_storage.first;
     }
 
     ByteStorage::ByteStorage(ByteStorage &&orig) : m_storage(orig.m_storage), m_storedLength(orig.m_storedLength), m_no_copy(orig.m_no_copy) {
@@ -31,6 +32,8 @@ namespace DCF {
         orig.m_storage.second = 0;
         orig.m_storedLength = 0;
         orig.m_no_copy = true;
+        orig.m_read_ptr = orig.m_storage.first;
+        m_read_ptr = m_storage.first;
     }
 
     ByteStorage::~ByteStorage() noexcept {
@@ -68,6 +71,31 @@ namespace DCF {
             return true;
         }
         return false;
+    }
+
+    void ByteStorage::resetRead() const {
+        m_read_ptr = m_storage.first;
+    }
+
+    void ByteStorage::advanceRead(const size_t distance) const {
+        m_read_ptr += distance;
+    }
+
+    const size_t ByteStorage::remainingReadLength() const {
+        size_t v =  m_storedLength - (m_read_ptr - m_storage.first);
+        return v;
+    }
+
+    const size_t ByteStorage::bytesRead() const {
+        return m_read_ptr - m_storage.first;
+    }
+
+    const byte *ByteStorage::readBytes() const {
+        return m_read_ptr;
+    }
+
+    const byte *ByteStorage::operator*() const {
+        return this->readBytes();
     }
 
     std::ostream &operator<<(std::ostream &out, const ByteStorage &msg) {

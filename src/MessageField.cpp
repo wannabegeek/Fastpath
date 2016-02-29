@@ -6,8 +6,8 @@
 #include "Message.h"
 
 namespace DCF {
-    void MessageField::set(const uint16_t identifier, const MessageType &msg) {
-        m_identifier = identifier;
+    void MessageField::set(const char *identifier, const MessageType &msg) {
+        setIdentifier(identifier);
         m_msg = msg;
     }
 

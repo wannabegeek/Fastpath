@@ -29,21 +29,19 @@ namespace DCF {
         using header_start = uint8_t;
         using body_length = uint64_t;     // len:8 off:0   Message Length
         using field_count = uint32_t;    // len:4 off:11  Number of fields in main body
-        using mapping_count = uint32_t;  // len:4 off:15  Number of fields in main body
 
         static constexpr const size_t size() { return sizeof(header_start)
-                                            + sizeof(body_length)
-                                            + sizeof(mapping_count);
+                                            + sizeof(body_length);
         }
     };
 
     struct MsgField {
-        using identifier = uint16_t ;
         using type = int8_t;
+        using identifier_length = uint8_t;
         using data_length = uint32_t;
 
-        static constexpr const size_t size() { return sizeof(identifier)
-                                            + sizeof(type)
+        static constexpr const size_t size() { return sizeof(type)
+                                            + sizeof(identifier_length)
                                             + sizeof(data_length);
         }
     };

@@ -47,40 +47,51 @@ namespace DCF {
         message_t
     } DataStorageType;
 
+    struct FieldIdentifierComparitor {
+        bool operator()(const char *s1, const char *s2) const {
+            return strcmp(s1, s2) == 0;
+        }
+    };
+
+    struct FieldIdentifierHash {
+        size_t operator()(const char *s) const {
+            size_t result = 0;
+            const size_t prime = 31;
+
+            size_t i = 0;
+            while (s[i] != '\0') {
+                result = s[i] + (result * prime);
+                i++;
+            }
+
+            return result;
+        }
+    };
+
     class Message : public Serializable, public tf::reusable {
     private:
         typedef std::vector<std::shared_ptr<Field>> PayloadContainer;
-        typedef std::array<uint16_t, std::numeric_limits<uint16_t>::max() - 1> PayloadMapper;
-        typedef std::unordered_map<std::string, std::vector<uint16_t>> KeyMappingsContainer;
+        typedef std::unordered_map<const char *, const size_t, FieldIdentifierHash, FieldIdentifierComparitor> KeyMappingsContainer;
 
-        uint32_t m_size;
         uint8_t m_flags;
         bool m_hasAddressing;
         char *m_subject;
 
-        static constexpr uint16_t _NO_FIELD = std::numeric_limits<uint16_t>::max();
         static constexpr const uint8_t addressing_flag = 1;
         static constexpr const uint8_t body_flag = 2;
 
         PayloadContainer m_payload;
-        PayloadMapper m_mapper;
-        uint16_t m_maxRef;
-
         KeyMappingsContainer m_keys;
 
         const uint16_t findIdentifierByName(const std::string &field, const size_t instance = 0) const noexcept;
 
-        const bool refExists(const uint16_t &field) const noexcept;
-        const uint16_t createRefForString(const std::string &field) noexcept;
-
         static const DataStorageType getStorageType(const StorageType type);
 
         const size_t encodeAddressing(MessageBuffer &buffer) noexcept;
-        const bool decodeAddressing(const ByteStorage &buffer, size_t &read_offset) noexcept;
+        const bool decodeAddressing(const ByteStorage &buffer) noexcept;
 
     public:
-        Message() : m_size(0), m_flags(-1), m_hasAddressing(true), m_maxRef(0) {
-            m_mapper.fill(_NO_FIELD);
+        Message() : m_flags(-1), m_hasAddressing(true) {
             m_subject = new char[std::numeric_limits<uint16_t>::max()];
             m_subject[0] = '\0';
         }
@@ -105,135 +116,79 @@ namespace DCF {
             return false;
         }
 
-        const uint32_t size() const noexcept { return m_size; }
+        const uint32_t size() const noexcept { return m_payload.size(); }
         const uint8_t flags() const noexcept { return m_flags; }
 
-        const StorageType storageType(const uint16_t &field) const {
-            if (refExists(field)) {
-                const std::shared_ptr<Field> element = m_payload[m_mapper[field]];
-                return element->type();
-            }
-
-            return StorageType::unknown;
+        const StorageType storageType(const char *field) const {
+            const std::shared_ptr<Field> element = m_payload[m_keys.at(field)];
+            return element->type();
         }
 
         void clear();
 
         ////////////// ADD ///////////////
-        template <typename T> void addScalarField(const uint16_t &field, const T &value) {
-            if (refExists(field)) {
-                ThrowException(TF::Exception, "Ref already exists in message");
-            }
-            m_maxRef = std::max(m_maxRef, field);
-            m_mapper[field] = m_payload.size();
-
+        template <typename T> bool addScalarField(const char *field, const T &value) {
             std::shared_ptr<ScalarField> e = std::make_shared<ScalarField>();
             e->set(field, value);
-            m_payload.emplace_back(e);
-            m_size++;
+            auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+            if (result.second) {
+                m_payload.emplace_back(e);
+            }
+            return result.second;
         }
 
-        void addDataField(const uint16_t &field, const char *value) {
-            if (refExists(field)) {
-                ThrowException(TF::Exception, "Ref already exists in message");
-            }
-            m_maxRef = std::max(m_maxRef, field);
-            m_mapper[field] = m_payload.size();
-
+        bool addDataField(const char *field, const char *value) {
             std::shared_ptr<DataField> e = std::make_shared<DataField>();
             e->set(field, value);
-            m_payload.emplace_back(e);
-            m_size++;
+            auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+            if (result.second) {
+                m_payload.emplace_back(e);
+            }
+            return result.second;
         }
 
-        void addDataField(const uint16_t &field, const std::string &value) {
-            this->addDataField(field, value.c_str());
+        bool addDataField(const char *field, const std::string &value) {
+            return this->addDataField(field, value.c_str());
         }
 
-        void addDataField(const uint16_t &field, const byte *value, const size_t size);
+        bool addDataField(const char *field, const byte *value, const size_t size);
 
-        void addMessageField(const uint16_t &field, const MessageType &msg);
-
-        void addMessageField(const MessageType &msg);
-
-        /////
-
-        template <typename T> void addScalarField(const std::string &field, const T &value) {
-            const uint16_t ref = createRefForString(field);
-            this->addScalarField(ref, value);
-        }
-
-        void addDataField(const std::string &field, const char *value) {
-            const uint16_t ref = createRefForString(field);
-            this->addDataField(ref, value);
-        }
-
-        void addDataField(const std::string &field, const std::string value) {
-            const uint16_t ref = createRefForString(field);
-            this->addDataField(ref, value.c_str());
-        }
-
-        void addDataField(const std::string &field, const byte *value, const size_t size);
-
-        void addMessageField(const std::string &field, const MessageType &msg);
+        bool addMessageField(const char *field, const MessageType &msg);
 
         ////////////// REMOVE ///////////////
 
-        bool removeField(const uint16_t &field);
+        bool removeField(const char *field);
 
-        /////
-
-        bool removeField(const std::string &field, const size_t instance = 0);
 
         ////////////// ACCESSOR ///////////////
 
-        template <typename T> bool getScalarField(const uint16_t &field, T &value) const {
-            if (field != _NO_FIELD && field <= m_maxRef) {
-                const std::shared_ptr<ScalarField> element = std::static_pointer_cast<ScalarField>(m_payload[m_mapper[field]]);
-                value = element.get()->get<T>();
-                return true;
+        template <typename T> bool getScalarField(const char *field, T &value) const {
+            if (field != nullptr) {
+                auto index = m_keys.find(field);
+                if (index != m_keys.end()) {
+                    const std::shared_ptr<ScalarField> element = std::static_pointer_cast<ScalarField>(
+                            m_payload[index->second]);
+                    value = element.get()->get<T>();
+                    return true;
+                }
             }
             return false;
         }
 
-        bool getDataField(const uint16_t &field, const char **value, size_t &length) const {
-            if (field != _NO_FIELD && field <= m_maxRef) {
-                const std::shared_ptr<DataField> element = std::static_pointer_cast<DataField>(m_payload[m_mapper[field]]);
-                length = element.get()->get(value);
-                return true;
-            }
-            return false;
-        }
-
-        bool getDataField(const uint16_t &field, std::string &value) const {
-            if (field != _NO_FIELD && field <= m_maxRef) {
-                const char *result = nullptr;
-                size_t length = 0;
-                bool r = this->getDataField(field, &result, length);
-                value = std::string(result, length);
-                return r;
+        bool getDataField(const char *field, const char **value, size_t &length) const {
+            if (field != nullptr) {
+                auto index = m_keys.find(field);
+                if (index != m_keys.end()) {
+                    const std::shared_ptr<DataField> element = std::static_pointer_cast<DataField>(
+                            m_payload[index->second]);
+                    length = element.get()->get(value);
+                    return true;
+                }
             }
             return false;
         }
 
         /////
-
-        template <typename T> const bool getScalarField(const std::string &field, T &value, const size_t instance = 0) const {
-            return this->getScalarField(findIdentifierByName(field, instance), value);
-        }
-
-        const bool getDataField(const std::string &field, const char **value, size_t &length, const size_t instance = 0) const {
-            return this->getDataField(findIdentifierByName(field, instance), value, length);
-        }
-
-        bool getDataField(const std::string &field, std::string &value, const size_t instance = 0) const {
-            const char *result = nullptr;
-            size_t length = 0;
-            bool r = this->getDataField(findIdentifierByName(field, instance), &result, length);
-            value = std::string(result, length);
-            return r;
-        }
-
 
         void detach() noexcept;
 
@@ -241,7 +196,7 @@ namespace DCF {
 
         // from Serializable
         const size_t encode(MessageBuffer &buffer) noexcept override;
-        const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override;
+        const bool decode(const ByteStorage &buffer) noexcept override;
 
         // from reusable
         void prepareForReuse() override {

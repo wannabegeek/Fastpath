@@ -19,15 +19,18 @@ TEST(Message, SetSubject) {
 TEST(Message, AddStringField) {
 
     DCF::Message msg;
-    msg.addDataField(1234, "TEST");
+    ASSERT_TRUE(msg.addDataField("1234", "TEST"));
 
-    std::string v;
-    ASSERT_TRUE(msg.getDataField(1234, v));
-    ASSERT_STREQ("TEST", v.c_str());
+    const char * v = nullptr;
+    size_t len = 0;
+    EXPECT_TRUE(msg.getDataField("1234", &v, len));
+    EXPECT_EQ(5, len);
+    EXPECT_STREQ("TEST", v);
 
     msg.addDataField("TEST", "AGAIN");
-    ASSERT_TRUE(msg.getDataField("TEST", v));
-    ASSERT_STREQ("AGAIN", v.c_str());
+    ASSERT_TRUE(msg.getDataField("TEST", &v, len));
+    ASSERT_EQ(6, len);
+    ASSERT_STREQ("AGAIN", v);
 }
 
 TEST(Message, AddFloatField) {
@@ -42,13 +45,12 @@ TEST(Message, AddMixedDuplicateField) {
     DCF::Message msg;
     msg.addDataField("TEST", "AGAIN");
 
-    msg.addScalarField("TEST", static_cast<float32_t>(1.4));
-    float32_t t = 0.0;
-    std::string v;
-    ASSERT_TRUE(msg.getDataField("TEST", v, 0));
-    ASSERT_STREQ("AGAIN", v.c_str());
-    ASSERT_TRUE(msg.getScalarField("TEST", t, 1));
-    ASSERT_FLOAT_EQ(1.4, t);
+    ASSERT_FALSE(msg.addScalarField("TEST", static_cast<float32_t>(1.4)));
+    ASSERT_EQ(DCF::StorageType::string, msg.storageType("TEST"));
+    const char *t = nullptr;
+    size_t length = 0;
+    ASSERT_TRUE(msg.getDataField("TEST", &t, length));
+    ASSERT_STREQ("AGAIN", t);
 
 }
 
@@ -96,10 +98,10 @@ TEST(Message, Decode) {
     DCF::Message in;
     in.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
-    in.addScalarField("TEST", t);
-    in.addScalarField("TEST", true);
-    in.addDataField("Name", "Tom");
-    in.addDataField("Name", "Zac");
+    EXPECT_TRUE(in.addScalarField("TEST1", t));
+    EXPECT_TRUE(in.addScalarField("TEST2", true));
+    EXPECT_TRUE(in.addDataField("Name1", "Tom"));
+    EXPECT_TRUE(in.addDataField("Name2", "Zac"));
 
     DCF::MessageBuffer buffer(1024);
     const size_t encoded_len = in.encode(buffer);
@@ -108,9 +110,9 @@ TEST(Message, Decode) {
     std::cout << buffer << std::endl;
     std::cout << buffer.byteStorage() << std::endl;
     DCF::Message out;
-    size_t decoded_len = 0;
-    EXPECT_TRUE(out.decode(buffer.byteStorage(), decoded_len));
-    EXPECT_EQ(encoded_len, decoded_len);
+    const DCF::ByteStorage &b = buffer.byteStorage();
+    EXPECT_TRUE(out.decode(b));
+    EXPECT_EQ(encoded_len, b.bytesRead());
 
     std::cout << "IN:  " << in << std::endl;
     std::cout << "OUT: " << out << std::endl;
@@ -181,8 +183,8 @@ TEST(Message, MultiPartialDecode) {
         DCF::ByteStorage storage(bytes, std::min(len, buffer.length()));
 
         size_t offset;
-        if (out.decode(storage, offset)) {
-            buffer.erase_front(offset);
+        if (out.decode(storage)) {
+            buffer.erase_front(storage.bytesRead());
             std::cout << "Msg decoded: " << out << std::endl;
             out.clear();
         }

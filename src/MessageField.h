@@ -17,7 +17,7 @@ namespace DCF {
         const StorageType type() const noexcept override { return StorageType::message; }
         const size_t size() const noexcept override { return 0; }
 
-        void set(const uint16_t identifier, const MessageType &msg);
+        void set(const char *identifier, const MessageType &msg);
         const MessageType get() const;
 
         const size_t encode(MessageBuffer &buffer) noexcept override {
@@ -33,7 +33,7 @@ namespace DCF {
             return 0;
         }
 
-        const bool decode(const ByteStorage &buffer, size_t &read_offset) noexcept override {
+        const bool decode(const ByteStorage &buffer) noexcept override {
 //            assert(buffer.length() > FieldHeaderSize());
 //            const byte *data = nullptr;
 //            buffer.bytes(&data);

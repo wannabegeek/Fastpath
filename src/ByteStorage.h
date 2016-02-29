@@ -23,6 +23,8 @@ namespace DCF {
 
         bool m_no_copy;
 
+        mutable byte *m_read_ptr;
+
         void allocateStorage(const size_t length);
 
         explicit ByteStorage(const size_t allocation = 256);
@@ -44,6 +46,14 @@ namespace DCF {
         const byte operator[](const size_t index) const {
             return m_storage.first[index];
         }
+
+        // for reading as a stream
+        void resetRead() const;
+        void advanceRead(const size_t distance) const;
+        const size_t remainingReadLength() const;
+        const size_t bytesRead() const;
+        const byte *readBytes() const;
+        const byte *operator*() const;
 
         const bool operator==(const ByteStorage &other) const;
 

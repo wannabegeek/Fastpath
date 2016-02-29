@@ -17,13 +17,13 @@ template<typename T = std::chrono::milliseconds> struct measure {
 
 int main(int argc, char *argv[])
 {
-    const size_t iterations = 100000;
+    const size_t iterations = 1000000;
     typedef tf::pool<DCF::Message> PoolType;
 
-    PoolType pool(100000);
+    PoolType pool(iterations);
 
     std::vector<PoolType::ptr_type> messages(iterations);
-    DCF::MessageBuffer buffer(100000);
+    DCF::MessageBuffer buffer(1000000);
 
     std::cout << "encode x" << iterations << ": " << measure<std::chrono::microseconds>::execution([&]() {
         for (int i = 0; i < iterations; i++) {
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
             const size_t encoded_len = msg->encode(buffer);
             messages.emplace_back(std::move(msg));
 //            msg.clear();
-//            buffer.clear();
+            buffer.clear();
         }
     }) / static_cast<float>(iterations) << "us" << std::endl;
 
