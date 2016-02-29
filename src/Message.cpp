@@ -100,6 +100,7 @@ namespace DCF {
         byte *body_length_offset = b;
         b += sizeof(MsgHeader::body_length);
         b = writeScalar(b, static_cast<MsgHeader::field_count>(this->size()));
+//        b += sizeof(MsgHeader::field_count);
 
         size_t body_length = 0;
 

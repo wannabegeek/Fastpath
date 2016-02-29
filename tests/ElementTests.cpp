@@ -82,7 +82,7 @@ TEST(Elements, SerializeString) {
     DCF::DataField out;
     const DCF::ByteStorage &b = buffer.byteStorage();
     EXPECT_TRUE(out.decode(b));
-    EXPECT_EQ(len_in, b.bytesRead());
+    ASSERT_EQ(len_in, b.bytesRead());
 
     EXPECT_EQ(in, out);
 }

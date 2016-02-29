@@ -31,7 +31,8 @@ namespace DCF {
         using field_count = uint32_t;    // len:4 off:11  Number of fields in main body
 
         static constexpr const size_t size() { return sizeof(header_start)
-                                            + sizeof(body_length);
+                                            + sizeof(body_length)
+                                            + sizeof(field_count);
         }
     };
 
