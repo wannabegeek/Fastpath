@@ -2,7 +2,7 @@
 #define tfthread_utils_h
 
 #include "logger.h"
-#include "config.h"
+#include "../config.h"
 
 #include <thread>
 #include <vector>

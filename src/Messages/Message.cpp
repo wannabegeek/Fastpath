@@ -5,6 +5,7 @@
 #include <iostream>
 #include "Message.h"
 #include "DataField.h"
+#include "DateTimeField.h"
 
 namespace DCF {
 
@@ -24,9 +25,28 @@ namespace DCF {
         m_keys.clear();
     }
 
+    const bool Message::setSubject(const char *subject) {
+        if (strlen(subject) < std::numeric_limits<uint16_t>::max()) {
+            strcpy(&m_subject[0], subject);
+            return true;
+        }
+
+        return false;
+    }
+
     bool Message::addDataField(const char *field, const byte *value, const size_t size) {
         std::shared_ptr<DataField> e = std::make_shared<DataField>();
         e->set(field, value, size);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (result.second) {
+            m_payload.emplace_back(e);
+        }
+        return result.second;
+    }
+
+    bool Message::addDataField(const char *field, const char *value) {
+        std::shared_ptr<DataField> e = std::make_shared<DataField>();
+        e->set(field, value);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
@@ -38,6 +58,16 @@ namespace DCF {
         msg->m_hasAddressing = false;
         std::shared_ptr<MessageField> e = std::make_shared<MessageField>();
         e->set(field, msg);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (result.second) {
+            m_payload.emplace_back(e);
+        }
+        return result.second;
+    }
+
+    bool Message::addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time) {
+        std::shared_ptr<DateTimeField> e = std::make_shared<DateTimeField>();
+        e->set(field, time);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
@@ -176,6 +206,9 @@ namespace DCF {
                             case StorageType::string:
                             case StorageType::data:
                                 field = std::make_shared<DataField>();
+                                break;
+                            case StorageType::date_time:
+                                field = std::make_shared<DateTimeField>();
                                 break;
                             case StorageType::message:
                                 field = std::make_shared<MessageField>();

@@ -2,27 +2,67 @@ project(TFDCF)
 
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
+INCLUDE(CheckCXXSymbolExists)
 
 CHECK_INCLUDE_FILES(pthread.h HAVE_PTHREAD_H)
 
 CHECK_FUNCTION_EXISTS(pthread_setaffinity_np HAVE_PTHREAD_SETAFFINITY_NP)
 CHECK_FUNCTION_EXISTS(pthread_setname_np HAVE_PTHREAD_SETNAME_NP)
 CHECK_FUNCTION_EXISTS(pthread_getname_np HAVE_PTHREAD_GETNAME_NP)
+CHECK_INCLUDE_FILES (sys/epoll.h HAVE_EPOLL_H)
+CHECK_INCLUDE_FILES (sys/event.h HAVE_EVENT_H)
+CHECK_INCLUDE_FILES (sys/epoll.h HAVE_EPOLL_H)
 
-CONFIGURE_FILE(config.h.in config.h)
+CHECK_FUNCTION_EXISTS(epoll_ctl HAVE_EPOLL)
+CHECK_FUNCTION_EXISTS(kevent HAVE_KEVENT)
+
+check_cxx_symbol_exists(EPOLLET "sys/event.h" HAVE_EPOLLET)
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 
 include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
 set(SOURCE_FILES
-        Message.cpp
-        Message.h
-        Field.h
-        Types.h
-        concurrentqueue.h
-        tfpool.h
-        tfspinlock.h
+        messages/Message.cpp
+        messages/Message.h
+        messages/Field.h
+        messages/StorageTypes.h
+        utils/concurrentqueue.h
+        utils/tfpool.h
+        utils/tfspinlock.h
         Exception.h
         MessageBuffer.h
-        FieldTraits.h MutableByteStorage.cpp MutableByteStorage.h SharedMemoryBuffer.h ByteStorage.cpp ByteStorage.h MessageBuffer.h ScalarField.h DataField.h MessageField.h MessageField.cpp Serializable.h)
+        messages/FieldTraits.h
+        MutableByteStorage.cpp
+        MutableByteStorage.h
+        SharedMemoryBuffer.h
+        ByteStorage.cpp
+        ByteStorage.h
+        MessageBuffer.h
+        messages/ScalarField.h
+        messages/DataField.h
+        messages/MessageField.h
+        messages/MessageField.cpp
+        messages/Serializable.h
+        messages/DateTimeField.h
+        types.h
+        event/Event.h
+        transport/Transport.h
+        event/MessageEvent.h
+        event/Queue.h
+        event/EventManager.h
+        event/EventManager.cpp
+        event/PollManager.h
+        event/EventType.h
+        event/PollManager_epoll.h
+        event/PollManager_kqueue.h
+        event/PollManager_select.h
+        utils/blockingconcurrentqueue.h
+        status.h
+        event/TimerEvent.h
+        event/TimerEvent.cpp
+        event/IOEvent.h
+        event/IOEvent.cpp
+        event/BusySpinQueue.h event/BlockingQueue.h event/InlineQueue.h event/Session.h event/ActionNotifier.cpp event/ActionNotifier.h)
 
 add_library(TFDCF ${SOURCE_FILES})

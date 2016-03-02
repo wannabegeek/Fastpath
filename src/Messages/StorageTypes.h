@@ -2,21 +2,17 @@
 // Created by Tom Fewster on 12/02/2016.
 //
 
-#ifndef TFDCF_TYPES_H
-#define TFDCF_TYPES_H
+#ifndef TFDCF_STORAGETYPES_H
+#define TFDCF_STORAGETYPES_H
 
 #include <cstdint>
 #include <memory>
-
-typedef float float32_t;
-typedef double float64_t;
-
-typedef unsigned char byte;
 
 namespace DCF {
     typedef enum {
         unknown,
         string,
+        date_time,
         boolean,
         uint8,
         uint16,
@@ -44,4 +40,4 @@ namespace DCF {
     using MessageType = std::shared_ptr<Message>;
 }
 
-#endif //TFDCF_TYPES_H
+#endif //TFDCF_STORAGETYPES_H

@@ -12,6 +12,38 @@ namespace DCF {
     private:
         MutableByteStorage m_storage;
         StorageType m_type;
+
+    protected:
+        virtual const bool isEqual(const Field &other) const noexcept override {
+            try {
+                const DataField &f = dynamic_cast<const DataField &>(other);
+                return m_type == f.m_type
+                       && m_storage == f.m_storage;
+            } catch (const std::bad_cast &e) {
+                return false;
+            }
+        }
+
+        virtual std::ostream& output(std::ostream& out) const override {
+            switch (m_type) {
+                case StorageType::string: {
+                    const byte *data;
+                    const size_t size = m_storage.bytes(&data);
+                    out << m_identifier << ":string=" << std::string(reinterpret_cast<const char *>(data), size - 1); // -1 for NULL
+                    break;
+                }
+                case StorageType::data: {
+                    out << m_identifier << ":opaque=" << "[data of " << m_storage.length() << " bytes]";
+                    break;
+                }
+                default:
+                    // we can't handle any other message type
+                    break;
+            }
+
+            return out;
+        }
+
     public:
         const StorageType type() const noexcept override { return m_type; }
         const size_t size() const noexcept override { return m_storage.length(); }
@@ -48,12 +80,6 @@ namespace DCF {
             return r;
         }
 
-        const bool operator==(const DataField &other) const {
-            return Field::operator==(other)
-                    && m_type == other.m_type
-                    && m_storage == other.m_storage;
-        }
-
         const size_t encode(MessageBuffer &buffer) noexcept override {
             byte *b = buffer.allocate(MsgField::size());
 
@@ -83,11 +109,11 @@ namespace DCF {
                 const size_t size = readScalar<MsgField::data_length>(buffer.readBytes());
                 buffer.advanceRead(sizeof(MsgField::data_length));
 
-                if (buffer.length() >= MsgField::size() + identifier_length) {
+                if (buffer.remainingReadLength() >= identifier_length) {
                     memcpy(m_identifier, buffer.readBytes(), identifier_length);
                     m_identifier[identifier_length] = '\0';
                     buffer.advanceRead(identifier_length);
-                    if (buffer.length() >= MsgField::size() + identifier_length + size) {
+                    if (buffer.remainingReadLength() >= size) {
                         m_storage.setData(buffer.readBytes(), size);
                         buffer.advanceRead(size);
                         return true;
@@ -96,26 +122,6 @@ namespace DCF {
             }
 
             return false;
-        }
-
-        virtual std::ostream& output(std::ostream& out) const override {
-            switch (m_type) {
-                case StorageType::string: {
-                    const byte *data;
-                    const size_t size = m_storage.bytes(&data);
-                    out << m_identifier << ":string=" << std::string(reinterpret_cast<const char *>(data), size - 1); // -1 for NULL
-                    break;
-                }
-                case StorageType::data: {
-                    out << m_identifier << ":opaque=" << "[data of " << m_storage.length() << " bytes]";
-                    break;
-                }
-                default:
-                    // we can't handle any other message type
-                    break;
-            }
-
-            return out;
         }
     };
 }

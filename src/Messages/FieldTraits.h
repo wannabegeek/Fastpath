@@ -8,7 +8,8 @@
 #include <cstdint>
 #include <iosfwd>
 
-#include "Types.h"
+#include "StorageTypes.h"
+#include "types.h"
 
 namespace DCF {
 

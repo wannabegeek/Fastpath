@@ -22,8 +22,8 @@ add_subdirectory(${GTEST_SRC_DIR})
 
 add_executable(tests
         MessageTests.cpp
-        ElementTests.cpp
-        MessageBufferTests.cpp ByteStorageTests.cpp MutableByteStorageTests.cpp)
+        FieldTests.cpp
+        MessageBufferTests.cpp ByteStorageTests.cpp MutableByteStorageTests.cpp EventTests.cpp SessionTests.cpp)
 
 target_link_libraries(tests TFDCF ${GTEST_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 

@@ -3,8 +3,8 @@
 //
 
 #include <chrono>
-#include <Message.h>
-#include <tfpool.h>
+#include <Messages/Message.h>
+#include <Utils/tfpool.h>
 
 template<typename T = std::chrono::milliseconds> struct measure {
     template<typename F, typename ...Args> static typename T::rep execution(F&& func, Args&&... args) {
@@ -33,9 +33,6 @@ int main(int argc, char *argv[])
             msg->addScalarField("TEST", t);
             msg->addDataField("Name", "Tom");
             msg->addDataField("Name", "Zac");
-//            msg.addScalarField(1, t);
-//            msg.addDataField(2, "Tom");
-//            msg.addDataField(3, "Zac");
 
             const size_t encoded_len = msg->encode(buffer);
             messages.emplace_back(std::move(msg));

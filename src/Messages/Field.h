@@ -10,7 +10,7 @@
 #include <type_traits>
 #include <boost/any.hpp>
 #include <iostream>
-#include "Types.h"
+#include "StorageTypes.h"
 #include "FieldTraits.h"
 #include "MessageBuffer.h"
 #include "MutableByteStorage.h"
@@ -29,6 +29,8 @@ namespace DCF {
     class Field : public Serializable {
     protected:
         char m_identifier[256];
+        virtual std::ostream& output(std::ostream& out) const = 0;
+        virtual const bool isEqual(const Field &other) const = 0;
     public:
         const char *identifier() const { return m_identifier; }
 
@@ -42,10 +44,9 @@ namespace DCF {
             strncpy(m_identifier, identifier, 256);
         }
 
-        virtual std::ostream& output(std::ostream& out) const = 0;
-
         virtual const bool operator==(const Field &other) const {
-            return strcmp(m_identifier, other.m_identifier);
+            return strcmp(m_identifier, other.m_identifier) == 0
+                    && this->isEqual(other);
         }
 
         friend std::ostream &operator<<(std::ostream &out, const Field &field) {

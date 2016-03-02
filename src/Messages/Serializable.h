@@ -5,7 +5,7 @@
 #ifndef TFDCF_SERIALIZABLE_H
 #define TFDCF_SERIALIZABLE_H
 
-#include "Types.h"
+#include "types.h"
 
 namespace DCF {
     template<typename T> T endianScalar(T t) {

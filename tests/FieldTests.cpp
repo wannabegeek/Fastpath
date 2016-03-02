@@ -3,9 +3,10 @@
 //
 
 #include <gtest/gtest.h>
-#include <Message.h>
+#include <Messages/Message.h>
+#include <Messages/DateTimeField.h>
 
-TEST(Elements, CreateString) {
+TEST(Field, CreateString) {
 
     // set the string as a char * &
     const char *b = "fgsg";
@@ -20,11 +21,11 @@ TEST(Elements, CreateString) {
     e4.set("0", b4);
     ASSERT_EQ(e4.type(), DCF::StorageType::string);
     const byte *result4 = nullptr;
-    ASSERT_EQ(5, e4.get(&result4));
+    ASSERT_EQ(5u, e4.get(&result4));
     ASSERT_STREQ(b4, reinterpret_cast<const char *>(result4));
 }
 
-TEST(Elements, CreateInt32) {
+TEST(Field, CreateInt32) {
     DCF::ScalarField e;
     int32_t t = 42;
     e.set("0", t);
@@ -32,7 +33,7 @@ TEST(Elements, CreateInt32) {
     ASSERT_EQ(t, e.get<int32_t>());
 }
 
-TEST(Elements, CreateInt64) {
+TEST(Field, CreateInt64) {
     DCF::ScalarField e;
     int64_t t = 42;
     e.set("0", t);
@@ -40,7 +41,7 @@ TEST(Elements, CreateInt64) {
     ASSERT_EQ(t, e.get<int64_t>());
 }
 
-TEST(Elements, CreateFloat32) {
+TEST(Field, CreateFloat32) {
     DCF::ScalarField e;
     float32_t t = 42.999;
     e.set("0", t);
@@ -48,7 +49,7 @@ TEST(Elements, CreateFloat32) {
     ASSERT_FLOAT_EQ(t, e.get<float32_t>());
 }
 
-TEST(Elements, CreateFloat64) {
+TEST(Field, CreateFloat64) {
     DCF::ScalarField e;
     float64_t t = 42.999;
     e.set("0", t);
@@ -56,8 +57,16 @@ TEST(Elements, CreateFloat64) {
     ASSERT_FLOAT_EQ(t, e.get<float64_t>());
 }
 
+TEST(Field, CreateDateTime) {
+    DCF::DateTimeField e;
+    std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+    e.set("time", time);
+    ASSERT_EQ(e.type(), DCF::StorageType::date_time);
+    ASSERT_EQ(time, e.get());
+}
 
-TEST(Elements, CreateData) {
+
+TEST(Field, CreateData) {
     const char *temp = "Hello world";
 
     DCF::DataField e;
@@ -70,7 +79,7 @@ TEST(Elements, CreateData) {
     ASSERT_EQ(0, strncmp(reinterpret_cast<const char *>(result), temp, strlen(temp)));
 }
 
-TEST(Elements, SerializeString) {
+TEST(Field, SerializeString) {
     const char *temp = "Hello world";
     DCF::DataField in;
     in.set("0", reinterpret_cast<const byte *>(temp), strlen(temp));
@@ -87,7 +96,7 @@ TEST(Elements, SerializeString) {
     EXPECT_EQ(in, out);
 }
 
-TEST(Elements, SerializeScalar) {
+TEST(Field, SerializeScalar) {
     const uint32_t temp = 1234567890u;
     DCF::ScalarField in;
     in.set("0", temp);
@@ -97,6 +106,23 @@ TEST(Elements, SerializeScalar) {
     EXPECT_EQ(len_in, buffer.length());
 
     DCF::ScalarField out;
+    const DCF::ByteStorage &b = buffer.byteStorage();
+    EXPECT_TRUE(out.decode(b));
+    EXPECT_EQ(len_in, b.bytesRead());
+
+    EXPECT_EQ(in, out);
+}
+
+TEST(Field, SerializeDateTime) {
+    std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+    DCF::DateTimeField in;
+    in.set("0", time);
+
+    DCF::MessageBuffer buffer(256);
+    const size_t len_in = in.encode(buffer);
+    EXPECT_EQ(len_in, buffer.length());
+
+    DCF::DateTimeField out;
     const DCF::ByteStorage &b = buffer.byteStorage();
     EXPECT_TRUE(out.decode(b));
     EXPECT_EQ(len_in, b.bytesRead());

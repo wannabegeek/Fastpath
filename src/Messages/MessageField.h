@@ -6,13 +6,26 @@
 #define TFDCF_MESSAGEFIELD_H
 
 #include "Field.h"
-#include "Types.h"
+#include "StorageTypes.h"
 
 namespace DCF {
 
     class MessageField: public Field {
     private:
         MessageType m_msg;
+
+    protected:
+        virtual const bool isEqual(const Field &other) const override {
+            try {
+                const MessageField &f = dynamic_cast<const MessageField &>(other);
+                return m_msg == f.m_msg;
+            } catch (const std::bad_cast &e) {
+                return false;
+            }
+        }
+
+        virtual std::ostream& output(std::ostream& out) const override;
+
     public:
         const StorageType type() const noexcept override { return StorageType::message; }
         const size_t size() const noexcept override { return 0; }
@@ -49,8 +62,6 @@ namespace DCF {
 //            return FieldHeaderSize() + size;
             return 0;
         }
-
-        virtual std::ostream& output(std::ostream& out) const override;
     };
 }
 #endif //TFDCF_MESSAGEFIELD_H

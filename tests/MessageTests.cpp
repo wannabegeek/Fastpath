@@ -3,7 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include <Message.h>
+#include <Messages/Message.h>
 
 TEST(Message, SetSubject) {
     DCF::Message msg;
@@ -24,12 +24,12 @@ TEST(Message, AddStringField) {
     const char * v = nullptr;
     size_t len = 0;
     EXPECT_TRUE(msg.getDataField("1234", &v, len));
-    EXPECT_EQ(5, len);
+    EXPECT_EQ(5u, len);
     EXPECT_STREQ("TEST", v);
 
     msg.addDataField("TEST", "AGAIN");
     ASSERT_TRUE(msg.getDataField("TEST", &v, len));
-    ASSERT_EQ(6, len);
+    ASSERT_EQ(6u, len);
     ASSERT_STREQ("AGAIN", v);
 }
 
@@ -146,7 +146,7 @@ TEST(Message, MultiDecode) {
     std::cout << "Msg 2: " << in2 << std::endl;
 
     DCF::Message out;
-    size_t offset = 0;
+//    size_t offset = 0;
 //    while (buffer.length() != 0 && (offset = out.decode(buffer.byteStorage())) != 0) {
 //        std::cout << "Decoded: " << out << std::endl;
 //        out.clear();
@@ -168,8 +168,9 @@ TEST(Message, MultiPartialDecode) {
     for (int i = 0; i < 10; i++) {
         sprintf(subject, "SAMPLE.MSG.%i", i);
         in1.setSubject(subject);
-        in1.addScalarField("id", i);
+        EXPECT_TRUE( in1.addScalarField("id", i));
         in1.encode(buffer);
+        in1.clear();
     }
 
     std::cout << buffer << std::endl;
@@ -177,12 +178,11 @@ TEST(Message, MultiPartialDecode) {
     const byte *bytes = nullptr;
     size_t len = 0;
     DCF::Message out;
-    for (int i = 0; i < buffer.length(); i++) {
+    for (size_t i = 0; i < buffer.length(); i++) {
         len += 10;
         buffer.bytes(&bytes);
         DCF::ByteStorage storage(bytes, std::min(len, buffer.length()));
 
-        size_t offset;
         if (out.decode(storage)) {
             buffer.erase_front(storage.bytesRead());
             std::cout << "Msg decoded: " << out << std::endl;

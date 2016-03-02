@@ -25,7 +25,7 @@ namespace tf {
             'T'  // tfLogLevelTrace
     };
 
-    static const tf::setcolor color[] {
+    static const tf::setcolor colors[] {
             tf::setcolor(tf::color::red, tf::attr::bright),
             tf::setcolor(tf::color::yellow, tf::attr::normal),
             tf::setcolor(tf::color::white, tf::attr::normal),
@@ -70,24 +70,24 @@ namespace tf {
             if (value && m_supports_colors) {
                 m_outputfn = [&](const logger::level &level, const char *prefix, const std::string &msg) {
                     if (m_log_thread_id) {
-                        m_outputStream << description[level] << tf::setcolor(tf::color::yellow) << prefix << tf::setcolor(tf::color::green) << std::this_thread::get_id() << ": " << color[level] << msg << tf::setcolor(tf::color::normal) << std::endl;
+                        m_output_stream << description[level] << tf::setcolor(tf::color::yellow) << prefix << tf::setcolor(tf::color::green) << std::this_thread::get_id() << ": " << colors[level] << msg << tf::setcolor(tf::color::normal) << std::endl;
                     } else {
-                        m_outputStream << description[level] << tf::setcolor(tf::color::yellow) << prefix << color[level] << msg << tf::setcolor(tf::color::normal) << std::endl;
+                        m_output_stream << description[level] << tf::setcolor(tf::color::yellow) << prefix << colors[level] << msg << tf::setcolor(tf::color::normal) << std::endl;
                     }
                 };;
             } else {
                 m_outputfn = [&](const logger::level &level, const char *prefix, const std::string &msg) {
                     if (m_log_thread_id) {
-                        m_outputStream << description[level] << prefix << std::this_thread::get_id() << ": " << msg << std::endl;
+                        m_output_stream << description[level] << prefix << std::this_thread::get_id() << ": " << msg << std::endl;
                     } else {
-                        m_outputStream << description[level] << prefix << msg << std::endl;
+                        m_output_stream << description[level] << prefix << msg << std::endl;
                     }
                 };;
             }
         }
 
         void log_thread_id(const bool value) {
-            m_logThreadId = value;
+            m_log_thread_id = value;
         }
 
         inline void log(const logger::level &level, const std::string &msg) noexcept {
@@ -116,7 +116,7 @@ namespace tf {
 }
 
 #define LOG(level, msg) { \
-	if (loglevel <= tf::logger::instance().logLevel) { \
+	if (level <= tf::logger::instance().logLevel) { \
 		std::ostringstream mess; \
 		mess << msg; \
 		tf::logger::instance().log(level, mess.str()); \
