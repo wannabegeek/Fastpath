@@ -6,3 +6,7 @@
 
 #cmakedefine HAVE_EPOLL 1
 #cmakedefine HAVE_KEVENT 1
+
+#cmakedefine HAVE_NOSIGNAL 1
+#cmakedefine HAVE_NOSIGPIPE 1
+#cmakedefine HAVE_IPTOS_LOWDELAY 1

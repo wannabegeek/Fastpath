@@ -9,7 +9,6 @@
 #ifndef TFFIXEngine_TFEventPollManager_epoll_h
 #define TFFIXEngine_TFEventPollManager_epoll_h
 
-#include "EventManager.h"
 #include "EventType.h"
 #include "utils/logger.h"
 

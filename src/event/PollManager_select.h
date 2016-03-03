@@ -21,7 +21,6 @@
 #include <array>
 
 #include <iostream>
-#include "EventManager.h"
 #include "EventType.h"
 
 #ifdef __APPLE__
