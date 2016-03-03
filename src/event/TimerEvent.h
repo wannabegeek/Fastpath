@@ -52,6 +52,7 @@ namespace  DCF {
 
         mutable TimeoutState m_timeoutState = TIMEOUTSTATE_NONE;
 		std::chrono::microseconds m_timeout;
+		// TODO: this needs to be atomic, since it can be updated by the event loop and the client side
 		mutable std::chrono::microseconds m_timeLeft;
 		mutable std::chrono::steady_clock::time_point m_lastTime;
 		bool pendingRemoval = false;
@@ -73,11 +74,12 @@ namespace  DCF {
 //		}
 
 		~TimerEvent() {
-            m_queue->__unregisterEvent(*this);
+			m_queue->__unregisterEvent(*this);
         }
 
         void reset() {
 			m_timeLeft = m_timeout;
+			m_queue->__notifyEventManager();
 		}
 
 		void setTimeout(const std::chrono::microseconds &timeout) {

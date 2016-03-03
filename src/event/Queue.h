@@ -23,14 +23,18 @@ namespace DCF {
         virtual const size_t eventsInQueue() const noexcept = 0;
         virtual const bool __enqueue(queue_value_type &event) noexcept = 0;
 
+        inline void __notifyEventManager() noexcept {
+            Session::instance().m_eventManager.notify();
+        }
+
         template <typename T> void __registerEvent(T &evt) {
             Session::instance().m_eventManager.registerHandler(evt);
-            Session::instance().m_eventManager.notify();
+            this->__notifyEventManager();
         }
 
         template <typename T> void __unregisterEvent(T &evt) {
             Session::instance().m_eventManager.unregisterHandler(evt);
-            Session::instance().m_eventManager.notify();
+            this->__notifyEventManager();
         }
     };
 }

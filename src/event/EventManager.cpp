@@ -25,6 +25,10 @@
 #include <cstring>
 #include <array>
 #include <vector>
+#include <thread>
+#include <condition_variable>
+#include <mutex>
+
 
 #ifdef HAVE_SYS_EVENTFD_H
 #	include <sys/eventfd.h>

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
     PoolType pool(iterations);
 
-    std::vector<PoolType::ptr_type> messages(iterations);
+    std::vector<PoolType::ptr_type> encoded_messages(iterations);
     DCF::MessageBuffer buffer(1000000);
 
     std::cout << "encode x" << iterations << ": " << measure<std::chrono::microseconds>::execution([&]() {
@@ -35,9 +35,22 @@ int main(int argc, char *argv[])
             msg->addDataField("Name", "Zac");
 
             const size_t encoded_len = msg->encode(buffer);
-            messages.emplace_back(std::move(msg));
-//            msg.clear();
-            buffer.clear();
+            encoded_messages.emplace_back(std::move(msg));
+        }
+    }) / static_cast<float>(iterations) << "us" << std::endl;
+
+    std::vector<PoolType::ptr_type> decoded_messages(iterations);
+    std::cout << "decode x" << iterations << ": " << measure<std::chrono::microseconds>::execution([&]() {
+        for (int i = 0; i < iterations + 1; i++) {
+            PoolType::ptr_type msg = pool.allocate_ptr();
+
+            const DCF::ByteStorage &storage = std::move(buffer.byteStorage());
+            if (!msg->decode(storage)) {
+                break;
+            }
+            buffer.erase_front(storage.bytesRead());
+
+            decoded_messages.emplace_back(std::move(msg));
         }
     }) / static_cast<float>(iterations) << "us" << std::endl;
 
