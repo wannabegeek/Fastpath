@@ -90,31 +90,37 @@ namespace DCF {
 
     const bool Message::operator==(const Message &other) const {
         return m_flags == other.m_flags
-                && strncmp(m_subject, other.m_subject, std::numeric_limits<uint16_t>::max()) == 0;
-
-        // TODO: this isn't complete
-//                && std::equal(m_payload.begin(), m_payload.end(), other.m_payload.begin(), [](const PayloadContainer::value_type& item1, const PayloadContainer::value_type& item2) -> bool {
-//            Field &f1 = *item1;
-//            Field &f2 = *item2;
-//                        return f1 == f2;
-//                    });
+                && strncmp(m_subject, other.m_subject, std::numeric_limits<uint16_t>::max()) == 0
+                && std::equal(m_payload.begin(), m_payload.end(), other.m_payload.begin(), [](const PayloadContainer::value_type& item1, const PayloadContainer::value_type& item2) -> bool {
+                        return *item1 == *item2;
+                });
     }
 
     // from Encoder
     const size_t Message::encodeAddressing(MessageBuffer &buffer) noexcept {
         byte *b = buffer.allocate(MsgAddressing::size());
-        size_t msgLength = MsgAddressing::size();
+        size_t addressing_size = MsgAddressing::size();
 
         b = writeScalar(b, static_cast<MsgAddressing::addressing_start>(addressing_flag));
+        b = writeScalar(b, static_cast<MsgAddressing::msg_length>(0));
         b = writeScalar(b, static_cast<MsgAddressing::flags>(this->flags()));
         b += sizeof(MsgAddressing::reserved);
         const size_t subject_length = strlen(this->subject());
         b = writeScalar(b, static_cast<MsgAddressing::subject_length>(subject_length));
 
         buffer.append(reinterpret_cast<const byte *>(this->subject()), subject_length);
-        msgLength += subject_length;
+        addressing_size += subject_length;
 
-        return msgLength;
+        return addressing_size;
+    }
+
+    const void Message::encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) noexcept {
+        if (m_hasAddressing) {
+            const byte *b = nullptr;
+            buffer.bytes(&b);
+            b += sizeof(MsgAddressing::addressing_start);
+            writeScalar(const_cast<byte *>(b), static_cast<MsgAddressing::msg_length>(length - MsgAddressing::msg_length_offset()));
+        }
     }
 
     const size_t Message::encode(MessageBuffer &buffer) noexcept {
@@ -127,8 +133,6 @@ namespace DCF {
         msgLength += MsgHeader::size();
 
         b = writeScalar(b, static_cast<MsgHeader::header_start>(body_flag));
-        byte *body_length_offset = b;
-        b += sizeof(MsgHeader::body_length);
         b = writeScalar(b, static_cast<MsgHeader::field_count>(this->size()));
 //        b += sizeof(MsgHeader::field_count);
 
@@ -139,7 +143,7 @@ namespace DCF {
         }
 
         const size_t total_len = msgLength + body_length;
-        writeScalar(body_length_offset, static_cast<MsgHeader::body_length>(body_length));
+        encodeMsgLength(buffer, total_len);
         return total_len;
     }
 
@@ -150,20 +154,22 @@ namespace DCF {
             buffer.advanceRead(sizeof(MsgAddressing::addressing_start));
             assert(chk == addressing_flag);
 
-            m_flags = readScalar<MsgAddressing::flags>(buffer.readBytes());
-            buffer.advanceRead(sizeof(MsgAddressing::flags));
+            MsgAddressing::msg_length msg_length = readScalar<MsgAddressing::msg_length>(buffer.readBytes());
+            if (buffer.remainingReadLength() >= msg_length) {
+                buffer.advanceRead(sizeof(MsgAddressing::msg_length));
+                m_flags = readScalar<MsgAddressing::flags>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgAddressing::flags));
 
-            buffer.advanceRead(sizeof(MsgAddressing::reserved));
+                buffer.advanceRead(sizeof(MsgAddressing::reserved));
 
-            const size_t subject_length = readScalar<MsgAddressing::subject_length>(buffer.readBytes());
-            buffer.advanceRead(sizeof(MsgAddressing::subject_length));
+                const size_t subject_length = readScalar<MsgAddressing::subject_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgAddressing::subject_length));
 
-            if (buffer.remainingReadLength() >= subject_length) {
                 const char *subject = reinterpret_cast<const char *>(buffer.readBytes());
                 memcpy(m_subject, subject, subject_length);
                 m_subject[subject_length] = '\0';
                 buffer.advanceRead(subject_length);
-                return false;
+                return true;
             }
         }
 
@@ -179,7 +185,7 @@ namespace DCF {
             const byte *bytes = buffer.readBytes();
 
             if (bytes[0] == addressing_flag) {
-                if (decodeAddressing(buffer)) {
+                if (!decodeAddressing(buffer)) {
                     // We didn't have enough data to read the header
                     buffer.resetRead();
                     return false;
@@ -192,38 +198,34 @@ namespace DCF {
                 buffer.advanceRead(sizeof(MsgHeader::header_start));
                 assert(chk == body_flag);
 
-                const MsgHeader::body_length body_length = readScalar<MsgHeader::body_length>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgHeader::body_length));
                 const MsgHeader::field_count field_count = readScalar<MsgHeader::field_count>(buffer.readBytes());
                 buffer.advanceRead(sizeof(MsgHeader::field_count));
 
-                if (buffer.remainingReadLength() >= body_length) {
-                    for (size_t i = 0; i < field_count; i++) {
+                for (size_t i = 0; i < field_count; i++) {
 
-                        const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
-                        std::shared_ptr<Field> field;
-                        switch (type) {
-                            case StorageType::string:
-                            case StorageType::data:
-                                field = std::make_shared<DataField>();
-                                break;
-                            case StorageType::date_time:
-                                field = std::make_shared<DateTimeField>();
-                                break;
-                            case StorageType::message:
-                                field = std::make_shared<MessageField>();
-                                break;
-                            default:
-                                field = std::make_shared<ScalarField>();
-                                break;
-                        }
-
-                        if (!field->decode(buffer)) {
-                            return false;
-                        }
-                        m_payload.emplace_back(field);
-                        m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));
+                    const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
+                    std::shared_ptr<Field> field;
+                    switch (type) {
+                        case StorageType::string:
+                        case StorageType::data:
+                            field = std::make_shared<DataField>();
+                            break;
+                        case StorageType::date_time:
+                            field = std::make_shared<DateTimeField>();
+                            break;
+                        case StorageType::message:
+                            field = std::make_shared<MessageField>();
+                            break;
+                        default:
+                            field = std::make_shared<ScalarField>();
+                            break;
                     }
+
+                    if (!field->decode(buffer)) {
+                        return false;
+                    }
+                    m_payload.emplace_back(field);
+                    m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));
 
                     success = true;
                 }

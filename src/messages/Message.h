@@ -90,6 +90,7 @@ namespace DCF {
         static const DataStorageType getStorageType(const StorageType type);
 
         const size_t encodeAddressing(MessageBuffer &buffer) noexcept;
+        const void encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) noexcept;
         const bool decodeAddressing(const ByteStorage &buffer) noexcept;
 
     public:

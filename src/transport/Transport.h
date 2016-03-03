@@ -7,14 +7,25 @@
 
 #include <messages/StorageTypes.h>
 #include <chrono>
+#include <string>
+#include <status.h>
 
 namespace DCF {
     class Transport {
+        const std::string m_description;
     public:
-        virtual ~Transport() {};
+        virtual ~Transport(const char *description) : m_description(description) {};
 
-        virtual void sendMessage(const MessageType &msg) = 0;
-        virtual void sendMessageWithResponse(const MessageType &msg, MessageType &msg, std::chrono::duration<std::chrono::milliseconds> &timeout) = 0;
+        virtual status sendMessage(const MessageType &msg) = 0;
+        virtual status sendMessageWithResponse(const MessageType &request, MessageType &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) = 0;
+
+        virtual status sendReply(const MessageType &reply, const Message &request) = 0;
+
+        virtual const bool valid() const noexcept = 0;
+
+        const char *description() const noexcept {
+            return m_description.c_str();
+        }
     };
 }
 
