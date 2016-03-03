@@ -18,6 +18,7 @@ install:
   - echo ${CXX}
   - ${CXX} --version
   - ${CXX} -v
+
 addons:
   apt:
     # List of whitelisted in travis packages for ubuntu-precise can be found here:
@@ -35,15 +36,21 @@ addons:
 os:
   - linux
   - osx
+
 language: cpp
 compiler:
   - g++
   - clang
+
 script: ./travis.sh
 env:
+
   matrix:
     - BUILD_TYPE=Debug CXX_FLAGS=-std=c++14
     - BUILD_TYPE=Release CXX_FLAGS=-std=c++14
+
 notifications:
   email: false
+  slack: veloxcapital:YLypZanCflsuwci44VOggtGS
+
 sudo: false
