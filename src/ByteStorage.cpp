@@ -7,7 +7,7 @@
 #include <ostream>
 #include <iomanip>
 #include "ByteStorage.h"
-#include "Types.h"
+#include "types.h"
 
 namespace DCF {
     ByteStorage::ByteStorage(const size_t allocation) : m_storedLength(0), m_no_copy(false), m_read_ptr(m_storage.first) {

@@ -7,7 +7,7 @@
 
 #include <ostream>
 #include <memory>
-#include "Types.h"
+#include "types.h"
 
 namespace DCF {
     class ByteStorage {
