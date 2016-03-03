@@ -79,7 +79,7 @@ namespace DCF {
             return m_queue->__enqueue(dispatcher);
         };
     };
-};
+}
 
 //class SigIOCallback;
 //class DCQueue;
