@@ -31,6 +31,8 @@
 #endif
 
 #include "EventType.h"
+#include "TimerEvent.h"
+#include "IOEvent.h"
 
 namespace DCF {
 	bool isFileDescriptorValid(int fd) {
@@ -141,18 +143,20 @@ namespace DCF {
 	}
 
 	void EventManager::serviceEvent(const EventPollElement &event) {
-		m_servicingEvents = true;
-		for(IOEvent *handler : m_handlers) {
-			if (handler->fileDescriptor() == m_actionNotifier.read_handle()) {
-				m_actionNotifier.reset();
-			} else if (handler->fileDescriptor() == event.fd) {
-				const int events = handler->eventTypes() & event.filter;
-				if (events != EventType::NONE) {
-					handler->notify(static_cast<EventType>(events));
-				}
-			}
-		}
-		m_servicingEvents = false;
+        if (event.fd == m_actionNotifier.read_handle()) {
+            m_actionNotifier.reset();
+        } else {
+            m_servicingEvents = true;
+            for (IOEvent *handler : m_handlers) {
+                if (handler->fileDescriptor() == event.fd) {
+                    const int events = handler->eventTypes() & event.filter;
+                    if (events != EventType::NONE) {
+                        handler->__notify(static_cast<EventType>(events));
+                    }
+                }
+            }
+            m_servicingEvents = false;
+        }
 	}
 
 	void EventManager::serviceTimers() {
@@ -168,7 +172,7 @@ namespace DCF {
 
 				if (handler->m_timeLeft <= std::chrono::microseconds(0)) {
                     handler->m_timeLeft = handler->m_timeout;
-					handler->notify(EventType::NONE);    //Execute the handler
+					handler->__notify(EventType::NONE);    //Execute the handler
 				}
 			}
 		}

@@ -5,6 +5,8 @@
 #include <chrono>
 #include <unistd.h>
 #include <event/EventType.h>
+#include <event/IOEvent.h>
+#include <event/TimerEvent.h>
 #include <event/InlineQueue.h>
 
 TEST(EventManager, SimpleTimeout) {

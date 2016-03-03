@@ -47,7 +47,12 @@ namespace DCF {
 	public:
 		IOEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(const IOEvent *, const EventType)> &callback)
 				: Event(queue), m_fd(fd), m_eventTypes(eventType), m_callback(callback) {
+            m_queue->__registerEvent(*this);
 		};
+
+        ~IOEvent() {
+            m_queue->__unregisterEvent(*this);
+        }
 
         inline const int fileDescriptor() const noexcept {
             return m_fd;
@@ -66,9 +71,9 @@ namespace DCF {
 			}
 		}
 
-        const bool notify(const EventType &eventType) noexcept override {
+        const bool __notify(const EventType &eventType) noexcept override {
             std::function<void ()> dispatcher = std::bind(m_callback, static_cast<const DCF::IOEvent *>(this), eventType);
-            return m_queue->enqueue(dispatcher);
+            return m_queue->__enqueue(dispatcher);
         };
     };
 };

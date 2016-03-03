@@ -43,7 +43,7 @@ namespace DCF {
             return m_queue.size_approx();
         }
 
-        const bool enqueue(queue_value_type &event) noexcept override {
+        const bool __enqueue(queue_value_type &event) noexcept override {
             return m_queue.try_enqueue(event);
         }
     };

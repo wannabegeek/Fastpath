@@ -8,6 +8,7 @@
 #include <functional>
 #include "Queue.h"
 #include "EventType.h"
+#include "Session.h"
 
 namespace DCF {
     class Queue;
@@ -23,13 +24,15 @@ namespace DCF {
         Event(Queue *queue) : m_queue(queue) {
         }
 
-//        SessionEventRegistration(SessionEventRegistration &&other) = delete;
+        Event(Event &&other) : m_queue(other.m_queue) {
+        }
+
         Event(const Event &other) = delete;
-//        SessionEventRegistration &operator=(const SessionEventRegistration &) = delete;
+        Event& operator=(Event const&) = delete;
 
         virtual ~Event() {}
 
-        virtual const bool notify(const EventType &eventType) noexcept = 0;
+        virtual const bool __notify(const EventType &eventType) noexcept = 0;
 
         bool operator==(const Event &other) {
             return this->isEqual(other);

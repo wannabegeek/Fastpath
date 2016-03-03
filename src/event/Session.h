@@ -38,6 +38,8 @@ namespace DCF {
                 while (!m_shutdown) {
                     m_eventManager.waitForEvent();
                 }
+
+                m_shutdown = false;
             });
 
             condition.wait(lock);
@@ -56,6 +58,7 @@ namespace DCF {
                 m_eventLoop.join();
             }
 
+            m_started = false;
             return OK;
         }
 
@@ -72,6 +75,8 @@ namespace DCF {
         static status destroy() {
             return Session::instance().stop();
         }
+
+        friend class Queue;
     };
 }
 

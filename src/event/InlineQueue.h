@@ -34,7 +34,7 @@ namespace DCF {
             return 0;
         }
 
-        const bool enqueue(queue_value_type &dispatcher) noexcept override {
+        const bool __enqueue(queue_value_type &dispatcher) noexcept override {
             dispatcher();
             return true;
         }

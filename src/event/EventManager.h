@@ -10,8 +10,6 @@
 #define __TFFIXEngine__TFSessionEventManager__
 
 #include "PollManager.h"
-#include "IOEvent.h"
-#include "TimerEvent.h"
 #include "ActionNotifier.h"
 
 #include <vector>
@@ -25,6 +23,9 @@
 #include <type_traits>
 
 namespace DCF {
+    class TimerEvent;
+    class IOEvent;
+    
 	class EventManager {
 	private:
 		EventManager(const EventManager &) = delete;

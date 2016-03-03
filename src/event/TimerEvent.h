@@ -32,6 +32,7 @@ class DCQueue;
 
 #include <chrono>
 #include "Event.h"
+#include "Session.h"
 #include "status.h"
 
 namespace  DCF {
@@ -60,9 +61,14 @@ namespace  DCF {
     public:
 		TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(const TimerEvent *)> &callback)
 				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
+            m_queue->__registerEvent(*this);
 		}
 
-		void reset() {
+        ~TimerEvent() {
+            m_queue->__unregisterEvent(*this);
+        }
+
+        void reset() {
 			m_timeLeft = m_timeout;
 		}
 
@@ -75,9 +81,9 @@ namespace  DCF {
 			}
 		}
 
-        const bool notify(const EventType &eventType) noexcept override {
+        const bool __notify(const EventType &eventType) noexcept override {
             std::function<void ()> dispatcher = std::bind(m_callback, static_cast<const DCF::TimerEvent *>(this));
-            return m_queue->enqueue(dispatcher);
+            return m_queue->__enqueue(dispatcher);
         };
     };
 }

@@ -36,11 +36,21 @@ namespace DCF {
             dispatcher();
         }
 
+        void dispatch(const std::chrono::microseconds &timeout) override {
+            queue_value_type dispatcher;
+            if (!m_queue.try_dequeue(dispatcher)) {
+                // TODO: create a TimerEvent and add to the dispatch loop
+                while (!m_queue.try_dequeue(dispatcher));
+            }
+            // we may have exited due to the timer firing, but hey dispatch it anyway
+            dispatcher();
+        }
+
         const size_t eventsInQueue() const noexcept override {
             return m_queue.size_approx();
         }
 
-        const bool enqueue(queue_value_type &event) noexcept override {
+        const bool __enqueue(queue_value_type &event) noexcept override {
             return m_queue.try_enqueue(event);
         }
     };

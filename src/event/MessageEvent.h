@@ -6,6 +6,7 @@
 #define TFDCF_LISTENER_H
 
 #include <messages/StorageTypes.h>
+#include <transport/Transport.h>
 #include "Event.h"
 
 namespace DCF {
@@ -15,7 +16,7 @@ namespace DCF {
         std::function<void(const MessageEvent *, const MessageType msg)> m_callback;
 
     public:
-        MessageEvent(const Queue &queue, const char *subject, const std::function<void(const MessageEvent *, const MessageType msg)> &callback) : Event(queue), m_callback(callback) {
+        MessageEvent(const Queue &queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const MessageType msg)> &callback) : Event(queue), m_callback(callback) {
             memcpy(m_subject, subject, std::numeric_limits<uint16_t>::max());
         };
 
