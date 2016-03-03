@@ -67,9 +67,8 @@ TEST(Session, SimpleRead) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         ASSERT_NE(-1, write(fd[1], "x", 1));
     });
-//    queue.dispatch(std::chrono::seconds(5));
+    queue.dispatch(std::chrono::seconds(5));
 
-    queue.dispatch();
     signal.join();
     EXPECT_TRUE(callbackFired);
 

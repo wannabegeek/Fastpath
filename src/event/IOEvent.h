@@ -41,7 +41,7 @@ namespace DCF {
 	private:
 		int m_fd;
 		EventType m_eventTypes;
-		bool pendingRemoval = false;
+		bool m_pendingRemoval = false;
 
 		std::function<void(const IOEvent *, const EventType)> m_callback;
 	public:
@@ -50,7 +50,10 @@ namespace DCF {
             m_queue->__registerEvent(*this);
 		};
 
-        ~IOEvent() {
+		IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes), m_pendingRemoval(other.m_pendingRemoval), m_callback(std::move(other.m_callback)) {
+		}
+
+		~IOEvent() {
             m_queue->__unregisterEvent(*this);
         }
 

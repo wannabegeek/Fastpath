@@ -58,18 +58,31 @@ namespace  DCF {
 
         std::function<void(const TimerEvent *)> m_callback;
 
-    public:
-		TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(const TimerEvent *)> &callback)
+	public:
+		TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(const TimerEvent *)> &callback)
 				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
-            m_queue->__registerEvent(*this);
+			m_queue->__registerEvent(*this);
 		}
 
-        ~TimerEvent() {
+		TimerEvent(TimerEvent &&other) : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)) {
+		}
+
+//		TimerEvent(Queue *queue, const uint64_t &timeout, const std::function<void(const TimerEvent *)> &callback)
+//				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
+//			m_queue->__registerEvent(*this);
+//		}
+
+		~TimerEvent() {
             m_queue->__unregisterEvent(*this);
         }
 
         void reset() {
 			m_timeLeft = m_timeout;
+		}
+
+		void setTimeout(const std::chrono::microseconds &timeout) {
+			m_timeout = timeout;
+			this->reset();
 		}
 
 		const bool isEqual(const Event &other) const noexcept override {

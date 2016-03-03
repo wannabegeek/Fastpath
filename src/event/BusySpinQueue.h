@@ -14,6 +14,7 @@ namespace DCF {
         using QueueType = moodycamel::ConcurrentQueue<queue_value_type>;
 
         QueueType m_queue;
+        std::unique_ptr<TimerEvent> m_timeout;
 
     public:
         BusySpinQueue() : m_queue(10000) {
@@ -36,10 +37,17 @@ namespace DCF {
             dispatcher();
         }
 
-        void dispatch(const std::chrono::microseconds &timeout) override {
+        void dispatch(const std::chrono::milliseconds &timeout) override {
             queue_value_type dispatcher;
             if (!m_queue.try_dequeue(dispatcher)) {
-                // TODO: create a TimerEvent and add to the dispatch loop
+                // Create a TimerEvent and add to the dispatch loop
+                if (m_timeout) {
+                    m_timeout->setTimeout(timeout);
+                } else {
+                    m_timeout = std::make_unique<TimerEvent>(static_cast<BusySpinQueue *>(this), timeout, [](const TimerEvent *) {
+                        // noop - this will cause us to drop out of the dispatch loop
+                    });
+                }
                 while (!m_queue.try_dequeue(dispatcher));
             }
             // we may have exited due to the timer firing, but hey dispatch it anyway

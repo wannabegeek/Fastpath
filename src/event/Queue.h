@@ -18,7 +18,7 @@ namespace DCF {
         virtual ~Queue() {}
 
         virtual void dispatch() = 0;
-        virtual void dispatch(const std::chrono::microseconds &timeout) = 0;
+        virtual void dispatch(const std::chrono::milliseconds &timeout) = 0;
         virtual const bool try_dispatch() = 0;
         virtual const size_t eventsInQueue() const noexcept = 0;
         virtual const bool __enqueue(queue_value_type &event) noexcept = 0;

@@ -26,7 +26,7 @@ namespace DCF {
             m_eventManager.waitForEvent();
         }
 
-        void dispatch(const std::chrono::microseconds &timeout) override {
+        void dispatch(const std::chrono::milliseconds &timeout) override {
             m_eventManager.waitForEvent(timeout);
         }
 
