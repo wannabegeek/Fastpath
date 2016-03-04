@@ -14,7 +14,8 @@ namespace DCF {
     class Transport {
         const std::string m_description;
     public:
-        virtual ~Transport(const char *description) : m_description(description) {};
+        Transport(const char *description) : m_description(description) {};
+        virtual ~Transport() {}
 
         virtual status sendMessage(const MessageType &msg) = 0;
         virtual status sendMessageWithResponse(const MessageType &request, MessageType &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) = 0;
