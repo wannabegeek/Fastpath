@@ -39,4 +39,10 @@ TEST(URL, ParseNoProtocol) {
     EXPECT_STREQ("localhost", url.host().c_str());
     EXPECT_STREQ("1234", url.path().c_str());
     EXPECT_STREQ("", url.query().c_str());
+
+    DCF::url url2("localhost:1234/test");
+    EXPECT_STREQ("", url2.protocol().c_str());
+    EXPECT_STREQ("localhost", url2.host().c_str());
+    EXPECT_STREQ("1234", url2.path().c_str());
+    EXPECT_STREQ("/test", url2.query().c_str());
 }
