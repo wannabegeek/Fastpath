@@ -18,6 +18,9 @@ namespace DCF {
         // This should have the format dcf://localhost:1234
         TCPTransport(const char *url, const char *description);
 
+        TCPTransport(const TCPTransport &) = delete;
+        TCPTransport &operator=(const TCPTransport &) = delete;
+
         status sendMessage(const MessageType &msg) override;
         status sendMessageWithResponse(const MessageType &request, MessageType &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) override;
         status sendReply(const MessageType &reply, const Message &request) override;
