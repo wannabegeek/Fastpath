@@ -22,7 +22,7 @@ namespace DCF {
             storage_traits::deallocate(m_allocator, m_storage.first, m_storage.second);
             allocateStorage(std::max(length, m_storage.second * 2));
         }
-        memcpy(m_storage.first, data, length);
+        std::copy(data, &data[length], m_storage.first);
         m_storedLength = length;
     }
 
@@ -41,7 +41,7 @@ namespace DCF {
     void MutableByteStorage::append(const byte *buffer, const size_t length) noexcept {
         const size_t current_length = m_storedLength;
         this->increaseLengthBy(length);
-        memcpy(&m_storage.first[current_length], buffer, length);
+        std::copy(buffer, &buffer[length], &m_storage.first[current_length]);
     }
 
     void MutableByteStorage::append(const ByteStorage &src, const size_t length) noexcept {
@@ -50,7 +50,7 @@ namespace DCF {
         const size_t copy_length = std::min(src.bytes(&data), length);
         this->increaseLengthBy(copy_length);
 
-        memcpy(&m_storage.first[current_length], data, copy_length);
+        std::copy(data, &data[copy_length], &m_storage.first[current_length]);
     }
 
     const size_t MutableByteStorage::capacity() const {

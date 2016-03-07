@@ -36,7 +36,7 @@ namespace DCF {
 
         INTERNAL_ERROR = 2,
         CANNOT_SEND = 3,
-        CANNOT_CREATE = 4,
+        ALREADY_ACTIVE = 4,
         CANNOT_DESTROY = 5,
         CANNOT_CONNECT = 6,
         NOT_VALID = 7,

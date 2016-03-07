@@ -6,14 +6,25 @@
 #define TFDCF_TCPTRANSPORT_H
 
 #include "Transport.h"
+#include "SocketClient.h"
+#include "URL.h"
+#include <future>
+#include <MessageBuffer.h>
 
 namespace DCF {
-    class SocketClient;
 
     class TCPTransport : public Transport {
     private:
         std::unique_ptr<SocketClient> m_peer;
+        const url m_url;
+
+        std::atomic<bool> m_shouldDisconnect;
+        std::future<bool> m_connectionAttemptInProgress;
+
+        MessageBuffer m_sendBuffer;
+
         bool __connect();
+        bool __disconnect();
     public:
         // This should have the format dcf://localhost:1234
         TCPTransport(const char *url, const char *description);
@@ -21,9 +32,11 @@ namespace DCF {
         TCPTransport(const TCPTransport &) = delete;
         TCPTransport &operator=(const TCPTransport &) = delete;
 
-        status sendMessage(const MessageType &msg) override;
-        status sendMessageWithResponse(const MessageType &request, MessageType &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) override;
-        status sendReply(const MessageType &reply, const Message &request) override;
+        ~TCPTransport();
+
+        status sendMessage(const Message &msg) override;
+        status sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) override;
+        status sendReply(const Message &reply, const Message &request) override;
         const bool valid() const noexcept override;
 
     };

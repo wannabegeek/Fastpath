@@ -98,7 +98,7 @@ namespace DCF {
             return readScalar<T>(m_raw);
         }
 
-        const size_t encode(MessageBuffer &buffer) noexcept override {
+        const size_t encode(MessageBuffer &buffer) const noexcept override {
             byte *b = buffer.allocate(MsgField::size());
 
             b = writeScalar(b, static_cast<MsgField::type>(m_type));
@@ -125,11 +125,11 @@ namespace DCF {
                 buffer.advanceRead(sizeof(MsgField::data_length));
 
                 if (buffer.length() >= MsgField::size() + identifier_length) {
-                    memcpy(m_identifier, buffer.readBytes(), identifier_length);
+                    std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);
                     m_identifier[identifier_length] = '\0';
                     buffer.advanceRead(identifier_length);
                     if (buffer.length() >= MsgField::size() + identifier_length + m_size) {
-                        memcpy(m_raw, buffer.readBytes(), m_size);
+                        std::copy(buffer.readBytes(), &buffer.readBytes()[m_size], m_raw);
                         buffer.advanceRead(m_size);
                         return true;
                     }

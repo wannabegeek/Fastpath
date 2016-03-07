@@ -133,7 +133,7 @@ namespace tf {
 #else
 #   define DEBUG_LOG(msg)
 #endif
-#define INFO_LOG(msg) { LOG(tf::logger::lnfo, msg); }
+#define INFO_LOG(msg) { LOG(tf::logger::info, msg); }
 #define WARNING_LOG(msg) { LOG(tf::logger::warning, msg); }
 #define ERROR_LOG(msg) { LOG(tf::logger::error, msg); }
 

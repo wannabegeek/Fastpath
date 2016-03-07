@@ -17,7 +17,7 @@ namespace DCF {
 
     public:
         MessageEvent(const Queue &queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const MessageType msg)> &callback) : Event(queue), m_callback(callback) {
-            memcpy(m_subject, subject, std::numeric_limits<uint16_t>::max());
+            std::copy(subject, &subject[std::numeric_limits<uint16_t>::max()], m_subject);
         };
 
         const bool isEqual(const Event &other) const noexcept override {

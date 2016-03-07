@@ -21,7 +21,7 @@ namespace DCF {
             m_storedLength = length;
         } else {
             allocateStorage(length);
-            memcpy(m_storage.first, reinterpret_cast<const void *>(bytes), length);
+            std::copy(bytes, &bytes[length], m_storage.first);
             m_storedLength = length;
         }
         m_read_ptr = m_storage.first;

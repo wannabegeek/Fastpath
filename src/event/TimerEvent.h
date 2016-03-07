@@ -57,10 +57,19 @@ namespace  DCF {
 		mutable std::chrono::steady_clock::time_point m_lastTime;
 		bool pendingRemoval = false;
 
-        std::function<void(const TimerEvent *)> m_callback;
+        std::function<void(TimerEvent *)> m_callback;
 
-	public:
-		TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(const TimerEvent *)> &callback)
+        void dispatch(TimerEvent *event) {
+            if (m_isActive) {
+                m_callback(event);
+            }
+        }
+
+    public:
+        TimerEvent() : m_callback(nullptr) {
+        }
+
+		TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback)
 				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
 			m_queue->__registerEvent(*this);
 		}
@@ -74,7 +83,31 @@ namespace  DCF {
 //		}
 
 		~TimerEvent() {
-			m_queue->__unregisterEvent(*this);
+            if (m_isActive) {
+                m_queue->__unregisterEvent(*this);
+            }
+        }
+
+        status registerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback) {
+            if (!m_isActive) {
+                setQueue(queue);
+                m_timeoutState = TIMEOUTSTATE_START;
+                m_timeout = timeout;
+                m_timeLeft = timeout;
+                m_callback = callback;
+                m_queue->__registerEvent(*this);
+                m_isActive = true;
+                return OK;
+            }
+
+            return ALREADY_ACTIVE;
+        }
+
+        void unregisterEvent() {
+            if (m_isActive) {
+                m_queue->__unregisterEvent(*this);
+                m_isActive = false;
+            }
         }
 
         void reset() {
@@ -97,7 +130,7 @@ namespace  DCF {
 		}
 
         const bool __notify(const EventType &eventType) noexcept override {
-            std::function<void ()> dispatcher = std::bind(m_callback, static_cast<const DCF::TimerEvent *>(this));
+            std::function<void ()> dispatcher = std::bind(&TimerEvent::dispatch, this, static_cast<DCF::TimerEvent *>(this));
             return m_queue->__enqueue(dispatcher);
         };
     };

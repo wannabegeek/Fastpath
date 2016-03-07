@@ -11,9 +11,14 @@
 namespace DCF {
     class InlineQueue : public Queue {
     private:
-        EventManager &m_eventManager;
+        EventManager m_eventManager;
+
+        virtual EventManager &eventManager() override {
+            return m_eventManager;
+        }
+
     public:
-        InlineQueue(EventManager &eventManager) : m_eventManager(eventManager) {
+        InlineQueue() {
         }
 
         virtual ~InlineQueue() { }
@@ -32,6 +37,9 @@ namespace DCF {
 
         const size_t eventsInQueue() const noexcept override {
             return 0;
+        }
+
+        virtual inline void __notifyEventManager() noexcept override {
         }
 
         const bool __enqueue(queue_value_type &dispatcher) noexcept override {

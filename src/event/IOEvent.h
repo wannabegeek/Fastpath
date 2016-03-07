@@ -43,9 +43,18 @@ namespace DCF {
 		EventType m_eventTypes;
 		bool m_pendingRemoval = false;
 
-		std::function<void(const IOEvent *, const EventType)> m_callback;
+		std::function<void(IOEvent *, const EventType)> m_callback;
+
+        void dispatch(IOEvent *event, const EventType &eventType) {
+            if (m_isActive) {
+                m_callback(event, eventType);
+            }
+        }
+
 	public:
-		IOEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(const IOEvent *, const EventType)> &callback)
+        IOEvent() : m_fd(-1), m_callback(nullptr) {}
+
+		IOEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback)
 				: Event(queue), m_fd(fd), m_eventTypes(eventType), m_callback(callback) {
             m_queue->__registerEvent(*this);
 		};
@@ -54,7 +63,25 @@ namespace DCF {
 		}
 
 		~IOEvent() {
-            m_queue->__unregisterEvent(*this);
+            if (m_isActive) {
+                m_queue->__unregisterEvent(*this);
+            }
+        }
+
+        void registerEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback) {
+            setQueue(queue);
+            m_fd = fd;
+            m_eventTypes = eventType;
+            m_callback = callback;
+            m_queue->__registerEvent(*this);
+            m_isActive = true;
+        }
+
+        void unregisterEvent() {
+            if (m_isActive) {
+                m_queue->__unregisterEvent(*this);
+                m_isActive = false;
+            }
         }
 
         inline const int fileDescriptor() const noexcept {
@@ -75,7 +102,7 @@ namespace DCF {
 		}
 
         const bool __notify(const EventType &eventType) noexcept override {
-            std::function<void ()> dispatcher = std::bind(m_callback, static_cast<const DCF::IOEvent *>(this), eventType);
+            std::function<void ()> dispatcher = std::bind(&IOEvent::dispatch, this, static_cast<DCF::IOEvent *>(this), eventType);
             return m_queue->__enqueue(dispatcher);
         };
     };

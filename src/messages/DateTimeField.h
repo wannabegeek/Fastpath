@@ -53,7 +53,7 @@ namespace DCF {
             return m_time_point;
         }
 
-        const size_t encode(MessageBuffer &buffer) noexcept override {
+        const size_t encode(MessageBuffer &buffer) const noexcept override {
             byte *b = buffer.allocate(MsgField::size());
 
             b = writeScalar(b, static_cast<MsgField::type>(StorageType::date_time));
@@ -82,7 +82,7 @@ namespace DCF {
                 buffer.advanceRead(sizeof(MsgField::identifier_length) + sizeof(MsgField::data_length));
 
                 if (buffer.remainingReadLength() >= identifier_length) {
-                    memcpy(m_identifier, buffer.readBytes(), identifier_length);
+                    std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);
                     m_identifier[identifier_length] = '\0';
                     buffer.advanceRead(identifier_length);
                     const size_t dataSize = sizeof(int64_t) + sizeof(int64_t);

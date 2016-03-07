@@ -73,7 +73,8 @@ namespace DCF {
     class Message : public Serializable, public tf::reusable {
     private:
         typedef std::vector<std::shared_ptr<Field>> PayloadContainer;
-        typedef std::unordered_map<const char *, const size_t, FieldIdentifierHash, FieldIdentifierComparitor> KeyMappingsContainer;
+//        typedef std::unordered_map<const char *, const size_t, FieldIdentifierHash, FieldIdentifierComparitor> KeyMappingsContainer;
+        typedef std::unordered_map<std::string, const size_t> KeyMappingsContainer;
 
         uint8_t m_flags;
         bool m_hasAddressing;
@@ -89,8 +90,8 @@ namespace DCF {
 
         static const DataStorageType getStorageType(const StorageType type);
 
-        const size_t encodeAddressing(MessageBuffer &buffer) noexcept;
-        const void encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) noexcept;
+        const size_t encodeAddressing(MessageBuffer &buffer) const noexcept;
+        const void encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) const noexcept;
         const bool decodeAddressing(const ByteStorage &buffer) noexcept;
 
     public:
@@ -179,7 +180,7 @@ namespace DCF {
         const bool operator==(const Message &other) const;
 
         // from Serializable
-        const size_t encode(MessageBuffer &buffer) noexcept override;
+        const size_t encode(MessageBuffer &buffer) const noexcept override;
         const bool decode(const ByteStorage &buffer) noexcept override;
 
         // from reusable

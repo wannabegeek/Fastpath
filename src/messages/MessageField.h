@@ -33,7 +33,7 @@ namespace DCF {
         void set(const char *identifier, const MessageType &msg);
         const MessageType get() const;
 
-        const size_t encode(MessageBuffer &buffer) noexcept override {
+        const size_t encode(MessageBuffer &buffer) const noexcept override {
 //            byte *b = buffer.allocate(sizeof(MsgField));
 //            MsgField *field = reinterpret_cast<MsgField *>(b);
 //            field->identifier = m_identifier;

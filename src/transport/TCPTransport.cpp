@@ -4,16 +4,18 @@
 
 #include <future>
 #include <chrono>
+#include "utils/logger.h"
 
 #include "TCPTransport.h"
 #include "SocketClient.h"
+#include "messages/Message.h"
 
 namespace DCF {
 
     class BackoffStrategy {
     private:
         static constexpr std::chrono::milliseconds min_retry_interval() { return std::chrono::milliseconds(1); }
-        static constexpr std::chrono::milliseconds max_retry_interval() { return std::chrono::seconds(15); }
+        static constexpr std::chrono::milliseconds max_retry_interval() { return std::chrono::seconds(5); }
 
         std::chrono::milliseconds m_current;
     public:
@@ -26,42 +28,63 @@ namespace DCF {
     };
 
 
-    TCPTransport::TCPTransport(const char *url, const char *description) : Transport(description) {
-        const std::string host = "localhost";
-        const std::string port = "6969";
-        m_peer = std::make_unique<SocketClient>(host, port);
-        auto result = std::async(std::launch::async, &TCPTransport::__connect, this);
+    TCPTransport::TCPTransport(const char *url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024) {
+        INFO_LOG("Connecting to: " << m_url);
+        m_peer = std::make_unique<SocketClient>(m_url.host(), m_url.port());
+        m_connectionAttemptInProgress = std::async(std::launch::async, &TCPTransport::__connect, this);
+    }
+
+    TCPTransport::~TCPTransport() {
+        this->__disconnect();
     }
 
     bool TCPTransport::__connect() {
         BackoffStrategy strategy;
-        while (!m_peer->isConnected()) {
+        while (!m_peer->isConnected() && m_shouldDisconnect == false) {
             if (!m_peer->connect()) {
+                INFO_LOG("Failed to connect trying again");
                 strategy.backoff();
+            }
+        }
+
+        INFO_LOG("Either connected or given up");
+        return true;
+    }
+
+    bool TCPTransport::__disconnect() {
+        if (m_peer->isConnected()) {
+            return m_peer->disconnect();
+        } else {
+            if (m_connectionAttemptInProgress.valid()) {
+                INFO_LOG("Shutting down our connection attempt loop");
+                m_shouldDisconnect = true;
+                m_connectionAttemptInProgress.wait();
             }
         }
 
         return true;
     }
 
-    status TCPTransport::sendMessage(const MessageType &msg) {
+    status TCPTransport::sendMessage(const Message &msg) {
         if (m_peer->isConnected()) {
-
-            return OK;
+            msg.encode(m_sendBuffer);
+            const byte *data = nullptr;
+            size_t len = m_sendBuffer.bytes(&data);
+            return m_peer->send(reinterpret_cast<const char *>(data), len) ? OK : CANNOT_SEND;
         }
         return CANNOT_SEND;
     }
 
-    status TCPTransport::sendMessageWithResponse(const MessageType &request, MessageType &reply,
+    status TCPTransport::sendMessageWithResponse(const Message &request, Message &reply,
                                                          std::chrono::duration<std::chrono::milliseconds> &timeout) {
         return this->sendMessage(request);
     }
 
-    status TCPTransport::sendReply(const MessageType &reply, const Message &request) {
+    status TCPTransport::sendReply(const Message &reply, const Message &request) {
         return this->sendMessage(reply);
     }
 
     const bool TCPTransport::valid() const noexcept {
-        return false;
+        return m_peer->isConnected();
     }
 }

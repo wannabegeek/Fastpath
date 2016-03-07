@@ -6,15 +6,18 @@
 #define TFDCF_URL_H
 
 #include <string>
+#include <unordered_map>
 
 namespace DCF {
     class url {
+    public:
+        using query_type = std::unordered_map<std::string, std::string>;
     private:
         std::string m_protocol;
         std::string m_host;
         std::string m_port;
         std::string m_path;
-        std::string m_query;
+        query_type m_query;
     public:
         url(const std::string& url_s); // omitted copy, ==, accessors, ...
 
@@ -27,7 +30,9 @@ namespace DCF {
         const std::string &host() const { return m_host; }
         const std::string &port() const { return m_port; }
         const std::string &path() const { return m_path; }
-        const std::string &query() const { return m_query; }
+        const query_type &query() const { return m_query; }
+
+        friend std::ostream &operator<<(std::ostream &out, const url &url);
     };
 }
 

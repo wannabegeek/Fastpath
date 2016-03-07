@@ -7,6 +7,7 @@
 #include <transport/SocketClient.h>
 
 #include <chrono>
+#include <memory>
 #include <thread>
 #include <unistd.h>
 
@@ -49,8 +50,6 @@ TEST(Socket, SimpleReadWrite) {
 TEST(TFSocket, NonBlockingReadWrite) {
     bool callbackFired = false;
 
-    DCF::EventManager mgr;
-
     std::thread server([&]() {
         DCF::SocketServer svr("localhost", "6967");
         ASSERT_TRUE(svr.connect());
@@ -81,7 +80,7 @@ TEST(TFSocket, NonBlockingReadWrite) {
 
     std::this_thread::sleep_for(std::chrono::microseconds(100));
     DCF::SocketClient client("localhost", "6967");
-    DCF::InlineQueue queue(mgr);
+    DCF::InlineQueue queue;
 
 
     ASSERT_TRUE(client.connect(DCF::SocketOptionsDisableSigPipe));
@@ -122,16 +121,17 @@ TEST(TFSocket, NonBlockingReadWrite) {
 TEST(TFSocket, NonBlockingServerReadWrite) {
     bool callbackFired = false;
 
+    LOG_LEVEL(tf::logger::info);
+
     std::thread server([&]() {
         DCF::SocketServer svr("localhost", "6966");
         ASSERT_TRUE(svr.connect(DCF::SocketOptionsNonBlocking));
         ASSERT_NE(-1, svr.getSocket());
 
-        DCF::EventManager serverMgr;
         std::shared_ptr<DCF::Socket> connection;
         bool finished = false;
 
-        DCF::InlineQueue queue(serverMgr);
+        DCF::InlineQueue queue;
 
         auto client = [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
@@ -140,7 +140,7 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
             ssize_t size = 0;
             while (true) {
                 DCF::Socket::ReadResult result = connection->read(buffer, 16, size);
-                std::cout << "got stuff" << std::endl;
+                INFO_LOG("got stuff");
                 if (result == DCF::Socket::MoreData) {
                     EXPECT_EQ(6, size);
                     EXPECT_STREQ(buffer, "hello");
@@ -151,7 +151,7 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
                         break;
                     }
                 } else if (result == DCF::Socket::Closed) {
-                    std::cout << "Server Socket closed" << std::endl;
+                    INFO_LOG("Server Socket closed");
                     break;
                 }
             }
@@ -160,28 +160,28 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
             finished = true;
         };
 
+        std::unique_ptr<DCF::IOEvent> clientHandler;
 
         DCF::IOEvent handler(&queue, svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
-            std::cout << "entering accept" << std::endl;
+            INFO_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
-                std::cout << "out of accept" << std::endl;
+                INFO_LOG("out of accept");
 
-                DCF::IOEvent clientHandler(&queue, connection->getSocket(), DCF::EventType::READ, client);
-                std::cout << "registered new client" << std::endl;
+                clientHandler = std::make_unique<DCF::IOEvent>(&queue, connection->getSocket(), DCF::EventType::READ, client);
+                INFO_LOG("registered new client");
             }
         });
 
         for (int i = 0; !finished && i < 15; i++) {
-            std::cout << "wait..." << std::endl;
+            INFO_LOG("wait...");
             queue.dispatch(std::chrono::milliseconds(1000));
-            std::cout << "...serviced event" << std::endl;
+            INFO_LOG("...serviced event");
         }
     });
 
-    DCF::EventManager mgr;
-    DCF::InlineQueue queue(mgr);
+    DCF::InlineQueue queue;
 
     std::this_thread::sleep_for(std::chrono::microseconds(100));
     DCF::SocketClient client("localhost", "6966");
@@ -208,7 +208,7 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
                     break;
                 }
             } else if (result == DCF::Socket::Closed) {
-                std::cout << "Client Socket closed" << std::endl;
+                INFO_LOG("Client Socket closed");
                 break;
             }
         }

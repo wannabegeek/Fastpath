@@ -44,6 +44,7 @@ namespace DCF {
                 if (::listen(m_socket, 10) == -1) {
                     // Failed to listen
                     ERROR_LOG("Failed to listen on server socket; " << strerror(errno));
+                    return false;
                 }
 
                 if (m_handler) {

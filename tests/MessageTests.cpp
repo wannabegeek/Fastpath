@@ -3,7 +3,8 @@
 //
 
 #include <gtest/gtest.h>
-#include <Messages/Message.h>
+#include <messages/Message.h>
+#include <utils/logger.h>
 
 TEST(Message, SetSubject) {
     DCF::Message msg;
@@ -120,6 +121,8 @@ TEST(Message, Decode) {
 }
 
 TEST(Message, MultiDecode) {
+    LOG_LEVEL(tf::logger::info);
+
     DCF::Message in1;
     in1.setSubject("SAMPLE.MSG.1");
     float32_t t = 22.0;
@@ -181,7 +184,7 @@ TEST(Message, MultiPartialDecode) {
     for (size_t i = 0; i < buffer.length(); i++) {
         len += 10;
         buffer.bytes(&bytes);
-        DCF::ByteStorage storage(bytes, std::min(len, buffer.length()));
+        DCF::ByteStorage storage(bytes, std::min(len, buffer.length()), true);
 
         if (out.decode(storage)) {
             buffer.erase_front(storage.bytesRead());

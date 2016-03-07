@@ -6,6 +6,7 @@
 #define TFDCF_BLOCKINGQUEUE_H
 
 #include "Queue.h"
+#include "TimerEvent.h"
 #include "utils/blockingconcurrentqueue.h"
 
 namespace DCF {

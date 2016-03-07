@@ -9,6 +9,7 @@
 #include "Queue.h"
 #include "EventType.h"
 #include "Session.h"
+#include <atomic>
 
 namespace DCF {
     class Queue;
@@ -18,13 +19,25 @@ namespace DCF {
 
         Queue *m_queue;
 
+        std::atomic<bool> m_isActive;
+
         virtual const bool isEqual(const Event &other) const noexcept = 0;
 
-    public:
-        Event(Queue *queue) : m_queue(queue) {
+        void setQueue(Queue *queue) {
+            m_queue = queue;
         }
 
-        Event(Event &&other) : m_queue(other.m_queue) {
+        void setActive(const bool value) {
+            m_isActive = value;
+        }
+    public:
+        Event() : m_isActive(false) {
+        }
+
+        Event(Queue *queue) : m_queue(queue), m_isActive(true) {
+        }
+
+        Event(Event &&other) : m_queue(other.m_queue), m_isActive(static_cast<bool>(other.m_isActive)) {
         }
 
         Event(const Event &other) = delete;
@@ -32,10 +45,16 @@ namespace DCF {
 
         virtual ~Event() {}
 
+        const bool isActive() const noexcept {
+            return m_isActive;
+        }
+
         virtual const bool __notify(const EventType &eventType) noexcept = 0;
 
         bool operator==(const Event &other) {
-            return this->isEqual(other);
+            return m_queue == other.m_queue
+                    && m_isActive == other.m_isActive
+                    && this->isEqual(other);
         }
     };
 }

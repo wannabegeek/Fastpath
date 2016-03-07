@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <utils/logger.h>
 #include "Message.h"
 #include "DataField.h"
 #include "DateTimeField.h"
@@ -78,9 +79,13 @@ namespace DCF {
     bool Message::removeField(const char* field) {
         if (field != nullptr) {
             auto index = m_keys.find(field);
-            m_keys.erase(field);
-            m_payload.erase(m_payload.begin() + index->second);
-            return true;
+            if (index != m_keys.end()) {
+                m_keys.erase(field);
+                auto it = m_payload.begin();
+                std::advance(it, index->second);
+                m_payload.erase(it);
+                return true;
+            }
         }
         return false;
     }
@@ -97,14 +102,14 @@ namespace DCF {
     }
 
     // from Encoder
-    const size_t Message::encodeAddressing(MessageBuffer &buffer) noexcept {
+    const size_t Message::encodeAddressing(MessageBuffer &buffer) const noexcept {
         byte *b = buffer.allocate(MsgAddressing::size());
         size_t addressing_size = MsgAddressing::size();
 
         b = writeScalar(b, static_cast<MsgAddressing::addressing_start>(addressing_flag));
         b = writeScalar(b, static_cast<MsgAddressing::msg_length>(0));
         b = writeScalar(b, static_cast<MsgAddressing::flags>(this->flags()));
-        b += sizeof(MsgAddressing::reserved);
+        b = writeScalar(b, static_cast<MsgAddressing::reserved>(0));
         const size_t subject_length = strlen(this->subject());
         b = writeScalar(b, static_cast<MsgAddressing::subject_length>(subject_length));
 
@@ -114,7 +119,7 @@ namespace DCF {
         return addressing_size;
     }
 
-    const void Message::encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) noexcept {
+    const void Message::encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) const noexcept {
         if (m_hasAddressing) {
             const byte *b = nullptr;
             buffer.bytes(&b);
@@ -123,7 +128,7 @@ namespace DCF {
         }
     }
 
-    const size_t Message::encode(MessageBuffer &buffer) noexcept {
+    const size_t Message::encode(MessageBuffer &buffer) const noexcept {
         size_t msgLength = 0;
         if (m_hasAddressing) {
             msgLength += encodeAddressing(buffer);
@@ -166,7 +171,7 @@ namespace DCF {
                 buffer.advanceRead(sizeof(MsgAddressing::subject_length));
 
                 const char *subject = reinterpret_cast<const char *>(buffer.readBytes());
-                memcpy(m_subject, subject, subject_length);
+                std::copy(subject, &subject[subject_length], m_subject);
                 m_subject[subject_length] = '\0';
                 buffer.advanceRead(subject_length);
                 return true;
@@ -202,7 +207,6 @@ namespace DCF {
                 buffer.advanceRead(sizeof(MsgHeader::field_count));
 
                 for (size_t i = 0; i < field_count; i++) {
-
                     const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
                     std::shared_ptr<Field> field;
                     switch (type) {
