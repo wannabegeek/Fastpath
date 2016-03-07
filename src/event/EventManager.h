@@ -35,7 +35,7 @@ namespace DCF {
     protected:
         EventPoll m_eventLoop;
         std::vector<TimerEvent *> m_timerHandlers;
-        std::vector<IOEvent *> m_handlers;
+        std::vector<IOEvent *> m_ioHandlers;
 
         mutable bool m_servicingEvents;
         mutable bool m_servicingTimers;
@@ -55,8 +55,8 @@ namespace DCF {
 
 		virtual void registerHandler(TimerEvent &eventRegistration) = 0;
 		virtual void registerHandler(IOEvent &eventRegistration) = 0;
-		virtual void unregisterHandler(const TimerEvent &handler) = 0;
-		virtual void unregisterHandler(const IOEvent &handler) = 0;
+		virtual void unregisterHandler(TimerEvent &handler) = 0;
+		virtual void unregisterHandler(IOEvent &handler) = 0;
 
         bool isRegistered(const TimerEvent &handler) const;
         bool isRegistered(const IOEvent &handler) const;

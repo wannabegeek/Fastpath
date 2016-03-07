@@ -29,8 +29,8 @@ namespace DCF {
 
         void registerHandler(TimerEvent &eventRegistration) override;
         void registerHandler(IOEvent &eventRegistration) override;
-        void unregisterHandler(const TimerEvent &handler) override;
-        void unregisterHandler(const IOEvent &handler) override;
+        void unregisterHandler(TimerEvent &handler) override;
+        void unregisterHandler(IOEvent &handler) override;
 
         void notify() override;
     };

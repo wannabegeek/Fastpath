@@ -60,10 +60,11 @@ namespace  DCF {
         std::function<void(TimerEvent *)> m_callback;
 
         void dispatch(TimerEvent *event) {
-            if (m_isActive) {
+            if (m_active) {
                 m_callback(event);
             }
-        }
+			this->__setAwaitingDispatch(false);
+		}
 
     public:
         TimerEvent() : m_callback(nullptr) {
@@ -83,20 +84,20 @@ namespace  DCF {
 //		}
 
 		~TimerEvent() {
-            if (m_isActive) {
+            if (m_active) {
                 m_queue->__unregisterEvent(*this);
             }
         }
 
         status registerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback) {
-            if (!m_isActive) {
+            if (!m_active) {
                 setQueue(queue);
                 m_timeoutState = TIMEOUTSTATE_START;
                 m_timeout = timeout;
                 m_timeLeft = timeout;
                 m_callback = callback;
                 m_queue->__registerEvent(*this);
-                m_isActive = true;
+                m_active = true;
                 return OK;
             }
 
@@ -104,9 +105,9 @@ namespace  DCF {
         }
 
         void unregisterEvent() {
-            if (m_isActive) {
+            if (m_active) {
+                m_active = false;
                 m_queue->__unregisterEvent(*this);
-                m_isActive = false;
             }
         }
 

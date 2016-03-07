@@ -39,7 +39,8 @@ namespace DCF {
         for (size_t i = 0; i < i_count; ++i) {
             IOEvent *event = io_events[i];
             m_eventLoop.add({event->fileDescriptor(), event->eventTypes()});
-            m_handlers.push_back(event);
+            m_ioHandlers.push_back(event);
+            event->__setIsRegistered(true);
         }
 
         TimerEvent *timer_events[256];
@@ -47,6 +48,7 @@ namespace DCF {
         for (size_t i = 0; i < t_count; ++i) {
             TimerEvent *event = timer_events[i];
             m_timerHandlers.push_back(event);
+            event->__setIsRegistered(true);
         }
 
     }
@@ -66,7 +68,7 @@ namespace DCF {
         this->notify();
     }
 
-    void GlobalEventManager::unregisterHandler(const TimerEvent &handler) {
+    void GlobalEventManager::unregisterHandler(TimerEvent &handler) {
 //        auto it = std::find(m_pendingTimerHandlers.begin(), m_pendingTimerHandlers.end(), &handler);
 //        if (it != m_pendingTimerHandlers.end()) {
 //            m_pendingTimerHandlers.erase(it);
@@ -83,7 +85,7 @@ namespace DCF {
         this->notify();
     }
 
-    void GlobalEventManager::unregisterHandler(const IOEvent &handler) {
+    void GlobalEventManager::unregisterHandler(IOEvent &handler) {
 //        auto it = std::find(m_pendingHandlers.begin(), m_pendingHandlers.end(), &handler);
 //        if (it != m_pendingHandlers.end()) {
 //            m_pendingHandlers.erase(it);

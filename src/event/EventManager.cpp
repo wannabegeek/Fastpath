@@ -49,9 +49,9 @@ namespace DCF {
 	EventManager::~EventManager() {
 	}
 
-    EventManager::EventManager(EventManager &&other) : m_events(other.m_events), m_eventLoop(other.m_eventLoop), m_timerHandlers(other.m_timerHandlers), m_handlers(other.m_handlers), m_servicingEvents(other.m_servicingEvents), m_servicingTimers(other.m_servicingTimers) {
+    EventManager::EventManager(EventManager &&other) : m_events(other.m_events), m_eventLoop(other.m_eventLoop), m_timerHandlers(other.m_timerHandlers), m_ioHandlers(other.m_ioHandlers), m_servicingEvents(other.m_servicingEvents), m_servicingTimers(other.m_servicingTimers) {
         other.m_timerHandlers.clear();
-        other.m_handlers.clear();
+        other.m_ioHandlers.clear();
         other.m_events.fill(EventPollElement());
     }
 
@@ -63,7 +63,7 @@ namespace DCF {
         this->processPendingRegistrations();
 
 		int result = 0;
-		if (__builtin_expect(timeout.count() == 0 && m_handlers.size() == 0 && m_timerHandlers.size() == 0, false)) {
+		if (__builtin_expect(timeout.count() == 0 && m_ioHandlers.size() == 0 && m_timerHandlers.size() == 0, false)) {
 			ERROR_LOG("No events to handle - returning");
 		} else {
 			std::chrono::microseconds duration = timeout;
@@ -115,10 +115,11 @@ namespace DCF {
 
 	void EventManager::serviceEvent(const EventPollElement &event) {
         m_servicingEvents = true;
-        for (IOEvent *handler : m_handlers) {
+        for (IOEvent *handler : m_ioHandlers) {
             if (handler->fileDescriptor() == event.fd) {
                 const int events = handler->eventTypes() & event.filter;
-                if (events != EventType::NONE) {
+                if (events != EventType::NONE && !handler->__awaitingDispatch()) {
+					handler->__setAwaitingDispatch(true);
                     handler->__notify(static_cast<EventType>(events));
                 }
             }
@@ -139,7 +140,10 @@ namespace DCF {
 
 				if (handler->m_timeLeft <= std::chrono::microseconds(0)) {
                     handler->m_timeLeft = handler->m_timeout;
-					handler->__notify(EventType::NONE);    //Execute the handler
+                    if (!handler->__awaitingDispatch()) {
+                        handler->__setAwaitingDispatch(true);
+                        handler->__notify(EventType::NONE);    //Execute the handler
+                    }
 				}
 			}
 		}
@@ -151,6 +155,6 @@ namespace DCF {
     }
 
     bool EventManager::isRegistered(const IOEvent &handler) const {
-        return std::find(m_handlers.begin(), m_handlers.end(), &handler) != m_handlers.end();
+        return std::find(m_ioHandlers.begin(), m_ioHandlers.end(), &handler) != m_ioHandlers.end();
     }
 }

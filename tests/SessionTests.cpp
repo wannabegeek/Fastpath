@@ -88,18 +88,26 @@ TEST(Session, SimpleReadBusySpin) {
 
     DCF::BusySpinQueue queue;
 
+    LOG_LEVEL(tf::logger::debug);
     DCF::IOEvent handler(&queue, fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+        DEBUG_LOG("In callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
 
+    // we need to make sure wwe have registered with the event loop
+    while(!handler.isRegistered());
+
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         ASSERT_NE(-1, write(fd[1], "x", 1));
+        DEBUG_LOG("Written to pipe");
     });
+    DEBUG_LOG("Dispatching...");
     queue.dispatch(std::chrono::seconds(5));
+    DEBUG_LOG("done disptach");
 
     signal.join();
     EXPECT_TRUE(callbackFired);
@@ -117,18 +125,26 @@ TEST(Session, SimpleReadBlocking) {
 
     DCF::BlockingQueue queue;
 
+    LOG_LEVEL(tf::logger::debug);
     DCF::IOEvent handler(&queue, fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+        DEBUG_LOG("In callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
 
+    // we need to make sure wwe have registered with the event loop
+    while(!handler.isRegistered());
+
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         ASSERT_NE(-1, write(fd[1], "x", 1));
+        DEBUG_LOG("Written to pipe");
     });
+    DEBUG_LOG("Dispatching...");
     queue.dispatch(std::chrono::seconds(5));
+    DEBUG_LOG("done disptach");
 
     signal.join();
     EXPECT_TRUE(callbackFired);
@@ -164,10 +180,10 @@ TEST(Session, ReadTimerInline) {
     DCF::TimerEvent timer(&queue, std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
         INFO_LOG("Still waiting for data");
         if (timerCounter == 0) {
-            ASSERT_FALSE(handler.isActive());
+            ASSERT_FALSE(handler.isRegistered());
             handler.registerEvent(&queue, fd[0], DCF::EventType::READ, callback);
         }
-        EXPECT_TRUE(handler.isActive());
+        EXPECT_TRUE(handler.isRegistered());
         timerCounter++;
     });
 
@@ -181,7 +197,9 @@ TEST(Session, ReadTimerInline) {
 
     signal.join();
     EXPECT_TRUE(callbackFired);
-    EXPECT_FALSE(handler.isActive());
+    timer.unregisterEvent();
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    EXPECT_FALSE(handler.isRegistered());
     EXPECT_GE(10u, timerCounter);
 
     EXPECT_EQ(DCF::OK, DCF::Session::destroy());
@@ -213,10 +231,10 @@ TEST(Session, ReadTimerBusySpin) {
     DCF::TimerEvent timer(&queue, std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
         INFO_LOG("Still waiting for data");
         if (timerCounter == 0) {
-            ASSERT_FALSE(handler.isActive());
+            ASSERT_FALSE(handler.isRegistered());
             handler.registerEvent(&queue, fd[0], DCF::EventType::READ, callback);
         }
-        EXPECT_TRUE(handler.isActive());
+        EXPECT_TRUE(handler.isRegistered());
         timerCounter++;
     });
 
@@ -230,7 +248,7 @@ TEST(Session, ReadTimerBusySpin) {
 
     signal.join();
     EXPECT_TRUE(callbackFired);
-    EXPECT_FALSE(handler.isActive());
+    EXPECT_FALSE(handler.isRegistered());
     EXPECT_GE(10u, timerCounter);
 
     EXPECT_EQ(DCF::OK, DCF::Session::destroy());
@@ -261,10 +279,10 @@ TEST(Session, ReadTimerBlocking) {
     DCF::TimerEvent timer(&queue, std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
         INFO_LOG("Still waiting for data");
         if (timerCounter == 0) {
-            ASSERT_FALSE(handler.isActive());
+            ASSERT_FALSE(handler.isRegistered());
             handler.registerEvent(&queue, fd[0], DCF::EventType::READ, callback);
         }
-        EXPECT_TRUE(handler.isActive());
+        EXPECT_TRUE(handler.isRegistered());
         timerCounter++;
     });
 
@@ -278,7 +296,7 @@ TEST(Session, ReadTimerBlocking) {
 
     signal.join();
     EXPECT_TRUE(callbackFired);
-    EXPECT_FALSE(handler.isActive());
+    EXPECT_FALSE(handler.isRegistered());
     EXPECT_GE(10u, timerCounter);
 
     EXPECT_EQ(DCF::OK, DCF::Session::destroy());

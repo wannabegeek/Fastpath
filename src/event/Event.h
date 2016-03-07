@@ -19,7 +19,10 @@ namespace DCF {
 
         Queue *m_queue;
 
-        std::atomic<bool> m_isActive;
+        std::atomic<bool> m_isRegistered;
+        std::atomic<bool> m_awaitingDispatch;
+
+        bool m_active;
 
         virtual const bool isEqual(const Event &other) const noexcept = 0;
 
@@ -27,17 +30,14 @@ namespace DCF {
             m_queue = queue;
         }
 
-        void setActive(const bool value) {
-            m_isActive = value;
-        }
     public:
-        Event() : m_isActive(false) {
+        Event() : m_isRegistered(false), m_awaitingDispatch(false), m_active(false) {
         }
 
-        Event(Queue *queue) : m_queue(queue), m_isActive(true) {
+        Event(Queue *queue) : m_queue(queue), m_isRegistered(false), m_awaitingDispatch(false), m_active(true) {
         }
 
-        Event(Event &&other) : m_queue(other.m_queue), m_isActive(static_cast<bool>(other.m_isActive)) {
+        Event(Event &&other) : m_queue(other.m_queue), m_isRegistered(static_cast<bool>(other.m_isRegistered)) {
         }
 
         Event(const Event &other) = delete;
@@ -45,15 +45,27 @@ namespace DCF {
 
         virtual ~Event() {}
 
-        const bool isActive() const noexcept {
-            return m_isActive;
+        virtual const bool __notify(const EventType &eventType) noexcept = 0;
+
+        const bool isRegistered() const noexcept {
+            return m_isRegistered;
         }
 
-        virtual const bool __notify(const EventType &eventType) noexcept = 0;
+        void __setIsRegistered(const bool flag) {
+            m_isRegistered = flag;
+        }
+
+        const bool __awaitingDispatch() const noexcept {
+            return m_awaitingDispatch;
+        }
+
+        void __setAwaitingDispatch(const bool value) noexcept {
+            m_awaitingDispatch = value;
+        }
 
         bool operator==(const Event &other) {
             return m_queue == other.m_queue
-                    && m_isActive == other.m_isActive
+                    && m_isRegistered == other.m_isRegistered
                     && this->isEqual(other);
         }
     };

@@ -3,6 +3,9 @@
 //
 
 #include "InlineEventManager.h"
+#include "IOEvent.h"
+#include "TimerEvent.h"
+
 
 namespace DCF {
 
@@ -22,7 +25,7 @@ namespace DCF {
             m_pendingTimerRegistrationEvents = false;
         }
         if (m_pendingFileDescriptorRegistrationEvents) {
-            m_handlers = m_pendingHandlers;
+            m_ioHandlers = m_pendingHandlers;
             m_pendingFileDescriptorRegistrationEvents = false;
         }
     }
@@ -35,6 +38,7 @@ namespace DCF {
             m_timerHandlers.push_back(&eventRegistration);
             m_pendingTimerHandlers.push_back(&eventRegistration);
         }
+        eventRegistration.__setIsRegistered(true);
     }
 
     void InlineEventManager::registerHandler(IOEvent &eventRegistration) {
@@ -47,13 +51,14 @@ namespace DCF {
             m_pendingHandlers.push_back(&eventRegistration);
             m_pendingFileDescriptorRegistrationEvents = true;
         } else {
-            m_handlers.push_back(&eventRegistration);
+            m_ioHandlers.push_back(&eventRegistration);
             m_pendingHandlers.push_back(&eventRegistration);
         }
         m_eventLoop.add({eventRegistration.fileDescriptor(), eventRegistration.eventTypes()});
+        eventRegistration.__setIsRegistered(true);
     }
 
-    void InlineEventManager::unregisterHandler(const TimerEvent &handler) {
+    void InlineEventManager::unregisterHandler(TimerEvent &handler) {
         auto it = std::find(m_pendingTimerHandlers.begin(), m_pendingTimerHandlers.end(), &handler);
         if (it != m_pendingTimerHandlers.end()) {
             m_pendingTimerHandlers.erase(it);
@@ -66,9 +71,11 @@ namespace DCF {
                 m_timerHandlers.erase(it);
             }
         }
+
+        handler.__setIsRegistered(false);
     }
 
-    void InlineEventManager::unregisterHandler(const IOEvent &handler) {
+    void InlineEventManager::unregisterHandler(IOEvent &handler) {
         auto it = std::find(m_pendingHandlers.begin(), m_pendingHandlers.end(), &handler);
         if (it != m_pendingHandlers.end()) {
             m_pendingHandlers.erase(it);
@@ -96,10 +103,12 @@ namespace DCF {
         if (m_servicingEvents) {
             m_pendingFileDescriptorRegistrationEvents = true;
         } else {
-            auto it = std::find(m_handlers.begin(), m_handlers.end(), &handler);
-            if (it != m_handlers.end()) {
-                m_handlers.erase(it);
+            auto it = std::find(m_ioHandlers.begin(), m_ioHandlers.end(), &handler);
+            if (it != m_ioHandlers.end()) {
+                m_ioHandlers.erase(it);
             }
         }
+
+        handler.__setIsRegistered(false);
     }
 }
