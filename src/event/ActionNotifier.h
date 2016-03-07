@@ -18,6 +18,11 @@ namespace DCF {
             ::pipe(m_fd);
         }
 
+        ActionNotifier(ActionNotifier &&other) {
+            m_fd[0] = other.m_fd[0];
+            m_fd[1] = other.m_fd[1];
+        }
+
         ~ActionNotifier() {
             close(m_fd[0]);
             close(m_fd[1]);

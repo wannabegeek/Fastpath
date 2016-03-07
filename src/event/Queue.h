@@ -38,6 +38,7 @@ namespace DCF {
         }
 
         template <typename T> void __unregisterEvent(T &evt) {
+            // TODO - remove any pending items from the queue
             this->eventManager().unregisterHandler(evt);
             this->__notifyEventManager();
         }

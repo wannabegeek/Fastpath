@@ -14,32 +14,42 @@ namespace DCF {
         using QueueType = moodycamel::ConcurrentQueue<queue_value_type>;
 
         QueueType m_queue;
+        moodycamel::ProducerToken m_producerToken;
         std::unique_ptr<TimerEvent> m_timeout;
 
     public:
-        BusySpinQueue() : m_queue(10000) {
+        BusySpinQueue() : m_queue(10000), m_producerToken(m_queue) {
         }
 
         virtual ~BusySpinQueue() { }
 
         const bool try_dispatch() override {
-            queue_value_type dispatcher;
-            if (m_queue.try_dequeue(dispatcher)) {
-                dispatcher();
+            queue_value_type dispatcher[32];
+            size_t count = 0;
+            if ((count = m_queue.try_dequeue_bulk_from_producer(m_producerToken, &dispatcher[0], 32))) {
+                for (size_t i = 0; i < count; ++i) {
+                    dispatcher[i]();
+                }
                 return true;
             }
             return false;
         }
 
         void dispatch() override {
-            queue_value_type dispatcher;
-            while (!m_queue.try_dequeue(dispatcher));
-            dispatcher();
+            queue_value_type dispatcher[32];
+            size_t count = 0;
+            while ((count = m_queue.try_dequeue_bulk_from_producer(m_producerToken, &dispatcher[0], 32)) == 0) {
+                // no-op - we will spin trying to get from the queue
+            }
+            for (size_t i = 0; i < count; ++i) {
+                dispatcher[i]();
+            }
         }
 
         void dispatch(const std::chrono::milliseconds &timeout) override {
-            queue_value_type dispatcher;
-            if (!m_queue.try_dequeue(dispatcher)) {
+            queue_value_type dispatcher[32];
+            size_t count = 0;
+            if ((count = m_queue.try_dequeue_bulk_from_producer(m_producerToken, &dispatcher[0], 32)) == 0) {
                 // Create a TimerEvent and add to the dispatch loop
                 if (m_timeout) {
                     m_timeout->setTimeout(timeout);
@@ -48,10 +58,14 @@ namespace DCF {
                         // noop - this will cause us to drop out of the dispatch loop
                     });
                 }
-                while (!m_queue.try_dequeue(dispatcher));
+                while ((count = m_queue.try_dequeue_bulk_from_producer(m_producerToken, &dispatcher[0], 32)) == 0) {
+                    // no-op - we will spin trying to get from the queue
+                }
             }
             // we may have exited due to the timer firing, but hey dispatch it anyway
-            dispatcher();
+            for (size_t i = 0; i < count; i++) {
+                dispatcher[i]();
+            }
         }
 
         const size_t eventsInQueue() const noexcept override {
@@ -59,7 +73,7 @@ namespace DCF {
         }
 
         const bool __enqueue(queue_value_type &event) noexcept override {
-            return m_queue.try_enqueue(event);
+            return m_queue.try_enqueue(m_producerToken, event);
         }
     };
 }

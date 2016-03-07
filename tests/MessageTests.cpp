@@ -64,7 +64,7 @@ TEST(Message, AddMessageField) {
 
     msg.addMessageField("MSG_TEST", m);
 
-    std::cout << "Embedded msg: " << msg << std::endl;
+    DEBUG_LOG("Embedded msg: " << msg);
 }
 
 TEST(Message, RemoveFieldByString) {
@@ -92,7 +92,7 @@ TEST(Message, Encode) {
     const size_t encoded_len = msg.encode(buffer);
     EXPECT_EQ(buffer.length(), encoded_len);
 
-    std::cout << buffer << std::endl;
+    DEBUG_LOG(buffer);
 }
 
 TEST(Message, Decode) {
@@ -108,15 +108,15 @@ TEST(Message, Decode) {
     const size_t encoded_len = in.encode(buffer);
     EXPECT_EQ(buffer.length(), encoded_len);
 
-    std::cout << buffer << std::endl;
-    std::cout << buffer.byteStorage() << std::endl;
+    DEBUG_LOG(buffer);
+    DEBUG_LOG(buffer.byteStorage());
     DCF::Message out;
     const DCF::ByteStorage &b = buffer.byteStorage();
     EXPECT_TRUE(out.decode(b));
     EXPECT_EQ(encoded_len, b.bytesRead());
 
-    std::cout << "IN:  " << in << std::endl;
-    std::cout << "OUT: " << out << std::endl;
+    DEBUG_LOG("IN:  " << in);
+    DEBUG_LOG("OUT: " << out);
     EXPECT_EQ(in, out);
 }
 
@@ -143,10 +143,10 @@ TEST(Message, MultiDecode) {
     in1.encode(buffer);
     in2.encode(buffer);
 
-    std::cout << buffer << std::endl;
+    DEBUG_LOG(buffer);
 
-    std::cout << "Msg 1: " << in1 << std::endl;
-    std::cout << "Msg 2: " << in2 << std::endl;
+    DEBUG_LOG("Msg 1: " << in1);
+    DEBUG_LOG("Msg 2: " << in2);
 
     DCF::Message out;
 //    size_t offset = 0;
@@ -176,7 +176,7 @@ TEST(Message, MultiPartialDecode) {
         in1.clear();
     }
 
-    std::cout << buffer << std::endl;
+    DEBUG_LOG(buffer);
 
     const byte *bytes = nullptr;
     size_t len = 0;
@@ -188,7 +188,7 @@ TEST(Message, MultiPartialDecode) {
 
         if (out.decode(storage)) {
             buffer.erase_front(storage.bytesRead());
-            std::cout << "Msg decoded: " << out << std::endl;
+            DEBUG_LOG("Msg decoded: " << out);
             out.clear();
         }
     }

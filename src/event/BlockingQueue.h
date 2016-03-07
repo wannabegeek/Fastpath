@@ -15,32 +15,39 @@ namespace DCF {
         using QueueType = moodycamel::BlockingConcurrentQueue<queue_value_type>;
 
         QueueType m_queue;
+        moodycamel::ProducerToken m_producerToken;
         std::unique_ptr<TimerEvent> m_timeout;
 
     public:
-        BlockingQueue() : m_queue(10000) {
+        BlockingQueue() : m_queue(10000), m_producerToken(m_queue) {
         }
 
         virtual ~BlockingQueue() { }
 
         const bool try_dispatch() override {
-            queue_value_type dispatcher;
-            if (m_queue.try_dequeue(dispatcher)) {
-                dispatcher();
+            queue_value_type dispatcher[32];
+            size_t count = 0;
+            if ((count = m_queue.try_dequeue_bulk(&dispatcher[0], 32))) {
+                for (size_t i = 0; i < count; ++i) {
+                    dispatcher[i]();
+                }
                 return true;
             }
             return false;
         }
 
         void dispatch() override {
-            queue_value_type dispatcher;
-            m_queue.wait_dequeue(dispatcher);
-            dispatcher();
+            queue_value_type dispatcher[32];
+            size_t count = m_queue.wait_dequeue_bulk(&dispatcher[0], 32);
+            for (size_t i = 0; i < count; ++i) {
+                dispatcher[i]();
+            }
         }
 
         void dispatch(const std::chrono::milliseconds &timeout) override {
-            queue_value_type dispatcher;
-            if (!m_queue.try_dequeue(dispatcher)) {
+            queue_value_type dispatcher[32];
+            size_t count = 0;
+            if ((count = m_queue.wait_dequeue_bulk(&dispatcher[0], 32)) == 0) {
                 // Create a TimerEvent and add to the dispatch loop
                 if (m_timeout) {
                     m_timeout->setTimeout(timeout);
@@ -49,10 +56,12 @@ namespace DCF {
                         // noop - this will cause us to drop out of the dispatch loop
                     });
                 }
-                while (!m_queue.try_dequeue(dispatcher));
+                count = m_queue.wait_dequeue_bulk(&dispatcher[0], 32);
             }
             // we may have exited due to the timer firing, but hey dispatch it anyway
-            dispatcher();
+            for (size_t i = 0; i < count; ++i) {
+                dispatcher[i]();
+            }
         }
 
         const size_t eventsInQueue() const noexcept override {

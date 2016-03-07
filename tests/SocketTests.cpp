@@ -10,6 +10,7 @@
 #include <memory>
 #include <thread>
 #include <unistd.h>
+#include <utils/logger.h>
 
 TEST(Socket, SimpleReadWrite) {
 
@@ -33,7 +34,7 @@ TEST(Socket, SimpleReadWrite) {
                     break;
                 }
             } else if (result == DCF::Socket::Closed) {
-                std::cout << "Socket closed" << std::endl;
+                DEBUG_LOG("Socket closed");
                 break;
             }
         }
@@ -70,7 +71,7 @@ TEST(TFSocket, NonBlockingReadWrite) {
                     break;
                 }
             } else if (result == DCF::Socket::Closed) {
-                std::cout << "Socket closed" << std::endl;
+                DEBUG_LOG("Socket closed");
                 break;
             }
         }
@@ -105,7 +106,7 @@ TEST(TFSocket, NonBlockingReadWrite) {
                     break;
                 }
             } else if (result == DCF::Socket::Closed) {
-                std::cout << "Socket closed" << std::endl;
+                DEBUG_LOG("Socket closed");
                 break;
             }
         }
@@ -140,7 +141,7 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
             ssize_t size = 0;
             while (true) {
                 DCF::Socket::ReadResult result = connection->read(buffer, 16, size);
-                INFO_LOG("got stuff");
+                DEBUG_LOG("got stuff");
                 if (result == DCF::Socket::MoreData) {
                     EXPECT_EQ(6, size);
                     EXPECT_STREQ(buffer, "hello");
@@ -151,7 +152,7 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
                         break;
                     }
                 } else if (result == DCF::Socket::Closed) {
-                    INFO_LOG("Server Socket closed");
+                    DEBUG_LOG("Server Socket closed");
                     break;
                 }
             }
@@ -164,20 +165,20 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
 
         DCF::IOEvent handler(&queue, svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
-            INFO_LOG("entering accept");
+            DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
-                INFO_LOG("out of accept");
+                DEBUG_LOG("out of accept");
 
                 clientHandler = std::make_unique<DCF::IOEvent>(&queue, connection->getSocket(), DCF::EventType::READ, client);
-                INFO_LOG("registered new client");
+                DEBUG_LOG("registered new client");
             }
         });
 
         for (int i = 0; !finished && i < 15; i++) {
-            INFO_LOG("wait...");
+            DEBUG_LOG("wait...");
             queue.dispatch(std::chrono::milliseconds(1000));
-            INFO_LOG("...serviced event");
+            DEBUG_LOG("...serviced event");
         }
     });
 
@@ -208,7 +209,7 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
                     break;
                 }
             } else if (result == DCF::Socket::Closed) {
-                INFO_LOG("Client Socket closed");
+                DEBUG_LOG("Client Socket closed");
                 break;
             }
         }

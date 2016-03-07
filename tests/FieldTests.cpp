@@ -3,8 +3,8 @@
 //
 
 #include <gtest/gtest.h>
-#include <Messages/Message.h>
-#include <Messages/DateTimeField.h>
+#include <messages/Message.h>
+#include <messages/DateTimeField.h>
 
 TEST(Field, CreateString) {
 

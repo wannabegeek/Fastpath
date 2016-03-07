@@ -47,9 +47,9 @@ TEST(TCPTransport, TryConnectSuccess) {
         ASSERT_TRUE(svr.connect(DCF::SocketOptionsNonBlocking));
         ASSERT_NE(-1, svr.getSocket());
 
-        INFO_LOG("Thread waiting for connections");
+        DEBUG_LOG("Thread waiting for connections");
 
-        DCF::EventManager serverMgr;
+        DCF::InlineEventManager serverMgr;
         std::unique_ptr<DCF::Socket> connection;
         bool finished = false;
 
@@ -57,18 +57,18 @@ TEST(TCPTransport, TryConnectSuccess) {
         DCF::IOEvent clientHandler;
 
         auto client = [&](const DCF::IOEvent *event, int eventType) {
-            INFO_LOG("In client callback");
+            DEBUG_LOG("In client callback");
             EXPECT_EQ(DCF::EventType::READ, eventType);
             char buffer[MTU];
             int counter = 0;
             ssize_t size = 0;
             while (true) {
                 DCF::Socket::ReadResult result = connection->read(buffer, MTU, size); // 1500 is the typical MTU size
-                INFO_LOG("got stuff");
+                DEBUG_LOG("got stuff");
                 if (result == DCF::Socket::MoreData) {
                     DCF::Message msg;
                     EXPECT_TRUE(msg.decode(DCF::ByteStorage(reinterpret_cast<const byte *>(buffer), size, true)));
-                    INFO_LOG("Received " << msg);
+                    DEBUG_LOG("Received " << msg);
                     EXPECT_EQ(sendMsg, msg);
                     break;
                 } else if (result == DCF::Socket::NoData) {
@@ -77,45 +77,45 @@ TEST(TCPTransport, TryConnectSuccess) {
                         break;
                     }
                 } else if (result == DCF::Socket::Closed) {
-                    std::cout << "Server Socket closed" << std::endl;
+                    DEBUG_LOG("Server Socket closed");
                     break;
                 }
             }
 
             EXPECT_TRUE(connection->send("goodbye", 8));
             finished = true;
-            INFO_LOG("Callback completed");
+            DEBUG_LOG("Callback completed");
             const_cast<DCF::IOEvent *>(event)->unregisterEvent();
         };
 
         DCF::IOEvent handler(&queue, svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
-            INFO_LOG("entering accept");
+            DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
-                INFO_LOG("out of accept");
+                DEBUG_LOG("out of accept");
 
                 clientHandler.registerEvent(&queue, connection->getSocket(), DCF::EventType::READ, client);
-                INFO_LOG("registered new client on socket: " << connection->getSocket());
+                DEBUG_LOG("registered new client on socket: " << connection->getSocket());
             }
         });
 
-        INFO_LOG("Ready to dispatch");
+        DEBUG_LOG("Ready to dispatch");
         while(!finished) {
             queue.dispatch(std::chrono::seconds(3));
-            INFO_LOG("Dispatch an event");
+            DEBUG_LOG("Dispatch an event");
         }
 
         connection->disconnect();
-        INFO_LOG("Exiting thread");
+        DEBUG_LOG("Exiting thread");
     });
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
     EXPECT_TRUE(transport.valid());
 
-    INFO_LOG("Sending Message");
+    DEBUG_LOG("Sending Message");
     EXPECT_EQ(DCF::OK, transport.sendMessage(sendMsg));
-    INFO_LOG("..sent");
+    DEBUG_LOG("..sent");
     server.join();
 }
 
@@ -138,9 +138,9 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
         ASSERT_TRUE(svr.connect(DCF::SocketOptionsNonBlocking));
         ASSERT_NE(-1, svr.getSocket());
 
-        INFO_LOG("Thread waiting for connections");
+        DEBUG_LOG("Thread waiting for connections");
 
-        DCF::EventManager serverMgr;
+        DCF::InlineEventManager serverMgr;
         std::unique_ptr<DCF::Socket> connection;
         bool finished = false;
 
@@ -151,7 +151,7 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
         DCF::MessageBuffer msgBuffer(1025);
 
         auto client = [&](const DCF::IOEvent *event, int eventType) {
-            INFO_LOG("In client callback");
+            DEBUG_LOG("In client callback");
             EXPECT_EQ(DCF::EventType::READ, eventType);
             int counter = 0;
             ssize_t size = 0;
@@ -159,15 +159,17 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
                 byte *buffer = msgBuffer.allocate(MTU);
                 DCF::Socket::ReadResult result = connection->read(reinterpret_cast<char *>(buffer), MTU, size); // 1500 is the typical MTU size
                 msgBuffer.erase_back(MTU - size);
-                INFO_LOG("got stuff");
+                DEBUG_LOG("got stuff");
                 if (result == DCF::Socket::MoreData) {
                     DCF::Message msg;
-                    if (msg.decode(DCF::ByteStorage(reinterpret_cast<const byte *>(buffer), size, true))) {
-                        INFO_LOG("Received " << msg);
+                    DEBUG_LOG("So far we have received " << msgBuffer.length() << " bytes");
+                    if (msg.decode(msgBuffer.byteStorage())) {
+                        DEBUG_LOG("Received " << msg);
                         EXPECT_EQ(sendMsg, msg);
                         consumedMessage = true;
                         finished = true;
                         const_cast<DCF::IOEvent *>(event)->unregisterEvent();
+                        break;
                     }
                 } else if (result == DCF::Socket::NoData) {
                     std::this_thread::sleep_for(std::chrono::microseconds(10));
@@ -175,7 +177,7 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
                         break;
                     }
                 } else if (result == DCF::Socket::Closed) {
-                    std::cout << "Server Socket closed" << std::endl;
+                    DEBUG_LOG("Server Socket closed");
                     break;
                 }
             }
@@ -183,31 +185,31 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
 
         DCF::IOEvent handler(&queue, svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
-            INFO_LOG("entering accept");
+            DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
-                INFO_LOG("out of accept");
+                DEBUG_LOG("out of accept");
 
                 clientHandler.registerEvent(&queue, connection->getSocket(), DCF::EventType::READ, client);
-                INFO_LOG("registered new client on socket: " << connection->getSocket());
+                DEBUG_LOG("registered new client on socket: " << connection->getSocket());
             }
         });
 
-        INFO_LOG("Ready to dispatch");
+        DEBUG_LOG("Ready to dispatch");
         while(!finished) {
             queue.dispatch(std::chrono::seconds(3));
-            INFO_LOG("Dispatch an event");
+            DEBUG_LOG("Dispatch an event");
         }
 
         connection->disconnect();
-        INFO_LOG("Exiting thread");
+        DEBUG_LOG("Exiting thread");
     });
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
     EXPECT_TRUE(transport.valid());
 
-    INFO_LOG("Sending Message");
+    DEBUG_LOG("Sending Message");
     EXPECT_EQ(DCF::OK, transport.sendMessage(sendMsg));
-    INFO_LOG("..sent");
+    DEBUG_LOG("..sent");
     server.join();
 }

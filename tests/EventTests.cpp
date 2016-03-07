@@ -9,9 +9,11 @@
 #include <event/TimerEvent.h>
 #include <event/InlineQueue.h>
 
+#include <utils/logger.h>
+
 TEST(EventManager, SimpleTimeout) {
 
-    DCF::EventManager mgr;
+    DCF::InlineEventManager mgr;
 
     const auto startTime = std::chrono::steady_clock::now();
     mgr.waitForEvent(std::chrono::milliseconds(100));
@@ -22,7 +24,8 @@ TEST(EventManager, SimpleTimeout) {
 }
 
 TEST(EventManager, Notifier) {
-    DCF::EventManager mgr;
+    // Notifier isn't valid for inline
+    DCF::GlobalEventManager mgr;
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -43,7 +46,7 @@ TEST(EventManager, Notifier) {
 
 TEST(EventManager, SimpleRead) {
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
@@ -59,14 +62,14 @@ TEST(EventManager, SimpleRead) {
     });
 
     std::thread signal([&]() {
-        INFO_LOG("sleeping");
+        DEBUG_LOG("sleeping");
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        INFO_LOG("Signalling to other thread");
+        DEBUG_LOG("Signalling to other thread");
         ASSERT_NE(-1, write(fd[1], "x", 1));
     });
-    INFO_LOG("Dispatching");
+    DEBUG_LOG("Dispatching");
     queue.dispatch(std::chrono::seconds(5));
-    INFO_LOG("...complete, waiting for thread to exit");
+    DEBUG_LOG("...complete, waiting for thread to exit");
     signal.join();
     EXPECT_TRUE(callbackFired);
     close(fd[0]);

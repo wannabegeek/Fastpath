@@ -10,14 +10,14 @@
 #include <mutex>
 #include <condition_variable>
 #include <status.h>
-#include "EventManager.h"
+#include "GlobalEventManager.h"
 
 namespace DCF {
     class Session {
     private:
         bool m_started;
         std::atomic_bool m_shutdown;
-        EventManager m_eventManager;
+        GlobalEventManager m_eventManager;
 
         std::thread m_eventLoop;
 

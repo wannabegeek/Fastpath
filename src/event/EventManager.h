@@ -27,46 +27,41 @@ namespace DCF {
     class IOEvent;
     
 	class EventManager {
-	private:
-		EventManager(const EventManager &) = delete;
-		EventManager &operator=(const EventManager &) = delete;
+    private:
+        std::array<EventPollElement, 256> m_events;
 
-		bool setTimeout(std::chrono::microseconds &timeout) const;
-		void serviceEvent(const EventPollElement &event);
-		void serviceTimers();
+        bool setTimeout(std::chrono::microseconds &timeout) const;
 
-		std::vector<TimerEvent *> m_timerHandlers;
-		std::vector<IOEvent *> m_handlers;
+    protected:
+        EventPoll m_eventLoop;
+        std::vector<TimerEvent *> m_timerHandlers;
+        std::vector<IOEvent *> m_handlers;
 
-		EventPoll m_eventLoop;
-		std::array<EventPollElement, 256> m_events;
+        mutable bool m_servicingEvents;
+        mutable bool m_servicingTimers;
 
-		mutable bool m_servicingEvents;
-		mutable bool m_servicingTimers;
+		virtual void serviceEvent(const EventPollElement &event);
+		virtual void serviceTimers();
 
-		ActionNotifier m_actionNotifier;
-
-		bool m_pendingFileDescriptorRegistrationEvents;
-		bool m_pendingTimerRegistrationEvents;
-		std::vector<TimerEvent *> m_pendingTimerHandlers;
-		std::vector<IOEvent *> m_pendingHandlers;
-
+        virtual void processPendingRegistrations() = 0;
 	public:
 		EventManager();
-		~EventManager();
         EventManager(EventManager &&other);
 
-		void registerHandler(TimerEvent &eventRegistration);
-		void registerHandler(IOEvent &eventRegistration);
-//		void emplaceHandler(const std::chrono::microseconds &timeout, const std::function<void(int)> &callback);
-//		void emplaceHandler(const int fd, const EventType eventType, const std::function<void(int)> &callback);
-		void unregisterHandler(const TimerEvent &handler);
-		void unregisterHandler(const IOEvent &handler);
+        EventManager(const EventManager &) = delete;
+        EventManager &operator=(const EventManager &) = delete;
+
+        virtual ~EventManager();
+
+		virtual void registerHandler(TimerEvent &eventRegistration) = 0;
+		virtual void registerHandler(IOEvent &eventRegistration) = 0;
+		virtual void unregisterHandler(const TimerEvent &handler) = 0;
+		virtual void unregisterHandler(const IOEvent &handler) = 0;
 
         bool isRegistered(const TimerEvent &handler) const;
         bool isRegistered(const IOEvent &handler) const;
 
-		void notify();
+		virtual void notify() = 0;
 
 		void waitForEvent();
 		template<typename T> void waitForEvent(const T &timeout) {

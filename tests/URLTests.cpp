@@ -11,14 +11,14 @@ TEST(URL, ParseCommon) {
     EXPECT_STREQ("localhost", url.host().c_str());
     EXPECT_STREQ("1234", url.port().c_str());
     EXPECT_STREQ("", url.path().c_str());
-    EXPECT_EQ(0, url.query().size());
+    EXPECT_EQ(0u, url.query().size());
 
     DCF::url url2("dcf://localhost:1234/");
     EXPECT_STREQ("dcf", url2.protocol().c_str());
     EXPECT_STREQ("localhost", url2.host().c_str());
     EXPECT_STREQ("1234", url.port().c_str());
     EXPECT_STREQ("", url2.path().c_str());
-    EXPECT_EQ(0, url2.query().size());
+    EXPECT_EQ(0u, url2.query().size());
 }
 
 TEST(URL, ParseCommonNoPort) {
@@ -27,14 +27,14 @@ TEST(URL, ParseCommonNoPort) {
     EXPECT_STREQ("localhost", url.host().c_str());
     EXPECT_STREQ("", url.port().c_str());
     EXPECT_STREQ("", url.path().c_str());
-    EXPECT_EQ(0, url.query().size());
+    EXPECT_EQ(0u, url.query().size());
 
     DCF::url url2("dcf://localhost/test");
     EXPECT_STREQ("dcf", url2.protocol().c_str());
     EXPECT_STREQ("localhost", url2.host().c_str());
     EXPECT_STREQ("", url.port().c_str());
     EXPECT_STREQ("test", url2.path().c_str());
-    EXPECT_EQ(0, url2.query().size());
+    EXPECT_EQ(0u, url2.query().size());
 }
 
 TEST(URL, ParseNoProtocol) {
@@ -49,9 +49,8 @@ TEST(URL, ParseCommonQuery) {
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("", url.port().c_str());
         EXPECT_STREQ("", url.path().c_str());
-        EXPECT_EQ(1, url.query().size());
+        EXPECT_EQ(1u, url.query().size());
         EXPECT_STREQ("", url.query().at("a").c_str());
-
     }
 
     {
@@ -60,7 +59,7 @@ TEST(URL, ParseCommonQuery) {
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("1234", url.port().c_str());
         EXPECT_STREQ("", url.path().c_str());
-        EXPECT_EQ(1, url.query().size());
+        EXPECT_EQ(1u, url.query().size());
         EXPECT_STREQ("", url.query().at("a").c_str());
     }
 
@@ -70,7 +69,7 @@ TEST(URL, ParseCommonQuery) {
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("", url.port().c_str());
         EXPECT_STREQ("test", url.path().c_str());
-        EXPECT_EQ(1, url.query().size());
+        EXPECT_EQ(1u, url.query().size());
         EXPECT_STREQ("1", url.query().at("a").c_str());
     }
 
@@ -80,7 +79,7 @@ TEST(URL, ParseCommonQuery) {
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("1234", url.port().c_str());
         EXPECT_STREQ("test", url.path().c_str());
-        EXPECT_EQ(1, url.query().size());
+        EXPECT_EQ(1u, url.query().size());
         EXPECT_STREQ("1", url.query().at("a").c_str());
     }
 
@@ -90,7 +89,7 @@ TEST(URL, ParseCommonQuery) {
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("", url.port().c_str());
         EXPECT_STREQ("test", url.path().c_str());
-        EXPECT_EQ(2, url.query().size());
+        EXPECT_EQ(2u, url.query().size());
         EXPECT_STREQ("1", url.query().at("a").c_str());
         EXPECT_STREQ("2", url.query().at("b").c_str());
     }
@@ -101,7 +100,7 @@ TEST(URL, ParseCommonQuery) {
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("1234", url.port().c_str());
         EXPECT_STREQ("test", url.path().c_str());
-        EXPECT_EQ(2, url.query().size());
+        EXPECT_EQ(2u, url.query().size());
         EXPECT_STREQ("1", url.query().at("a").c_str());
         EXPECT_STREQ("2", url.query().at("b").c_str());
     }

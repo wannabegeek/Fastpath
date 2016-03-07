@@ -6,12 +6,12 @@
 #define TFDCF_INLINEQUEUE_H
 
 #include "Queue.h"
-#include "EventManager.h"
+#include "InlineEventManager.h"
 
 namespace DCF {
     class InlineQueue : public Queue {
     private:
-        EventManager m_eventManager;
+        InlineEventManager m_eventManager;
 
         virtual EventManager &eventManager() override {
             return m_eventManager;

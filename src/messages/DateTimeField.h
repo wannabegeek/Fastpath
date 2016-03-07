@@ -74,8 +74,7 @@ namespace DCF {
 
         const bool decode(const ByteStorage &buffer) noexcept override {
             if (buffer.remainingReadLength() >= MsgField::size()) {
-                const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
-                assert(type == StorageType::date_time);
+                assert(static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes())) == StorageType::date_time);
                 buffer.advanceRead(sizeof(MsgField::type));
 
                 const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
