@@ -78,6 +78,6 @@ set(SOURCE_FILES
         transport/SocketClient.h
         transport/SocketServer.cpp
         transport/SocketServer.h
-        transport/TCPTransport.cpp transport/TCPTransport.h transport/URL.cpp transport/URL.h event/GlobalEventController.h event/InlineEventController.h event/EventController.h)
+        transport/TCPTransport.cpp transport/TCPTransport.h transport/URL.cpp transport/URL.h)
 
 add_library(TFDCF ${SOURCE_FILES})
