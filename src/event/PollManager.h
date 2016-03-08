@@ -21,8 +21,6 @@
 
 #include "../config.h"
 
-#define MAX_EVENTS 256
-
 namespace DCF {
 	using DistantFutureType = std::chrono::microseconds;
 	static constexpr DistantFutureType DistantFuture = DistantFutureType::max();

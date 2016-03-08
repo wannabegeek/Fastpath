@@ -49,9 +49,7 @@ namespace DCF {
 	EventManager::~EventManager() {
 	}
 
-    EventManager::EventManager(EventManager &&other) : m_events(other.m_events), m_eventLoop(other.m_eventLoop), m_timerHandlers(other.m_timerHandlers), m_ioHandlers(other.m_ioHandlers), m_servicingEvents(other.m_servicingEvents), m_servicingTimers(other.m_servicingTimers) {
-        other.m_timerHandlers.clear();
-        other.m_ioHandlers.clear();
+    EventManager::EventManager(EventManager &&other) : m_events(other.m_events), m_eventLoop(other.m_eventLoop), m_servicingEvents(other.m_servicingEvents), m_servicingTimers(other.m_servicingTimers) {
         other.m_events.fill(EventPollElement());
     }
 
@@ -63,7 +61,7 @@ namespace DCF {
         this->processPendingRegistrations();
 
 		int result = 0;
-		if (__builtin_expect(timeout.count() == 0 && m_ioHandlers.size() == 0 && m_timerHandlers.size() == 0, false)) {
+		if (__builtin_expect(timeout.count() == 0 && !haveHandlers(), false)) {
 			ERROR_LOG("No events to handle - returning");
 		} else {
 			std::chrono::microseconds duration = timeout;
@@ -89,8 +87,7 @@ namespace DCF {
 		std::chrono::microseconds duration = timeout;
 		bool haveTimeout = false;
 
-		std::for_each(m_timerHandlers.begin(), m_timerHandlers.end(), [&](const TimerEvent *handler) {
-//			TimerEvent *handler = const_cast<TimerEvent *>(h);
+        __foreach_timer([&](auto handler) {
 			if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_START) {
 				haveTimeout = true;
 				handler->m_lastTime = nowTime;
@@ -115,15 +112,15 @@ namespace DCF {
 
 	void EventManager::serviceEvent(const EventPollElement &event) {
         m_servicingEvents = true;
-        for (IOEvent *handler : m_ioHandlers) {
-            if (handler->fileDescriptor() == event.fd) {
+        __foreach_ioevent([&](auto handler) {
+                if (handler->fileDescriptor() == event.fd) {
                 const int events = handler->eventTypes() & event.filter;
                 if (events != EventType::NONE && !handler->__awaitingDispatch()) {
 					handler->__setAwaitingDispatch(true);
                     handler->__notify(static_cast<EventType>(events));
                 }
             }
-        }
+        });
         m_servicingEvents = false;
 	}
 
@@ -131,30 +128,31 @@ namespace DCF {
 		std::chrono::steady_clock::time_point nowTime = std::chrono::steady_clock::now();
 
 		m_servicingTimers = true;
-		for(TimerEvent *handler : m_timerHandlers) {
-			if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_PROGRESS) {
-				// calculate the elapsed time
-				std::chrono::microseconds elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(nowTime - handler->m_lastTime);
+		__foreach_timer([&](auto handler) {
+            if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_PROGRESS) {
+                // calculate the elapsed time
+                std::chrono::microseconds elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                        nowTime - handler->m_lastTime);
 
-				handler->m_timeLeft = handler->m_timeLeft - elapsedTime;
+                handler->m_timeLeft = handler->m_timeLeft - elapsedTime;
 
-				if (handler->m_timeLeft <= std::chrono::microseconds(0)) {
+                if (handler->m_timeLeft <= std::chrono::microseconds(0)) {
                     handler->m_timeLeft = handler->m_timeout;
                     if (!handler->__awaitingDispatch()) {
                         handler->__setAwaitingDispatch(true);
                         handler->__notify(EventType::NONE);    //Execute the handler
                     }
-				}
-			}
-		}
+                }
+            }
+        });
 		m_servicingTimers = false;
 	}
 
-    bool EventManager::isRegistered(const TimerEvent &handler) const {
-        return std::find(m_timerHandlers.begin(), m_timerHandlers.end(), &handler) != m_timerHandlers.end();
-    }
-
-    bool EventManager::isRegistered(const IOEvent &handler) const {
-        return std::find(m_ioHandlers.begin(), m_ioHandlers.end(), &handler) != m_ioHandlers.end();
-    }
+//    bool EventManager::isRegistered(const TimerEvent &handler) const {
+//        return std::find(m_timerHandlers.begin(), m_timerHandlers.end(), &handler) != m_timerHandlers.end();
+//    }
+//
+//    bool EventManager::isRegistered(const IOEvent &handler) const {
+//        return std::find(m_ioHandlers.begin(), m_ioHandlers.end(), &handler) != m_ioHandlers.end();
+//    }
 }

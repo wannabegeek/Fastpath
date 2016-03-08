@@ -12,7 +12,9 @@ namespace DCF {
     InlineEventManager::InlineEventManager() : m_pendingFileDescriptorRegistrationEvents(false), m_pendingTimerRegistrationEvents(false) {
     }
 
-    InlineEventManager::InlineEventManager(InlineEventManager &&other) : EventManager(std::move(other)), m_pendingFileDescriptorRegistrationEvents(false), m_pendingTimerRegistrationEvents(false) {
+    InlineEventManager::InlineEventManager(InlineEventManager &&other) : EventManager(std::move(other)), m_pendingFileDescriptorRegistrationEvents(false), m_pendingTimerRegistrationEvents(false), m_timerHandlers(other.m_timerHandlers), m_ioHandlers(other.m_ioHandlers) {
+        other.m_timerHandlers.clear();
+        other.m_ioHandlers.clear();
     }
 
     InlineEventManager::~InlineEventManager() {
@@ -111,4 +113,17 @@ namespace DCF {
 
         handler.__setIsRegistered(false);
     }
+
+    void InlineEventManager::__foreach_timer(std::function<void(TimerEvent *)> callback) const {
+        std::for_each(m_timerHandlers.begin(), m_timerHandlers.end(), std::forward<decltype(callback)>(callback));
+    }
+
+    void InlineEventManager::__foreach_ioevent(std::function<void(IOEvent *)> callback) const {
+        std::for_each(m_ioHandlers.begin(), m_ioHandlers.end(), std::forward<decltype(callback)>(callback));
+    }
+
+    const bool InlineEventManager::haveHandlers() const {
+        return !(m_timerHandlers.empty() && m_ioHandlers.empty());
+    }
+
 }

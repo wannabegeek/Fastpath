@@ -19,7 +19,7 @@
 #include <array>
 
 namespace DCF {
-	class EventPoll {
+	template <int MAX_EVENTS> class EventPoll {
 		int m_kq = 0;
 		int m_events = 0;
 	public:
@@ -83,7 +83,7 @@ namespace DCF {
 			return true;
 		}
 
-		int run(std::array<EventPollElement, 256> &events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
+		int run(std::array<EventPollElement, MAX_EVENTS> &events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
 			int result = -1;
 
             if (m_events != 0) {

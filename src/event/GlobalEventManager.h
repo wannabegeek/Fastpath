@@ -18,9 +18,16 @@ namespace DCF {
         PendingTimerType m_pendingTimerRegistrations;
         PendingIOType m_pendingIORegistrations;
 
+        std::vector<TimerEvent *> m_timerHandlers;
+        std::vector<IOEvent *> m_ioHandlers;
+
         void serviceEvent(const EventPollElement &event) override;
 
         void processPendingRegistrations() override;
+        void __foreach_timer(std::function<void(TimerEvent *)> callback) const override;
+        void __foreach_ioevent(std::function<void(IOEvent *)> callback) const override;
+
+        const bool haveHandlers() const override;
     public:
         GlobalEventManager();
         GlobalEventManager(GlobalEventManager &&other);

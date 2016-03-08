@@ -5,6 +5,8 @@
 #include "GlobalEventManager.h"
 #include "TimerEvent.h"
 #include "IOEvent.h"
+#include <functional>
+#include <utility>
 
 namespace DCF {
 
@@ -119,5 +121,17 @@ namespace DCF {
 //            }
 //        }
         this->notify();
+    }
+
+    void GlobalEventManager::__foreach_timer(std::function<void(TimerEvent *)> callback) const {
+        std::for_each(m_timerHandlers.begin(), m_timerHandlers.end(), std::forward<decltype(callback)>(callback));
+    }
+
+    void GlobalEventManager::__foreach_ioevent(std::function<void(IOEvent *)> callback) const {
+        std::for_each(m_ioHandlers.begin(), m_ioHandlers.end(), std::forward<decltype(callback)>(callback));
+    }
+
+    const bool GlobalEventManager::haveHandlers() const {
+        return !(m_timerHandlers.empty() && m_ioHandlers.empty());
     }
 }

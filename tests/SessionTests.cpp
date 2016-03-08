@@ -234,7 +234,6 @@ TEST(Session, ReadTimerBusySpin) {
             ASSERT_FALSE(handler.isRegistered());
             handler.registerEvent(&queue, fd[0], DCF::EventType::READ, callback);
         }
-        EXPECT_TRUE(handler.isRegistered());
         timerCounter++;
     });
 

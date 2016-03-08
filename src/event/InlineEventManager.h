@@ -8,6 +8,9 @@
 #include "IOEvent.h"
 
 namespace DCF {
+    class Timer;
+    class IOEvent;
+
     class InlineEventManager final : public EventManager {
     private:
         bool m_pendingFileDescriptorRegistrationEvents;
@@ -15,7 +18,14 @@ namespace DCF {
         std::vector<TimerEvent *> m_pendingTimerHandlers;
         std::vector<IOEvent *> m_pendingHandlers;
 
+        std::vector<TimerEvent *> m_timerHandlers;
+        std::vector<IOEvent *> m_ioHandlers;
+
         void processPendingRegistrations() override;
+        void __foreach_timer(std::function<void(TimerEvent *)> callback) const override;
+        void __foreach_ioevent(std::function<void(IOEvent *)> callback) const override;
+
+        const bool haveHandlers() const override;
     public:
         InlineEventManager();
         InlineEventManager(InlineEventManager &&other);

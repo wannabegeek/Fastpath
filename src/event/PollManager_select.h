@@ -37,7 +37,7 @@
 
 namespace DCF {
 
-   class EventPoll {
+   template <int = MAX_EVENTS> class EventPoll {
    private:
       fd_set m_readSet;
       fd_set m_writeSet;

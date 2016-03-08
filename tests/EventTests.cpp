@@ -19,7 +19,7 @@ TEST(EventManager, SimpleTimeout) {
     mgr.waitForEvent(std::chrono::milliseconds(100));
     const auto endTime = std::chrono::steady_clock::now();
     const auto actual = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    EXPECT_GT(110, actual.count());
+    EXPECT_GE(110, actual.count());
     EXPECT_LT(99, actual.count());
 }
 

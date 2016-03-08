@@ -28,14 +28,12 @@ namespace DCF {
     
 	class EventManager {
     private:
-        std::array<EventPollElement, 256> m_events;
+        std::array<EventPollElement, std::numeric_limits<uint16_t>::max()> m_events;
 
         bool setTimeout(std::chrono::microseconds &timeout) const;
 
     protected:
-        EventPoll m_eventLoop;
-        std::vector<TimerEvent *> m_timerHandlers;
-        std::vector<IOEvent *> m_ioHandlers;
+        EventPoll<std::numeric_limits<uint16_t>::max()> m_eventLoop;
 
         mutable bool m_servicingEvents;
         mutable bool m_servicingTimers;
@@ -44,7 +42,12 @@ namespace DCF {
 		virtual void serviceTimers();
 
         virtual void processPendingRegistrations() = 0;
-	public:
+        virtual void __foreach_timer(std::function<void(TimerEvent *)> callback) const = 0;
+        virtual void __foreach_ioevent(std::function<void(IOEvent *)> callback) const = 0;
+
+        virtual const bool haveHandlers() const = 0;
+
+    public:
 		EventManager();
         EventManager(EventManager &&other);
 
@@ -58,8 +61,8 @@ namespace DCF {
 		virtual void unregisterHandler(TimerEvent &handler) = 0;
 		virtual void unregisterHandler(IOEvent &handler) = 0;
 
-        bool isRegistered(const TimerEvent &handler) const;
-        bool isRegistered(const IOEvent &handler) const;
+//        bool isRegistered(const TimerEvent &handler) const;
+//        bool isRegistered(const IOEvent &handler) const;
 
 		virtual void notify() = 0;
 
