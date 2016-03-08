@@ -18,18 +18,26 @@
 #include <cstring>
 
 namespace DCF {
-   template <int = MAX_EVENTS> class EventPoll {
+   template <int MAX_EVENTS> class EventPoll {
    private:
-      int epollfd = -1;
-      int m_events = 0;
+       int epollfd = -1;
+       int m_events = 0;
+
+       static constexpr const bool greater_than(const size_t x, const size_t y) { return x >= y; }
+       static constexpr size_t maxDispatchSize = 256;
+
+       static_assert(greater_than(MAX_EVENTS, maxDispatchSize), "MAX_EVENTS template parameter not large enough");
+       // we will dispatch at most 'maxDispatchSize'
+       struct epoll_event _events[maxDispatchSize];
+
    public:
-      EventPoll() {
-         epollfd = epoll_create1(0);
-         if (epollfd == -1) {
-             ERROR_LOG("Failed to create epoll fd: " << strerror(errno));
-             return;
-         }
-      }
+       EventPoll() {
+           epollfd = epoll_create1(0);
+           if (epollfd == -1) {
+               ERROR_LOG("Failed to create epoll fd: " << strerror(errno));
+               return;
+           }
+       }
 
       ~EventPoll() {
       }
@@ -83,7 +91,7 @@ namespace DCF {
          return true;
       }
 
-      int run(std::array<EventPollElement, MAX_EVENTS> &events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
+      int run(std::array<EventPollElement, MAX_EVENTS> *events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
          int result = -1;
 
          if (m_events != 0) {
@@ -92,7 +100,6 @@ namespace DCF {
                 timeout = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
             }
 
-            struct epoll_event _events[MAX_EVENTS];
             result = epoll_wait(epollfd, _events, m_events, timeout);
             if (result == -1) {
                 ERROR_LOG("epoll_wait returned -1: " << strerror(errno));
@@ -109,7 +116,7 @@ namespace DCF {
                   }
 
                   if (filter != EventType::NONE) {
-                     events[numEvents++] = EventPollElement(_events[j].data.fd, filter);
+                      (*events)[numEvents++] = EventPollElement(_events[j].data.fd, filter);
                   }
                }
             }

@@ -22,7 +22,16 @@ namespace DCF {
 	template <int MAX_EVENTS> class EventPoll {
 		int m_kq = 0;
 		int m_events = 0;
-	public:
+
+        static constexpr const bool greater_than(const size_t x, const size_t y) { return x >= y; }
+
+        static constexpr size_t maxDispatchSize = 256;
+
+        static_assert(greater_than(MAX_EVENTS, maxDispatchSize), "MAX_EVENTS template parameter not large enough");
+        // we will dispatch at most 'maxDispatchSize'
+        struct kevent _events[maxDispatchSize];
+
+    public:
 		EventPoll() {
 			m_kq = kqueue();
 			if (m_kq == -1) {
@@ -83,7 +92,7 @@ namespace DCF {
 			return true;
 		}
 
-		int run(std::array<EventPollElement, MAX_EVENTS> &events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
+		int run(std::array<EventPollElement, MAX_EVENTS> *events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
 			int result = -1;
 
             if (m_events != 0) {
@@ -101,8 +110,7 @@ namespace DCF {
                     timeoutPtr = &timeout;
                 }
 
-                struct kevent _events[MAX_EVENTS];
-                result = kevent(m_kq, NULL, 0, _events, m_events, timeoutPtr);
+                result = kevent(m_kq, NULL, 0, _events, maxDispatchSize, timeoutPtr);
                 if (result == -1) {
                     ERROR_LOG("kevent returned -1: " << strerror(errno));
                     return -1;
@@ -117,7 +125,7 @@ namespace DCF {
                             filter |= EventType::WRITE;
                         }
                         if (filter != EventType::NONE) {
-                            events[numEvents++] = EventPollElement(static_cast<int>(_events[i].ident), filter);
+                            (*events)[numEvents++] = EventPollElement(static_cast<int>(_events[i].ident), filter);
                         }
                     }
                 }

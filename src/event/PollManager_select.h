@@ -37,7 +37,7 @@
 
 namespace DCF {
 
-   template <int = MAX_EVENTS> class EventPoll {
+   template <int MAX_EVENTS> class EventPoll {
    private:
       fd_set m_readSet;
       fd_set m_writeSet;
@@ -82,7 +82,7 @@ namespace DCF {
          return true;
       }
 
-      int run(std::array<EventPollElement, 256> &events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
+      int run(std::array<EventPollElement, MAX_EVENTS> *events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
          int result = 0;
          struct timeval *timeoutPtr = nullptr;
          struct timeval timeout = {0, 0};
@@ -120,7 +120,7 @@ namespace DCF {
                }
 
                if (filter != EventType::NONE) {
-                  events[numEvents++] = EventPollElement(j, filter);
+                  (*events)[numEvents++] = EventPollElement(j, filter);
                }
             }
          }

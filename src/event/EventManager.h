@@ -27,13 +27,15 @@ namespace DCF {
     class IOEvent;
     
 	class EventManager {
+    public:
+        static constexpr const size_t maxEvents = std::numeric_limits<uint16_t>::max();
     private:
-        std::array<EventPollElement, std::numeric_limits<uint16_t>::max()> m_events;
+        std::array<EventPollElement, maxEvents> *m_events;
 
         bool setTimeout(std::chrono::microseconds &timeout) const;
 
     protected:
-        EventPoll<std::numeric_limits<uint16_t>::max()> m_eventLoop;
+        EventPoll<maxEvents> m_eventLoop;
 
         mutable bool m_servicingEvents;
         mutable bool m_servicingTimers;

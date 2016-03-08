@@ -44,13 +44,15 @@ namespace DCF {
 	}
 
 	EventManager::EventManager() : m_servicingEvents(false), m_servicingTimers(false) {
+        m_events = new std::array<EventPollElement, maxEvents>;
 	}
 
 	EventManager::~EventManager() {
+        delete m_events;
 	}
 
     EventManager::EventManager(EventManager &&other) : m_events(other.m_events), m_eventLoop(other.m_eventLoop), m_servicingEvents(other.m_servicingEvents), m_servicingTimers(other.m_servicingTimers) {
-        other.m_events.fill(EventPollElement());
+        other.m_events = new std::array<EventPollElement, maxEvents>;
     }
 
     void EventManager::waitForEvent() {
@@ -73,7 +75,7 @@ namespace DCF {
 			result = m_eventLoop.run(m_events, numEvents, duration);
 			if (result != -1) {
 				for (int i = 0; i < numEvents; ++i) {
-					serviceEvent(m_events[i]);
+					serviceEvent(m_events->at(i));
 				}
 				serviceTimers();
 			} else {

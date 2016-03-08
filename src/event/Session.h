@@ -16,7 +16,7 @@ namespace DCF {
     class Session {
     private:
         bool m_started;
-        std::atomic_bool m_shutdown;
+        std::atomic_bool m_shutdown = ATOMIC_VAR_INIT(false);
         GlobalEventManager m_eventManager;
 
         std::thread m_eventLoop;
@@ -37,11 +37,12 @@ namespace DCF {
                     std::lock_guard<std::mutex> lock_guard(mutex);
                     condition.notify_all();
                 }
-                while (!m_shutdown) {
+                while (!m_shutdown.load()) {
+                    std::cout << "Need to shutdown " << std::boolalpha << m_shutdown.load() << std::endl;
                     m_eventManager.waitForEvent();
                 }
 
-                m_shutdown = false;
+                m_shutdown.store(false);
             });
 
             condition.wait(lock);
@@ -54,7 +55,8 @@ namespace DCF {
                 return EVM_NOTRUNNING;
             }
 
-            m_shutdown = true;
+            std::cout << "shutting down" << std::endl;
+            m_shutdown.store(true);
             m_eventManager.notify();
             if (m_eventLoop.joinable()) {
                 m_eventLoop.join();
