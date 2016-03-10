@@ -47,7 +47,7 @@ namespace DCF {
         void dispatch(const std::chrono::milliseconds &timeout) override {
             queue_value_type dispatcher[32];
             size_t count = 0;
-            if ((count = m_queue.wait_dequeue_bulk(&dispatcher[0], 32)) == 0) {
+            if ((count = m_queue.try_dequeue_bulk(&dispatcher[0], 32)) == 0) {
                 // Create a TimerEvent and add to the dispatch loop
                 if (m_timeout) {
                     m_timeout->setTimeout(timeout);

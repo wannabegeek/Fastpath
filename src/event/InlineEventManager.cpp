@@ -9,12 +9,7 @@
 
 namespace DCF {
 
-    InlineEventManager::InlineEventManager() : m_pendingFileDescriptorRegistrationEvents(false), m_pendingTimerRegistrationEvents(false) {
-    }
-
-    InlineEventManager::InlineEventManager(InlineEventManager &&other) : EventManager(std::move(other)), m_pendingFileDescriptorRegistrationEvents(false), m_pendingTimerRegistrationEvents(false), m_timerHandlers(other.m_timerHandlers), m_ioHandlers(other.m_ioHandlers) {
-        other.m_timerHandlers.clear();
-        other.m_ioHandlers.clear();
+    InlineEventManager::InlineEventManager() : m_servicingEvents(false), m_servicingTimers(false), m_pendingFileDescriptorRegistrationEvents(false), m_pendingTimerRegistrationEvents(false) {
     }
 
     InlineEventManager::~InlineEventManager() {
@@ -26,38 +21,37 @@ namespace DCF {
             m_timerHandlers = m_pendingTimerHandlers;
             m_pendingTimerRegistrationEvents = false;
         }
-        if (m_pendingFileDescriptorRegistrationEvents) {
-            m_ioHandlers = m_pendingHandlers;
-            m_pendingFileDescriptorRegistrationEvents = false;
-        }
     }
 
-    void InlineEventManager::registerHandler(TimerEvent &eventRegistration) {
+    void InlineEventManager::registerHandler(TimerEvent &event) {
         if (m_servicingTimers) {
             m_pendingTimerRegistrationEvents = true;
-            m_pendingTimerHandlers.push_back(&eventRegistration);
+            m_pendingTimerHandlers.push_back(&event);
         } else {
-            m_timerHandlers.push_back(&eventRegistration);
-            m_pendingTimerHandlers.push_back(&eventRegistration);
+            m_timerHandlers.push_back(&event);
+            m_pendingTimerHandlers.push_back(&event);
         }
-        eventRegistration.__setIsRegistered(true);
+        // we can do this for the InlineEventManager since we must be out of the event loop to get here!
+        event.__setIsRegistered(true);
     }
 
-    void InlineEventManager::registerHandler(IOEvent &eventRegistration) {
-        if (eventRegistration.fileDescriptor() <= 0) {
-            ERROR_LOG("Failed to register invalid file descriptor: " << eventRegistration.fileDescriptor());
+    void InlineEventManager::registerHandler(IOEvent &event) {
+        if (event.fileDescriptor() <= 0) {
+            ERROR_LOG("Failed to register invalid file descriptor: " << event.fileDescriptor());
             throw EventException("Invalid file descriptor");
         }
 
-        if (m_servicingEvents) {
-            m_pendingHandlers.push_back(&eventRegistration);
-            m_pendingFileDescriptorRegistrationEvents = true;
+        auto it = m_ioHandlerLookup.find(event.fileDescriptor());
+        if (it != m_ioHandlerLookup.end()) {
+            it->second.push_back(&event);
         } else {
-            m_ioHandlers.push_back(&eventRegistration);
-            m_pendingHandlers.push_back(&eventRegistration);
+            IOEventTable::mapped_type events;
+            events.push_back(&event);
+            m_ioHandlerLookup.emplace(event.fileDescriptor(), std::move(events));
         }
-        m_eventLoop.add({eventRegistration.fileDescriptor(), eventRegistration.eventTypes()});
-        eventRegistration.__setIsRegistered(true);
+
+        m_eventLoop.add({event.fileDescriptor(), event.eventTypes()});
+        event.__setIsRegistered(true);
     }
 
     void InlineEventManager::unregisterHandler(TimerEvent &handler) {
@@ -77,53 +71,54 @@ namespace DCF {
         handler.__setIsRegistered(false);
     }
 
-    void InlineEventManager::unregisterHandler(IOEvent &handler) {
-        auto it = std::find(m_pendingHandlers.begin(), m_pendingHandlers.end(), &handler);
-        if (it != m_pendingHandlers.end()) {
-            m_pendingHandlers.erase(it);
-
-            if (handler.eventTypes() != EventType::ALL) {
-                it = std::find_if(m_pendingHandlers.begin(), m_pendingHandlers.end(), [&handler](const IOEvent *other) {
-                    return other->fileDescriptor() == handler.fileDescriptor() && (other->eventTypes() & handler.eventTypes()) == handler.eventTypes();
-                });
-                if (it == m_pendingHandlers.end()) {
-                    m_eventLoop.remove({handler.fileDescriptor(), handler.eventTypes()});
-                }
-            } else {
-                EventType eventTypes = handler.eventTypes();
-                std::for_each(m_pendingHandlers.begin(), m_pendingHandlers.end(), [&eventTypes, &handler](const IOEvent *other) {
-                    if (other->fileDescriptor() == handler.fileDescriptor()) {
-                        eventTypes = static_cast<EventType>(eventTypes & ~other->eventTypes());
+    void InlineEventManager::unregisterHandler(IOEvent &event) {
+        auto it = m_ioHandlerLookup.find(event.fileDescriptor());
+        if (it != m_ioHandlerLookup.end()) {
+            auto registered_events = it->second;
+            auto t = std::find(registered_events.begin(), registered_events.end(), &event);
+            if (t != registered_events.end()) {
+                // We can only remove the FD from listening if no one else is registed
+                // for callbacks on it
+                if (registered_events.size() == 1) {
+                    if (decltype(m_eventLoop)::can_add_events_async) {
+                        m_eventLoop.remove({event.fileDescriptor(), event.eventTypes()});
                     }
-                });
-                if (eventTypes != EventType::NONE) {
-                    m_eventLoop.remove({handler.fileDescriptor(), eventTypes});
+                    // upgrade read lock to write lock
+                    registered_events.erase(t);
+                } else {
+                    // upgrade read lock to write lock
+                    m_ioHandlerLookup.erase(it);
                 }
+
+                if (event.__awaitingDispatch()) {
+                    assert(false); // We are removing an event which is awaiting dispatch
+                }
+                event.__setIsRegistered(false);
             }
         }
-
-        if (m_servicingEvents) {
-            m_pendingFileDescriptorRegistrationEvents = true;
-        } else {
-            auto it = std::find(m_ioHandlers.begin(), m_ioHandlers.end(), &handler);
-            if (it != m_ioHandlers.end()) {
-                m_ioHandlers.erase(it);
-            }
-        }
-
-        handler.__setIsRegistered(false);
     }
 
-    void InlineEventManager::__foreach_timer(std::function<void(TimerEvent *)> callback) const {
+    void InlineEventManager::foreach_timer(std::function<void(TimerEvent *)> callback) const {
+        m_servicingTimers = true;
         std::for_each(m_timerHandlers.begin(), m_timerHandlers.end(), std::forward<decltype(callback)>(callback));
+        m_servicingTimers = false;
     }
 
-    void InlineEventManager::__foreach_ioevent(std::function<void(IOEvent *)> callback) const {
-        std::for_each(m_ioHandlers.begin(), m_ioHandlers.end(), std::forward<decltype(callback)>(callback));
+    void InlineEventManager::foreach_event_matching(const EventPollElement &event,
+                                                    std::function<void(IOEvent *)> callback) const {
+        auto it = m_ioHandlerLookup.find(event.fd);
+        if (it != m_ioHandlerLookup.end()) {
+            m_servicingEvents = true;
+            std::for_each(it->second.begin(), it->second.end(), [&](IOEvent *e) {
+                if ((e->eventTypes() & event.filter) != EventType::NONE) {
+                    callback(e);
+                }
+            });
+            m_servicingEvents = false;
+        }
     }
 
     const bool InlineEventManager::haveHandlers() const {
-        return !(m_timerHandlers.empty() && m_ioHandlers.empty());
+        return !(m_timerHandlers.empty() && m_ioHandlerLookup.empty());
     }
-
 }

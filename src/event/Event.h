@@ -19,8 +19,9 @@ namespace DCF {
 
         Queue *m_queue;
 
-        std::atomic<bool> m_isRegistered;
-        std::atomic<bool> m_awaitingDispatch;
+        std::atomic<bool> m_isRegistered = ATOMIC_VAR_INIT(false);
+        std::atomic<bool> m_awaitingDispatch = ATOMIC_VAR_INIT(false);
+//        std::atomic<bool> m_inCallback = ATOMIC_VAR_INIT(false);
 
         bool m_active;
 
@@ -31,10 +32,10 @@ namespace DCF {
         }
 
     public:
-        Event() : m_isRegistered(false), m_awaitingDispatch(false), m_active(false) {
+        Event() : m_active(false) {
         }
 
-        Event(Queue *queue) : m_queue(queue), m_isRegistered(false), m_awaitingDispatch(false), m_active(true) {
+        Event(Queue *queue) : m_queue(queue), m_active(true) {
         }
 
         Event(Event &&other) : m_queue(other.m_queue), m_isRegistered(static_cast<bool>(other.m_isRegistered)) {

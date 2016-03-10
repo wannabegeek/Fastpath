@@ -43,17 +43,13 @@ namespace DCF {
 		return (!(::fcntl(fd, F_GETFL) == -1 && errno != EBADF));
 	}
 
-	EventManager::EventManager() : m_servicingEvents(false), m_servicingTimers(false) {
+	EventManager::EventManager() {
         m_events = new std::array<EventPollElement, maxEvents>;
 	}
 
 	EventManager::~EventManager() {
         delete m_events;
 	}
-
-    EventManager::EventManager(EventManager &&other) : m_events(other.m_events), m_eventLoop(other.m_eventLoop), m_servicingEvents(other.m_servicingEvents), m_servicingTimers(other.m_servicingTimers) {
-        other.m_events = new std::array<EventPollElement, maxEvents>;
-    }
 
     void EventManager::waitForEvent() {
 		this->waitForEvent(DistantFuture);
@@ -89,22 +85,22 @@ namespace DCF {
 		std::chrono::microseconds duration = timeout;
 		bool haveTimeout = false;
 
-        __foreach_timer([&](auto handler) {
-			if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_START) {
-				haveTimeout = true;
-				handler->m_lastTime = nowTime;
-				handler->m_timeoutState = TimerEvent::TIMEOUTSTATE_PROGRESS;
-				if (handler->m_timeLeft < duration) {
-					duration = handler->m_timeLeft;
-				}
-			} else if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_PROGRESS) {
-				haveTimeout = true;
-				handler->m_lastTime = nowTime;
-				if (handler->m_timeLeft < duration) {
-					duration = handler->m_timeLeft;
-				}
-			}
-		});
+        foreach_timer([&](auto handler) {
+            if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_START) {
+                haveTimeout = true;
+                handler->m_lastTime = nowTime;
+                handler->m_timeoutState = TimerEvent::TIMEOUTSTATE_PROGRESS;
+                if (handler->m_timeLeft < duration) {
+                    duration = handler->m_timeLeft;
+                }
+            } else if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_PROGRESS) {
+                haveTimeout = true;
+                handler->m_lastTime = nowTime;
+                if (handler->m_timeLeft < duration) {
+                    duration = handler->m_timeLeft;
+                }
+            }
+        });
 
 		if (haveTimeout) {
 			timeout = duration;
@@ -113,24 +109,18 @@ namespace DCF {
 	}
 
 	void EventManager::serviceEvent(const EventPollElement &event) {
-        m_servicingEvents = true;
-        __foreach_ioevent([&](auto handler) {
-                if (handler->fileDescriptor() == event.fd) {
-                const int events = handler->eventTypes() & event.filter;
-                if (events != EventType::NONE && !handler->__awaitingDispatch()) {
-					handler->__setAwaitingDispatch(true);
-                    handler->__notify(static_cast<EventType>(events));
-                }
+        foreach_event_matching(event, [&](IOEvent *handler) {
+            if (!handler->__awaitingDispatch()) {
+                handler->__setAwaitingDispatch(true);
+                handler->__notify(static_cast<EventType>(handler->eventTypes() & event.filter));
             }
         });
-        m_servicingEvents = false;
 	}
 
 	void EventManager::serviceTimers() {
 		std::chrono::steady_clock::time_point nowTime = std::chrono::steady_clock::now();
 
-		m_servicingTimers = true;
-		__foreach_timer([&](auto handler) {
+        foreach_timer([&](auto handler) {
             if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_PROGRESS) {
                 // calculate the elapsed time
                 std::chrono::microseconds elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -147,14 +137,5 @@ namespace DCF {
                 }
             }
         });
-		m_servicingTimers = false;
 	}
-
-//    bool EventManager::isRegistered(const TimerEvent &handler) const {
-//        return std::find(m_timerHandlers.begin(), m_timerHandlers.end(), &handler) != m_timerHandlers.end();
-//    }
-//
-//    bool EventManager::isRegistered(const IOEvent &handler) const {
-//        return std::find(m_ioHandlers.begin(), m_ioHandlers.end(), &handler) != m_ioHandlers.end();
-//    }
 }

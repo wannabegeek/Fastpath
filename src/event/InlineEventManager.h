@@ -13,17 +13,21 @@ namespace DCF {
 
     class InlineEventManager final : public EventManager {
     private:
+        using IOEventTable = std::unordered_map<int, std::vector<IOEvent *>>;
+
+        mutable bool m_servicingEvents;
+        mutable bool m_servicingTimers;
+
         bool m_pendingFileDescriptorRegistrationEvents;
         bool m_pendingTimerRegistrationEvents;
         std::vector<TimerEvent *> m_pendingTimerHandlers;
-        std::vector<IOEvent *> m_pendingHandlers;
 
         std::vector<TimerEvent *> m_timerHandlers;
-        std::vector<IOEvent *> m_ioHandlers;
+        IOEventTable m_ioHandlerLookup;
 
         void processPendingRegistrations() override;
-        void __foreach_timer(std::function<void(TimerEvent *)> callback) const override;
-        void __foreach_ioevent(std::function<void(IOEvent *)> callback) const override;
+        void foreach_timer(std::function<void(TimerEvent *)> callback) const override;
+        void foreach_event_matching(const EventPollElement &event, std::function<void(IOEvent *)> callback) const override;
 
         const bool haveHandlers() const override;
     public:
@@ -37,7 +41,7 @@ namespace DCF {
         void unregisterHandler(TimerEvent &handler) override;
         void unregisterHandler(IOEvent &handler) override;
 
-        void notify() override {}
+        void notify(bool wait = false) override {}
     };
 }
 

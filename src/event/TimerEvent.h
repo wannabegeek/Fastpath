@@ -60,10 +60,10 @@ namespace  DCF {
         std::function<void(TimerEvent *)> m_callback;
 
         void dispatch(TimerEvent *event) {
+            this->__setAwaitingDispatch(false);
             if (m_active) {
                 m_callback(event);
             }
-			this->__setAwaitingDispatch(false);
 		}
 
     public:
@@ -105,7 +105,7 @@ namespace  DCF {
         }
 
         void unregisterEvent() {
-            if (m_active) {
+            if (m_active && m_isRegistered.load()) {
                 m_active = false;
                 m_queue->__unregisterEvent(*this);
             }

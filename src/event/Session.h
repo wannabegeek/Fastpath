@@ -38,7 +38,6 @@ namespace DCF {
                     condition.notify_all();
                 }
                 while (!m_shutdown.load()) {
-                    std::cout << "Need to shutdown " << std::boolalpha << m_shutdown.load() << std::endl;
                     m_eventManager.waitForEvent();
                 }
 
@@ -55,7 +54,6 @@ namespace DCF {
                 return EVM_NOTRUNNING;
             }
 
-            std::cout << "shutting down" << std::endl;
             m_shutdown.store(true);
             m_eventManager.notify();
             if (m_eventLoop.joinable()) {

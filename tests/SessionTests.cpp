@@ -131,7 +131,9 @@ TEST(Session, SimpleReadBlocking) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
+        DEBUG_LOG("In read");
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
+        DEBUG_LOG("Out read");
     });
 
     // we need to make sure wwe have registered with the event loop

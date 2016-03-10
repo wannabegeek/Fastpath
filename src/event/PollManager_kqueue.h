@@ -19,9 +19,10 @@
 #include <array>
 
 namespace DCF {
-	template <int MAX_EVENTS> class EventPoll {
-		int m_kq = 0;
-		int m_events = 0;
+    template<int MAX_EVENTS>
+    class EventPoll {
+        int m_kq = 0;
+        int m_events = 0;
 
         static constexpr const bool greater_than(const size_t x, const size_t y) { return x >= y; }
 
@@ -32,20 +33,23 @@ namespace DCF {
         struct kevent _events[maxDispatchSize];
 
     public:
-		EventPoll() {
-			m_kq = kqueue();
-			if (m_kq == -1) {
-				// kqueue failed
+        static constexpr bool can_add_events_async = true;
+        static constexpr bool can_remove_events_async = true;
+
+        EventPoll() {
+            m_kq = kqueue();
+            if (m_kq == -1) {
+                // kqueue failed
                 ERROR_LOG("Failed to create kqueue: " << strerror(errno));
-				return;
-			}
-		}
+                return;
+            }
+        }
 
-		~EventPoll() {
-		}
+        ~EventPoll() {
+        }
 
-		bool add(const EventPollElement &event) {
-			int filter = 0;
+        bool add(const EventPollElement &event) {
+            int filter = 0;
             struct kevent ke;
 
             if ((event.filter & EventType::READ) == EventType::READ) {
@@ -56,44 +60,45 @@ namespace DCF {
             }
             ++m_events;
 
-			EV_SET(&ke, event.fd, filter, EV_ADD, 0, 0, NULL);
+            EV_SET(&ke, event.fd, filter, EV_ADD | EV_CLEAR, 0, 0, NULL);
 
             int i = kevent(m_kq, &ke, 1, NULL, 0, NULL);
             if (i == -1) {
                 ERROR_LOG("Failed to add event to kevent: " << strerror(errno));
                 return false;
             }
-			return true;
-		}
+            return true;
+        }
 
-		bool remove(const EventPollElement &event) {
-			int filter = 0;
+        bool remove(const EventPollElement &event) {
+            int filter = 0;
             struct kevent ke;
 
             if ((event.filter & EventType::READ) == EventType::READ) {
-				filter |= EVFILT_READ;
-			}
-			if ((event.filter & EventType::WRITE) == EventType::WRITE) {
-				filter |= EVFILT_WRITE;
-			}
+                filter |= EVFILT_READ;
+            }
+            if ((event.filter & EventType::WRITE) == EventType::WRITE) {
+                filter |= EVFILT_WRITE;
+            }
 
-			--m_events;
+            --m_events;
             EV_SET(&ke, event.fd, filter, EV_DELETE, 0, 0, NULL);
 
             int i = kevent(m_kq, &ke, 1, NULL, 0, NULL);
             if (i == -1) {
                 // EBADF is ok here - probably just means the FD has been closed
-                // Once a fd is closed the kernel automatically removeds it from the kevent queue
+                // Once a fd is closed the kernel automatically removes it from the kevent queue
                 if (errno != EBADF) {
                     ERROR_LOG("Failed to remove event to kevent: " << strerror(errno));
                     return false;
                 }
             }
-			return true;
-		}
+            return true;
+        }
 
-		int run(std::array<EventPollElement, MAX_EVENTS> *events, int &numEvents, const std::chrono::steady_clock::duration &duration) {
-			int result = -1;
+        int run(std::array<EventPollElement, MAX_EVENTS> *events, int &numEvents,
+                const std::chrono::steady_clock::duration &duration) {
+            int result = -1;
 
             if (m_events != 0) {
                 struct timespec *timeoutPtr = nullptr;
@@ -104,7 +109,9 @@ namespace DCF {
                         timeout = {0, 0};
                     } else {
                         timeout.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
-                        timeout.tv_nsec = static_cast<decltype(timeout.tv_nsec)>(std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() - (timeout.tv_sec * 1000000000));
+                        timeout.tv_nsec = static_cast<decltype(timeout.tv_nsec)>(
+                                std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() -
+                                (timeout.tv_sec * 1000000000));
                         TRACE_LOG("Setting timeout: " << timeout.tv_sec << "s " << timeout.tv_nsec << "ns");
                     }
                     timeoutPtr = &timeout;
@@ -132,14 +139,14 @@ namespace DCF {
             } else {
                 std::this_thread::sleep_for(duration);
             }
-			return 0;
-		}
+            return 0;
+        }
 
-		friend std::ostream &operator<<(std::ostream &out, const EventPoll &event) {
-			out << "Event loop registrations:\n";
-			return out;
-		}
-	};
+        friend std::ostream &operator<<(std::ostream &out, const EventPoll &event) {
+            out << "Event loop registrations:\n";
+            return out;
+        }
+    };
 }
 
 #endif

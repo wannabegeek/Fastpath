@@ -46,10 +46,10 @@ namespace DCF {
 		std::function<void(IOEvent *, const EventType)> m_callback;
 
         void dispatch(IOEvent *event, const EventType &eventType) {
+            this->__setAwaitingDispatch(false);
             if (m_active) {
                 m_callback(event, eventType);
             }
-            this->__setAwaitingDispatch(false);
         }
 
 	public:
@@ -79,7 +79,7 @@ namespace DCF {
         }
 
         void unregisterEvent() {
-            if (m_active && m_isRegistered) {
+            if (m_active && m_isRegistered.load()) {
                 m_active = false;
                 m_queue->__unregisterEvent(*this);
             }

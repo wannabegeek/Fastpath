@@ -37,22 +37,17 @@ namespace DCF {
     protected:
         EventPoll<maxEvents> m_eventLoop;
 
-        mutable bool m_servicingEvents;
-        mutable bool m_servicingTimers;
-
 		virtual void serviceEvent(const EventPollElement &event);
 		virtual void serviceTimers();
 
         virtual void processPendingRegistrations() = 0;
-        virtual void __foreach_timer(std::function<void(TimerEvent *)> callback) const = 0;
-        virtual void __foreach_ioevent(std::function<void(IOEvent *)> callback) const = 0;
+        virtual void foreach_timer(std::function<void(TimerEvent *)> callback) const = 0;
+        virtual void foreach_event_matching(const EventPollElement &event, std::function<void(IOEvent *)> callback) const = 0;
 
         virtual const bool haveHandlers() const = 0;
 
     public:
 		EventManager();
-        EventManager(EventManager &&other);
-
         EventManager(const EventManager &) = delete;
         EventManager &operator=(const EventManager &) = delete;
 
@@ -63,10 +58,7 @@ namespace DCF {
 		virtual void unregisterHandler(TimerEvent &handler) = 0;
 		virtual void unregisterHandler(IOEvent &handler) = 0;
 
-//        bool isRegistered(const TimerEvent &handler) const;
-//        bool isRegistered(const IOEvent &handler) const;
-
-		virtual void notify() = 0;
+		virtual void notify(bool wait = false) = 0;
 
 		void waitForEvent();
 		template<typename T> void waitForEvent(const T &timeout) {

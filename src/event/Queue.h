@@ -34,13 +34,11 @@ namespace DCF {
 
         template <typename T> void __registerEvent(T &evt) {
             this->eventManager().registerHandler(evt);
-            this->__notifyEventManager();
         }
 
         template <typename T> void __unregisterEvent(T &evt) {
             // TODO - remove any pending items from the queue
             this->eventManager().unregisterHandler(evt);
-            this->__notifyEventManager();
         }
     };
 }

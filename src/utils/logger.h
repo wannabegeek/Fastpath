@@ -124,7 +124,7 @@ namespace tf {
 }
 
 #ifdef TRACE
-#   define TRACE_LOG(msg) { LOG(tf::logger::Trace, msg); }
+#   define TRACE_LOG(msg) { LOG(tf::logger::trace, msg); }
 #else
 #   define TRACE_LOG(msg)
 #endif

@@ -6,12 +6,15 @@
 #define TFDCF_ACTIONNOTIFIER_H
 
 #include <unistd.h>
+#include <atomic>
 #include "PollManager.h"
 
 namespace DCF {
     class ActionNotifier {
     private:
         int m_fd[2];
+
+        std::atomic<bool> m_locked = ATOMIC_VAR_INIT(false);
 
     public:
         explicit ActionNotifier() {
@@ -28,6 +31,12 @@ namespace DCF {
             close(m_fd[1]);
         }
 
+        inline void notify_and_wait() {
+            m_locked.store(true, std::memory_order_acquire);
+            this->notify();
+            while(!m_locked.load());
+        }
+
         inline void notify() {
             char data[] = "\n";
             unsigned int length = 1;
@@ -35,6 +44,7 @@ namespace DCF {
         }
 
         inline void reset() {
+            m_locked.store(false, std::memory_order_release);
             char data[256];
             unsigned int length = 255;
             read(m_fd[0], data, length);

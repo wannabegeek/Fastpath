@@ -14,21 +14,15 @@
 namespace tf {
 
 	class spinlock {
-		typedef enum {
-			spinlock_locked, spinlock_unlocked
-		} spinlock_state;
-		std::atomic<spinlock_state> m_state = ATOMIC_VAR_INIT(spinlock_unlocked);
+		std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
 
 	public:
-        spinlock() : m_state(spinlock_unlocked) {
-		}
-
 		inline void lock() {
-			while (m_state.exchange(spinlock_locked, std::memory_order_acquire) == spinlock_locked);
+            while (m_locked.test_and_set(std::memory_order_acquire));
 		}
 
 		inline void unlock() {
-			m_state.store(spinlock_unlocked, std::memory_order_release);
+            m_locked.clear(std::memory_order_release);
 		}
 	};
 
