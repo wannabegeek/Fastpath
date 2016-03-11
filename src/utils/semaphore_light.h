@@ -161,7 +161,7 @@ namespace tf {
             timeout.tv_nsec = static_cast<decltype(timeout.tv_nsec)>(
                     std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() -
                     (timeout.tv_sec * 1000000000));
-            sem_timedwait(&m_sema, timeout);
+            sem_timedwait(&m_sema, &timeout);
         }
 
 

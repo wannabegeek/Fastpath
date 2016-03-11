@@ -26,62 +26,25 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DI
 include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
 set(SOURCE_FILES
-        messages/Message.cpp
-        messages/Message.h
-        messages/Field.h
-        messages/StorageTypes.h
-        utils/logger.h
-        utils/tfpool.h
-        utils/tfspinlock.h
         Exception.h
         MessageBuffer.h
-        messages/FieldTraits.h
         MutableByteStorage.cpp
         MutableByteStorage.h
         SharedMemoryBuffer.h
         ByteStorage.cpp
         ByteStorage.h
         MessageBuffer.h
-        messages/ScalarField.h
-        messages/DataField.h
-        messages/MessageField.h
-        messages/MessageField.cpp
-        messages/Serializable.h
-        messages/DateTimeField.h
         types.h
-        event/Event.h
-        transport/Transport.h
-        event/MessageEvent.h
-        event/Queue.h
-        event/EventManager.h
-        event/EventManager.cpp
-        event/PollManager.h
-        event/EventType.h
-        event/PollManager_epoll.h
-        event/PollManager_kqueue.h
-        event/PollManager_select.h
-        utils/console_colors.h
-        utils/daemon_process.cpp
-        utils/daemon_process.h
         status.h
-        event/TimerEvent.h
-        event/TimerEvent.cpp
-        event/IOEvent.h
-        event/IOEvent.cpp
-        event/BusySpinQueue.h
-        event/BlockingQueue.h
-        event/InlineQueue.h
-        event/Session.h
-        event/ActionNotifier.cpp
-        event/ActionNotifier.h
-        transport/Socket.cpp
-        transport/Socket.h
-        transport/SocketClient.cpp
-        transport/SocketClient.h
-        transport/SocketServer.cpp
-        transport/SocketServer.h
-        transport/TCPTransport.cpp transport/TCPTransport.h transport/URL.cpp transport/URL.h event/GlobalEventManager.cpp event/GlobalEventManager.h event/InlineEventManager.cpp event/InlineEventManager.h utils/semaphore_light.h utils/tfringbuffer.h utils/blocking_ringbuffer.h utils/optimize.h utils/tfoptions.h)
+        )
 
-add_library(TFDCF ${SOURCE_FILES})
+add_library(TFDCF SHARED ${SOURCE_FILES} $<TARGET_OBJECTS:utils>
+        $<TARGET_OBJECTS:event>
+        $<TARGET_OBJECTS:messages>
+        $<TARGET_OBJECTS:transport>)
 
+add_subdirectory(utils)
+add_subdirectory(event)
+add_subdirectory(messages)
+add_subdirectory(transport)
 add_subdirectory(router)

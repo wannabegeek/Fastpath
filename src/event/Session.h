@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include <status.h>
 #include "GlobalEventManager.h"
+#include "utils/logger.h"
 
 namespace DCF {
     class Session {

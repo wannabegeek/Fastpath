@@ -12,7 +12,7 @@ CHECK_FUNCTION_EXISTS(pthread_getname_np HAVE_PTHREAD_GETNAME_NP)
 
 set(GENERIC_COMPILER_FLAGS "-Wall -pedantic -std=c++14")
 IF (CMAKE_COMPILER_IS_GNUCXX)
-    set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wold-style-cast -Woverloaded-virtual")
+    set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wold-style-cast -Woverloaded-virtual -fPIC -flto -mtune=native")
 ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wc++11-extensions")
 ENDIF (CMAKE_COMPILER_IS_GNUCXX)
