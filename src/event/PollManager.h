@@ -33,9 +33,9 @@ namespace DCF {
 		int filter = 0;
 	};
 }
-#ifdef HAVE_KEVENT
+#if defined HAVE_KEVENT
 #	include "PollManager_kqueue.h"
-#elif HAVE_EPOLL
+#elif defined HAVE_EPOLL
 #	include "PollManager_epoll.h"
 #else
 #	include "PollManager_select.h"

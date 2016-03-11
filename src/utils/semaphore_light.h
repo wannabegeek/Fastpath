@@ -106,7 +106,7 @@ namespace tf {
         }
 
         void wait(const std::chrono::steady_clock::duration &duration) {
-            struct timespec timeout = {0, 0};
+            mach_timespec_t timeout = {0, 0};
             timeout.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
             timeout.tv_nsec = static_cast<decltype(timeout.tv_nsec)>(
                     std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() -

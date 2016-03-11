@@ -10,6 +10,7 @@
 #include <type_traits>
 
 #include "tfspinlock.h"
+#include "optimize.h"
 
 namespace tf {
 
@@ -64,7 +65,7 @@ namespace tf {
 
         T *allocate() {
             m_lock.lock();
-            if (__builtin_expect(m_freeAllocations.empty(), false)) {
+            if (unlikely(m_freeAllocations.empty())) {
                 size_t newPoolSize = m_poolSize * 2;
                 m_freeAllocations.reserve(newPoolSize);
                 m_objectCache.reserve(newPoolSize);
@@ -160,7 +161,7 @@ namespace tf {
 
         T *allocate() {
             m_lock.lock();
-            if (__builtin_expect(m_freeAllocations.empty(), false)) {
+            if (unlikely(m_freeAllocations.empty())) {
                 size_t newPoolSize = m_poolSize * 2;
                 m_freeAllocations.reserve(newPoolSize);
                 m_objectCache.reserve(newPoolSize);

@@ -2,6 +2,7 @@
 // Created by Tom Fewster on 07/03/2016.
 //
 
+#include <utils/logger.h>
 #include "InlineEventManager.h"
 #include "IOEvent.h"
 #include "TimerEvent.h"

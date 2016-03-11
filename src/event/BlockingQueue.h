@@ -5,49 +5,42 @@
 #ifndef TFDCF_BLOCKINGQUEUE_H
 #define TFDCF_BLOCKINGQUEUE_H
 
+#include <utils/blocking_ringbuffer.h>
 #include "Queue.h"
 #include "TimerEvent.h"
-#include "utils/blockingconcurrentqueue.h"
 
 namespace DCF {
     class BlockingQueue : public Queue {
     private:
-        using QueueType = moodycamel::BlockingConcurrentQueue<queue_value_type>;
+        using QueueType = tf::blocking_ringbuffer<queue_value_type, 4096>;
 
         QueueType m_queue;
-        moodycamel::ProducerToken m_producerToken;
         std::unique_ptr<TimerEvent> m_timeout;
 
     public:
-        BlockingQueue() : m_queue(10000), m_producerToken(m_queue) {
+        BlockingQueue() {
         }
 
         virtual ~BlockingQueue() { }
 
         const bool try_dispatch() override {
-            queue_value_type dispatcher[32];
-            size_t count = 0;
-            if ((count = m_queue.try_dequeue_bulk(&dispatcher[0], 32))) {
-                for (size_t i = 0; i < count; ++i) {
-                    dispatcher[i]();
-                }
-                return true;
+            bool result = false;
+            queue_value_type dispatcher;
+            while (m_queue.pop(dispatcher)) {
+                dispatcher();
+                result = true;
             }
-            return false;
+            return result;
         }
 
         void dispatch() override {
-            queue_value_type dispatcher[32];
-            size_t count = m_queue.wait_dequeue_bulk(&dispatcher[0], 32);
-            for (size_t i = 0; i < count; ++i) {
-                dispatcher[i]();
-            }
+            queue_value_type dispatcher;
+            m_queue.pop_wait(dispatcher);
+            dispatcher();
         }
 
         void dispatch(const std::chrono::milliseconds &timeout) override {
-            queue_value_type dispatcher[32];
-            size_t count = 0;
-            if ((count = m_queue.try_dequeue_bulk(&dispatcher[0], 32)) == 0) {
+            if (!this->try_dispatch()) {
                 // Create a TimerEvent and add to the dispatch loop
                 if (m_timeout) {
                     m_timeout->setTimeout(timeout);
@@ -56,21 +49,18 @@ namespace DCF {
                         // noop - this will cause us to drop out of the dispatch loop
                     });
                 }
-                count = m_queue.wait_dequeue_bulk(&dispatcher[0], 32);
-            }
-            // we may have exited due to the timer firing, but hey dispatch it anyway
-            for (size_t i = 0; i < count; ++i) {
-                dispatcher[i]();
+                this->dispatch();
             }
         }
 
         const size_t eventsInQueue() const noexcept override {
-            return m_queue.size_approx();
+            return m_queue.size();
         }
 
         const bool __enqueue(queue_value_type &event) noexcept override {
-            return m_queue.try_enqueue(event);
+            return m_queue.push(event);
         }
+
     };
 }
 #endif //TFDCF_BLOCKINGQUEUE_H

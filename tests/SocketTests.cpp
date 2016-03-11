@@ -11,6 +11,7 @@
 #include <thread>
 #include <unistd.h>
 #include <utils/logger.h>
+#include <event/BusySpinQueue.h>
 
 TEST(Socket, SimpleReadWrite) {
 
@@ -48,13 +49,19 @@ TEST(Socket, SimpleReadWrite) {
     server.join();
 }
 
-TEST(TFSocket, NonBlockingReadWrite) {
+TEST(Socket, NonBlockingReadWrite) {
     bool callbackFired = false;
 
+    LOG_LEVEL(tf::logger::debug);
+
+    DCF::Session::initialise();
+
     std::thread server([&]() {
+        DEBUG_LOG("Started server thread");
         DCF::SocketServer svr("localhost", "6967");
         ASSERT_TRUE(svr.connect());
         std::shared_ptr<DCF::Socket> connection = svr.acceptPendingConnection();
+        DEBUG_LOG("Accepted connection");
 
         char buffer[16];
         int counter = 0;
@@ -62,6 +69,7 @@ TEST(TFSocket, NonBlockingReadWrite) {
         while(true) {
             DCF::Socket::ReadResult result = connection->read(buffer, 16, size);
             if (result == DCF::Socket::MoreData) {
+                DEBUG_LOG("Server received data");
                 EXPECT_EQ(6, size);
                 EXPECT_STREQ(buffer, "hello");
                 break;
@@ -76,19 +84,24 @@ TEST(TFSocket, NonBlockingReadWrite) {
             }
         }
 
+        DEBUG_LOG("Server sending data");
         EXPECT_TRUE(connection->send("goodbye", 8));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     });
 
     std::this_thread::sleep_for(std::chrono::microseconds(100));
     DCF::SocketClient client("localhost", "6967");
-    DCF::InlineQueue queue;
+    DCF::BusySpinQueue queue;
 
 
+    DEBUG_LOG("Client attempting to connect");
     ASSERT_TRUE(client.connect(DCF::SocketOptionsDisableSigPipe));
     EXPECT_NE(-1, client.getSocket());
+    DEBUG_LOG("Client connected");
 
     DCF::IOEvent handler(&queue, client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
+        DEBUG_LOG("Client received data");
         callbackFired = true;
 
         int counter = 0;
@@ -112,17 +125,23 @@ TEST(TFSocket, NonBlockingReadWrite) {
         }
     });
 
+    EXPECT_TRUE(handler.isRegistered());
+
+    DEBUG_LOG("Client sending data");
     EXPECT_TRUE(client.send("hello", 6));
 
     queue.dispatch(std::chrono::seconds(5));
     EXPECT_TRUE(callbackFired);
     server.join();
+
+    DCF::Session::destroy();
 }
 
-TEST(TFSocket, NonBlockingServerReadWrite) {
+TEST(Socket, NonBlockingServerReadWrite) {
     bool callbackFired = false;
 
     LOG_LEVEL(tf::logger::info);
+    DCF::Session::initialise();
 
     std::thread server([&]() {
         DCF::SocketServer svr("localhost", "6966");
@@ -132,7 +151,7 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
         std::shared_ptr<DCF::Socket> connection;
         bool finished = false;
 
-        DCF::InlineQueue queue;
+        DCF::BusySpinQueue queue;
 
         auto client = [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
@@ -182,7 +201,7 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
         }
     });
 
-    DCF::InlineQueue queue;
+    DCF::BusySpinQueue queue;
 
     std::this_thread::sleep_for(std::chrono::microseconds(100));
     DCF::SocketClient client("localhost", "6966");
@@ -221,4 +240,5 @@ TEST(TFSocket, NonBlockingServerReadWrite) {
     EXPECT_TRUE(callbackFired);
 
     server.join();
+    DCF::Session::destroy();
 }

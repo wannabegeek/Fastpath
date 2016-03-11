@@ -14,7 +14,7 @@ namespace DCF {
     private:
         int m_fd[2];
 
-        std::atomic<bool> m_locked = ATOMIC_VAR_INIT(false);
+        std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
 
     public:
         explicit ActionNotifier() {
@@ -32,9 +32,9 @@ namespace DCF {
         }
 
         inline void notify_and_wait() {
-            m_locked.store(true, std::memory_order_acquire);
+            m_locked.test_and_set(std::memory_order_acquire);
             this->notify();
-            while(!m_locked.load());
+            while(!m_locked.test_and_set(std::memory_order_acquire));
         }
 
         inline void notify() {
@@ -44,7 +44,7 @@ namespace DCF {
         }
 
         inline void reset() {
-            m_locked.store(false, std::memory_order_release);
+            m_locked.clear(std::memory_order_release);
             char data[256];
             unsigned int length = 255;
             read(m_fd[0], data, length);

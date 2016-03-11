@@ -8,6 +8,7 @@
 #include <functional>
 #include <utility>
 #include <vector>
+#include <utils/logger.h>
 
 namespace DCF {
 
@@ -20,10 +21,12 @@ namespace DCF {
     }
 
     void GlobalEventManager::notify(bool wait) {
-        if (wait) {
-            m_actionNotifier.notify_and_wait();
-        } else {
-            m_actionNotifier.notify();
+        if (m_in_event_wait.load()) {
+            if (wait) {
+                m_actionNotifier.notify_and_wait();
+            } else {
+                m_actionNotifier.notify();
+            }
         }
     }
 
@@ -70,7 +73,6 @@ namespace DCF {
             ERROR_LOG("Failed to register invalid file descriptor: " << event.fileDescriptor());
             throw EventException("Invalid file descriptor");
         }
-
         m_lock.lock();
         auto it = m_ioHandlerLookup.find(event.fileDescriptor());
         if (it != m_ioHandlerLookup.end()) {
@@ -130,7 +132,7 @@ namespace DCF {
                 }
 
                 if (event.__awaitingDispatch()) {
-                    assert(false); // We are removing an event which is awaiting dispatch
+                    //assert(false); // We are removing an event which is awaiting dispatch
                 }
                 if (decltype(m_eventLoop)::can_add_events_async) {
                     event.__setIsRegistered(false);

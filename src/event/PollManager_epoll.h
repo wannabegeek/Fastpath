@@ -23,6 +23,7 @@ namespace DCF {
     private:
         int epollfd = -1;
         int m_events = 0;
+        int err_count = 0;
 
         static constexpr const bool greater_than(const size_t x, const size_t y) { return x >= y; }
 
@@ -108,9 +109,14 @@ namespace DCF {
 
                 result = epoll_wait(epollfd, _events, m_events, timeout);
                 if (result == -1) {
+                    if (errno == EINTR && err_count < 10) {
+                        ++err_count;
+                        return 0;
+                    }
                     ERROR_LOG("epoll_wait returned -1: " << strerror(errno));
                     return -1;
                 } else {
+                    err_count = 0;
                     numEvents = 0;
                     for (int j = 0; j < result; ++j) {
                         int filter = EventType::NONE;

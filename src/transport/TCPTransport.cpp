@@ -47,7 +47,7 @@ namespace DCF {
             }
         }
 
-        INFO_LOG("Either connected or given up");
+        DEBUG_LOG("Either connected or given up");
         return true;
     }
 

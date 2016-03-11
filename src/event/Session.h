@@ -42,6 +42,7 @@ namespace DCF {
                 }
 
                 m_shutdown.store(false);
+                DEBUG_LOG("Event loop exit");
             });
 
             condition.wait(lock);

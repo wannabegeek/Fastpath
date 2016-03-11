@@ -28,6 +28,7 @@
 #include <thread>
 #include <condition_variable>
 #include <mutex>
+#include <utils/optimize.h>
 
 
 #ifdef HAVE_SYS_EVENTFD_H
@@ -59,9 +60,10 @@ namespace DCF {
         this->processPendingRegistrations();
 
 		int result = 0;
-		if (__builtin_expect(timeout.count() == 0 && !haveHandlers(), false)) {
+		if (tf::unlikely(timeout.count() == 0 && !haveHandlers())) {
 			ERROR_LOG("No events to handle - returning");
 		} else {
+            m_in_event_wait.store(true); // not sure if this should be before the setTimeout() or below - lets be safe
 			std::chrono::microseconds duration = timeout;
 			if (setTimeout(duration)) {
 				duration = std::min(duration, timeout);
@@ -69,7 +71,8 @@ namespace DCF {
 
 			int numEvents = 0;
 			result = m_eventLoop.run(m_events, numEvents, duration);
-			if (result != -1) {
+            m_in_event_wait.store(false);
+			if (tf::likely(result != -1)) {
 				for (int i = 0; i < numEvents; ++i) {
 					serviceEvent(m_events->at(i));
 				}

@@ -37,6 +37,8 @@ namespace DCF {
     protected:
         EventPoll<maxEvents> m_eventLoop;
 
+        std::atomic<bool> m_in_event_wait = ATOMIC_VAR_INIT(false);
+
 		virtual void serviceEvent(const EventPollElement &event);
 		virtual void serviceTimers();
 

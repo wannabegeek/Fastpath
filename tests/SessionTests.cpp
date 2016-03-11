@@ -13,7 +13,10 @@
 
 TEST(Session, Shutdown) {
 
+    LOG_LEVEL(tf::logger::debug);
+
     EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     const auto startTime = std::chrono::steady_clock::now();
     EXPECT_EQ(DCF::OK, DCF::Session::destroy());
@@ -122,6 +125,7 @@ TEST(Session, SimpleReadBlocking) {
     bool callbackFired = false;
     int fd[2] = {0, 0};
     ASSERT_NE(-1, pipe(fd));
+    bool done = false;
 
     DCF::BlockingQueue queue;
 
@@ -134,10 +138,8 @@ TEST(Session, SimpleReadBlocking) {
         DEBUG_LOG("In read");
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
         DEBUG_LOG("Out read");
+        done = true;
     });
-
-    // we need to make sure wwe have registered with the event loop
-    while(!handler.isRegistered());
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -145,7 +147,9 @@ TEST(Session, SimpleReadBlocking) {
         DEBUG_LOG("Written to pipe");
     });
     DEBUG_LOG("Dispatching...");
-    queue.dispatch(std::chrono::seconds(5));
+    while (!done) {
+        queue.dispatch(std::chrono::seconds(5));
+    }
     DEBUG_LOG("done disptach");
 
     signal.join();

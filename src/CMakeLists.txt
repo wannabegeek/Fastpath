@@ -9,11 +9,11 @@ CHECK_INCLUDE_FILES(pthread.h HAVE_PTHREAD_H)
 CHECK_FUNCTION_EXISTS(pthread_setaffinity_np HAVE_PTHREAD_SETAFFINITY_NP)
 CHECK_FUNCTION_EXISTS(pthread_setname_np HAVE_PTHREAD_SETNAME_NP)
 CHECK_FUNCTION_EXISTS(pthread_getname_np HAVE_PTHREAD_GETNAME_NP)
-CHECK_INCLUDE_FILES (sys/epoll.h HAVE_EPOLL_H)
-CHECK_INCLUDE_FILES (sys/event.h HAVE_EVENT_H)
-CHECK_INCLUDE_FILES (sys/epoll.h HAVE_EPOLL_H)
+CHECK_INCLUDE_FILES (sys/epoll.h HAVE_EPOLL)
+CHECK_INCLUDE_FILES (sys/event.h HAVE_EVENT)
+CHECK_INCLUDE_FILES (sys/epoll.h HAVE_EPOLL)
 
-CHECK_FUNCTION_EXISTS(epoll_ctl HAVE_EPOLL)
+#CHECK_FUNCTION_EXISTS(epoll_ctl HAVE_EPOLL)
 CHECK_FUNCTION_EXISTS(kevent HAVE_KEVENT)
 
 check_cxx_symbol_exists(EPOLLET "sys/event.h" HAVE_EPOLLET)
@@ -78,6 +78,6 @@ set(SOURCE_FILES
         transport/SocketClient.h
         transport/SocketServer.cpp
         transport/SocketServer.h
-        transport/TCPTransport.cpp transport/TCPTransport.h transport/URL.cpp transport/URL.h event/GlobalEventManager.cpp event/GlobalEventManager.h event/InlineEventManager.cpp event/InlineEventManager.h utils/semaphore_light.h)
+        transport/TCPTransport.cpp transport/TCPTransport.h transport/URL.cpp transport/URL.h event/GlobalEventManager.cpp event/GlobalEventManager.h event/InlineEventManager.cpp event/InlineEventManager.h utils/semaphore_light.h utils/tfringbuffer.h utils/blocking_ringbuffer.h utils/optimize.h)
 
 add_library(TFDCF ${SOURCE_FILES})
