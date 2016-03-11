@@ -30,7 +30,7 @@ set(SOURCE_FILES
         messages/Message.h
         messages/Field.h
         messages/StorageTypes.h
-        utils/concurrentqueue.h
+        utils/logger.h
         utils/tfpool.h
         utils/tfspinlock.h
         Exception.h
@@ -60,7 +60,7 @@ set(SOURCE_FILES
         event/PollManager_epoll.h
         event/PollManager_kqueue.h
         event/PollManager_select.h
-        utils/blockingconcurrentqueue.h
+        utils/console_colors.h
         status.h
         event/TimerEvent.h
         event/TimerEvent.cpp
@@ -78,6 +78,8 @@ set(SOURCE_FILES
         transport/SocketClient.h
         transport/SocketServer.cpp
         transport/SocketServer.h
-        transport/TCPTransport.cpp transport/TCPTransport.h transport/URL.cpp transport/URL.h event/GlobalEventManager.cpp event/GlobalEventManager.h event/InlineEventManager.cpp event/InlineEventManager.h utils/semaphore_light.h utils/tfringbuffer.h utils/blocking_ringbuffer.h utils/optimize.h)
+        transport/TCPTransport.cpp transport/TCPTransport.h transport/URL.cpp transport/URL.h event/GlobalEventManager.cpp event/GlobalEventManager.h event/InlineEventManager.cpp event/InlineEventManager.h utils/semaphore_light.h utils/tfringbuffer.h utils/blocking_ringbuffer.h utils/optimize.h utils/tfoptions.h)
 
 add_library(TFDCF ${SOURCE_FILES})
+
+add_subdirectory(router)
