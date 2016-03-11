@@ -27,12 +27,16 @@
 #ifndef DAEMONPROCESS_H
 #define DAEMONPROCESS_H
 
-extern void entryMain( int argc, char *argv[] );	
-extern void entryShutdown();
+namespace tf {
+    extern void entryMain(int argc, char *argv[]);
 
-bool InstallService();
-bool UninstallService();
+    extern void entryShutdown();
 
-void run_as_daemon();
+    bool InstallService();
+
+    bool UninstallService();
+
+    void run_as_daemon();
+}
 
 #endif

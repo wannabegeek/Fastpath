@@ -5,16 +5,34 @@
 #include <iostream>
 #include <utils/logger.h>
 #include <utils/tfoptions.h>
+#include <utils/daemon_process.h>
 #include "fprouter.h"
+#include "bootstrap.h"
 
-#define VERSION 0.1
+
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 1
+
+static const char *banner = "\n+------------------------------------------------------------------------------+\n"
+                                    "|   Fast Path Routing Server                                                   |\n"
+                                    "|                                                                              |\n"
+                                    "|   Version: %2d.%-2d                                                             |\n"
+                                    "|                                                                              |\n"
+                                    "|   (c) Tom Fewster <tom@wannabegeek.com> 2003-%4d                            |\n"
+                                    "|   This software is covered by the GNU Public Licence, see http://www.gnu.org |\n"
+                                    "|   for more details                                                           |\n"
+                                    "+------------------------------------------------------------------------------+\n\n";
+
 
 int main( int argc, char *argv[] )  {
     tf::options o;
     o.register_option(tf::option("help", "Displays help", false, false, "help", 'h'));
     o.register_option(tf::option("config", "Configuration file to load", true, false, "config", 'c'));
     o.register_option(tf::option("loglevel", "Logging level (DEBUG, INFO, WARNING, ERROR)", false, true, "loglevel", 'l'));
+    o.register_option(tf::option("service", "Service to process", true, true, "service", 's'));
+
     o.register_option(tf::option("nobanner", "Don't display startup banner", false, false, "nobanner", 'x'));
+    o.register_option(tf::option("daemon", "Run in daemon mode", false, false, "daemon", 'd'));
 
     try {
         o.parse(argc, argv);
@@ -44,34 +62,29 @@ int main( int argc, char *argv[] )  {
     LOG_THREADS(true);
 
     if (!o.get("nobanner", false)) {
-        const std::ostringstream banner << std::endl << "+------------------------------------------------------------------------------+" << std::endl
-                   << "|   Distributed Communication Server                                           |" << std::endl
-                   << "|                                                                              |" << std::endl
-                   << "|   Version: " << VERSION << "                                                              |" << std::endl
-                   << "|                                                                              |" << std::endl
-                   << "|   (c) Tom Fewster <tom@wannabegeek.com> 2003-2006                            |" << std::endl
-                   << "|   This software is covered by the GNU Public Licence, see http://www.gnu.org |" << std::endl
-                   << "|      for more details                                                        |" << std::endl
-                   << "+------------------------------------------------------------------------------+" << std::endl);
-        tf::logger::instance().log(tf::logger::info, banner.str());
-
+        char output[1024];
+        sprintf(output, banner, VERSION_MAJOR, VERSION_MINOR, 2016);
+        tf::logger::instance().log(tf::logger::info, output);
     }
 
     std::string configFile;
     o.get("config", configFile);
     DEBUG_LOG("Using config file '" << configFile << "'");
 
-//	try {
-//		TF::ExecutionEngineBootstrap executionEngine(configFile, !nosignals);
-//
-//		// now that we should be fully initialised & all objects created, we can call run.
-//		// This will first link objects together, then run the man dispatch loop
-//		executionEngine.run();
+    if (!o.get("daemon", false)) {
+        tf::run_as_daemon();
+    }
+
+    try {
+        const std::string service = o.getWithDefault("service", "7900");
+        fp::bootstrap engine(service);
+
+//        engine.run();
 //	} catch (const TF::Exception &e) {
 //		WARNING_LOG("Exiting");
 //		return 1;
-//	} catch (const std::exception &stde) {
-//		ERROR_LOG("Unhandled Exception Caught: " << stde.what());
-//		return 2;
-//	}
+	} catch (const std::exception &stde) {
+		ERROR_LOG("Unhandled Exception Caught: " << stde.what());
+		return 2;
+	}
 }

@@ -40,123 +40,123 @@
 
 #include <iostream>
 
-void run_as_daemon()
-{
+namespace tf {
+    void run_as_daemon() {
 #ifdef _WIN32
 #else
-	pid_t pid;
-	if ((pid = fork()) != 0) {
-		exit( 0 );  // kill the parent
-	}
-	setsid();
-	umask(0);
+        pid_t pid;
+        if ((pid = fork()) != 0) {
+            exit(0);  // kill the parent
+        }
+        setsid();
+        umask(0);
 #endif
-}
+    }
 
-bool InstallService()
-{
+    bool InstallService() {
 #ifdef _WIN32
-	SC_HANDLE serviceControlManager = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
-	if (serviceControlManager) {
-		char path[ _MAX_PATH + 1 ];
-		if (GetModuleFileName(0, path, sizeof(path)/sizeof(path[0])) > 0) {
-			SC_HANDLE service = CreateService(serviceControlManager, serviceName, serviceName, SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_IGNORE, path, 0, 0, 0, 0, 0);
-			if (service) {
-				CloseServiceHandle(service);
-			}
-		}
-		CloseServiceHandle(serviceControlManager);
-	}
-	return true;
+        SC_HANDLE serviceControlManager = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
+        if (serviceControlManager) {
+            char path[ _MAX_PATH + 1 ];
+            if (GetModuleFileName(0, path, sizeof(path)/sizeof(path[0])) > 0) {
+                SC_HANDLE service = CreateService(serviceControlManager, serviceName, serviceName, SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_IGNORE, path, 0, 0, 0, 0, 0);
+                if (service) {
+                    CloseServiceHandle(service);
+                }
+            }
+            CloseServiceHandle(serviceControlManager);
+        }
+        return true;
 #else
-	std::cerr << "InstallService not supported on unix" << std::endl;
-	return false;
+        std::cerr << "InstallService not supported on unix" << std::endl;
+        return false;
 #endif
-}
+    }
 
-bool UninstallService() {
+    bool UninstallService() {
 #ifdef _WIN32
-	SC_HANDLE serviceControlManager = OpenSCManager(0, 0, SC_MANAGER_CONNECT);
-	if (serviceControlManager) {
-		SC_HANDLE service = OpenService(serviceControlManager, serviceName, SERVICE_QUERY_STATUS | DELETE);
-		if (service) {
-			SERVICE_STATUS serviceStatus;
-			if (QueryServiceStatus(service, &serviceStatus)) {
-				if (serviceStatus.dwCurrentState == SERVICE_STOPPED)
-					DeleteService(service);
-			}
+        SC_HANDLE serviceControlManager = OpenSCManager(0, 0, SC_MANAGER_CONNECT);
+        if (serviceControlManager) {
+            SC_HANDLE service = OpenService(serviceControlManager, serviceName, SERVICE_QUERY_STATUS | DELETE);
+            if (service) {
+                SERVICE_STATUS serviceStatus;
+                if (QueryServiceStatus(service, &serviceStatus)) {
+                    if (serviceStatus.dwCurrentState == SERVICE_STOPPED)
+                        DeleteService(service);
+                }
 
-			CloseServiceHandle(service);
-		}
-		CloseServiceHandle(serviceControlManager);
-	}
-	return true;
+                CloseServiceHandle(service);
+            }
+            CloseServiceHandle(serviceControlManager);
+        }
+        return true;
 #else
-	std::cerr << "InstallService not supported on unix" << std::endl;
-	return false;
+        std::cerr << "InstallService not supported on unix" << std::endl;
+        return false;
 #endif
-}
+    }
 
 #ifdef _WIN32
-void WINAPI ServiceControlHandler(DWORD controlCode) {
-	switch (controlCode) {
-		case SERVICE_CONTROL_INTERROGATE:
-			break;
-		case SERVICE_CONTROL_SHUTDOWN:
-		case SERVICE_CONTROL_STOP:
-			serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-			SetServiceStatus(serviceStatusHandle, &serviceStatus);
-			// we need to shut down the process
-			entryShutdown();
-			return;
-		case SERVICE_CONTROL_PAUSE:
-			break;
-		case SERVICE_CONTROL_CONTINUE:
-			break;
-		default:
-			if (controlCode >= 128 && controlCode <= 255)
-				// user defined control code
-				break;
-			else
-				// unrecognised control code
-				break;
-	}
-	SetServiceStatus(serviceStatusHandle, &serviceStatus);
-}
+     void WINAPI ServiceControlHandler(DWORD controlCode) {
+         switch (controlCode) {
+             case SERVICE_CONTROL_INTERROGATE:
+                 break;
+             case SERVICE_CONTROL_SHUTDOWN:
+             case SERVICE_CONTROL_STOP:
+                 serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+                 SetServiceStatus(serviceStatusHandle, &serviceStatus);
+                 // we need to shut down the process
+                 entryShutdown();
+                 return;
+             case SERVICE_CONTROL_PAUSE:
+                 break;
+             case SERVICE_CONTROL_CONTINUE:
+                 break;
+             default:
+                 if (controlCode >= 128 && controlCode <= 255)
+                     // user defined control code
+                     break;
+                 else
+                     // unrecognised control code
+                     break;
+         }
+         SetServiceStatus(serviceStatusHandle, &serviceStatus);
+     }
 
-void WINAPI ServiceMain(DWORD argc, TCHAR* argv[]) {
-	// initialise service status
-	serviceStatus.dwServiceType = SERVICE_WIN32;
-	serviceStatus.dwCurrentState = SERVICE_STOPPED;
-	serviceStatus.dwControlsAccepted = 0;
-	serviceStatus.dwWin32ExitCode = NO_ERROR;
-	serviceStatus.dwServiceSpecificExitCode = NO_ERROR;
-	serviceStatus.dwCheckPoint = 0;
-	serviceStatus.dwWaitHint = 0;
+     void WINAPI ServiceMain(DWORD argc, TCHAR* argv[]) {
+         // initialise service status
+         serviceStatus.dwServiceType = SERVICE_WIN32;
+         serviceStatus.dwCurrentState = SERVICE_STOPPED;
+         serviceStatus.dwControlsAccepted = 0;
+         serviceStatus.dwWin32ExitCode = NO_ERROR;
+         serviceStatus.dwServiceSpecificExitCode = NO_ERROR;
+         serviceStatus.dwCheckPoint = 0;
+         serviceStatus.dwWaitHint = 0;
 
-	serviceStatusHandle = RegisterServiceCtrlHandler(serviceName, ServiceControlHandler);
+         serviceStatusHandle = RegisterServiceCtrlHandler(serviceName, ServiceControlHandler);
 
-	if (serviceStatusHandle) {
-		// Tell the service manager service is starting
-		serviceStatus.dwCurrentState = SERVICE_START_PENDING;
-		SetServiceStatus(serviceStatusHandle, &serviceStatus);
+         if (serviceStatusHandle) {
+             // Tell the service manager service is starting
+             serviceStatus.dwCurrentState = SERVICE_START_PENDING;
+             SetServiceStatus(serviceStatusHandle, &serviceStatus);
 
-		// Tell the service manager we are running
-		serviceStatus.dwControlsAccepted |= (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN);
-		serviceStatus.dwCurrentState = SERVICE_RUNNING;
-		SetServiceStatus(serviceStatusHandle, &serviceStatus);
+             // Tell the service manager we are running
+             serviceStatus.dwControlsAccepted |= (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN);
+             serviceStatus.dwCurrentState = SERVICE_RUNNING;
+             SetServiceStatus(serviceStatusHandle, &serviceStatus);
 
-		// Start the main method
-		entryMain(argc, argv);
+             // Start the main method
+             entryMain(argc, argv);
 
-		// since we have fallen out of our loop service was stopped
-		serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-		SetServiceStatus(serviceStatusHandle, &serviceStatus);
+             // since we have fallen out of our loop service was stopped
+             serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+             SetServiceStatus(serviceStatusHandle, &serviceStatus);
 
-		// service is now stopped
-		serviceStatus.dwControlsAccepted &= ~(SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN);
-		serviceStatus.dwCurrentState = SERVICE_STOPPED;
-		SetServiceStatus(serviceStatusHandle, &serviceStatus);
-	}
-}
+             // service is now stopped
+             serviceStatus.dwControlsAccepted &= ~(SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN);
+             serviceStatus.dwCurrentState = SERVICE_STOPPED;
+             SetServiceStatus(serviceStatusHandle, &serviceStatus);
+         }
+     }
 #endif
+}

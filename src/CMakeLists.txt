@@ -61,6 +61,8 @@ set(SOURCE_FILES
         event/PollManager_kqueue.h
         event/PollManager_select.h
         utils/console_colors.h
+        utils/daemon_process.cpp
+        utils/daemon_process.h
         status.h
         event/TimerEvent.h
         event/TimerEvent.cpp
