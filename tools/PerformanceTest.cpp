@@ -2,18 +2,9 @@
 // Created by Tom Fewster on 27/02/2016.
 //
 
-#include <chrono>
+#include "performance.h"
 #include <Messages/Message.h>
 #include <Utils/tfpool.h>
-
-template<typename T = std::chrono::milliseconds> struct measure {
-    template<typename F, typename ...Args> static typename T::rep execution(F&& func, Args&&... args) {
-        auto start = std::chrono::system_clock::now();
-        std::forward<decltype(func)>(func)(std::forward<Args>(args)...);
-        auto duration = std::chrono::duration_cast<T>(std::chrono::system_clock::now() - start);
-        return duration.count();
-    }
-};
 
 int main(int argc, char *argv[])
 {
@@ -25,7 +16,7 @@ int main(int argc, char *argv[])
     std::vector<PoolType::ptr_type> encoded_messages(iterations);
     DCF::MessageBuffer buffer(1000000);
 
-    std::cout << "encode x" << iterations << ": " << measure<std::chrono::microseconds>::execution([&]() {
+    std::cout << "encode x" << iterations << ": " << tf::measure<std::chrono::microseconds>::execution([&]() {
         for (int i = 0; i < iterations; i++) {
             PoolType::ptr_type msg = pool.allocate_ptr();
             msg->setSubject("SOME.TEST.SUBJECT");
@@ -40,7 +31,7 @@ int main(int argc, char *argv[])
     }) / static_cast<float>(iterations) << "us" << std::endl;
 
     std::vector<PoolType::ptr_type> decoded_messages(iterations);
-    std::cout << "decode x" << iterations << ": " << measure<std::chrono::microseconds>::execution([&]() {
+    std::cout << "decode x" << iterations << ": " << tf::measure<std::chrono::microseconds>::execution([&]() {
         for (int i = 0; i < iterations + 1; i++) {
             PoolType::ptr_type msg = pool.allocate_ptr();
 

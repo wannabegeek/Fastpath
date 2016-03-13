@@ -23,9 +23,11 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -Ofast
 
 add_executable(SharedMemoryReceiver SharedMemoryReceiver.cpp)
 add_executable(SharedMemorySender SharedMemorySender.cpp)
-add_executable(PerformanceTest PerformanceTest.cpp)
+add_executable(PerformanceTest PerformanceTest.cpp performance.h)
+add_executable(SubjectTest ../src/router/subscription.cpp SubjectTest.cpp)
 
 target_link_libraries(SharedMemoryReceiver TFDCF ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(SharedMemorySender TFDCF ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(PerformanceTest TFDCF ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(SubjectTest ${CMAKE_THREAD_LIBS_INIT})
 
