@@ -28,9 +28,10 @@ namespace fp {
                         break;
                 }
             });
-        } else {
-            m_subject_hash = hasher()(subject);
         }
+
+        // always calculate this, we use it in operator==
+        m_subject_hash = hasher()(subject);
     }
 
     subscription::~subscription() {
@@ -38,18 +39,18 @@ namespace fp {
     }
 
     bool subscription::matches(const std::string &subject) const {
+        bool matches = false;
         if (!m_contains_wildcard) {
-            return m_subject_hash == hasher()(subject);
+            matches = (m_subject_hash == hasher()(subject));
         } else {
             std::vector<std::string> out;
             this->split(subject, out);
             if (out.size() >= m_components.size()) {
                 size_t index = 0;
-                std::find_if_not(m_components.begin(), m_components.end(), [&](const component &component) {
+                auto it = std::find_if_not(m_components.begin(), m_components.end(), [&](const component &component) {
                     bool result = false;
                     switch (component.type) {
                         case STANDARD:
-                            std::cout << "component match: " << m_subject_hash << " == " << hasher()(out[index]) << std::endl;
                             result = component.component_hash == hasher()(out[index]);
                             break;
                         case ELEMENT:
@@ -60,10 +61,12 @@ namespace fp {
                     ++index;
                     return result;
                 });
+
+                matches = (it == m_components.end());
             }
         }
 
-        return false;
+        return matches;
     }
 
     void subscription::split(const std::string &subject, std::vector<std::string> &out) const {
@@ -85,5 +88,13 @@ namespace fp {
 
     bool subscription::contains_wildcard(const std::string &subject) const {
         return subject.find(wildcard_completion) != std::string::npos || subject.find(wildcard_element) != std::string::npos;
+    }
+
+    const bool subscription::operator==(const subscription &other) const {
+        return m_subject_hash == other.m_subject_hash;
+    }
+
+    const bool subscription::operator==(const std::string &other) const {
+        return m_subject_hash == hasher()(other);
     }
 }

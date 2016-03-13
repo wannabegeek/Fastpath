@@ -78,13 +78,9 @@ int main( int argc, char *argv[] )  {
     try {
         const std::string service = o.getWithDefault("service", "7900");
         fp::bootstrap engine(service);
-
-//        engine.run();
-//	} catch (const TF::Exception &e) {
-//		WARNING_LOG("Exiting");
-//		return 1;
+        engine.run();
 	} catch (const std::exception &stde) {
-		ERROR_LOG("Unhandled Exception Caught: " << stde.what());
-		return 2;
+		ERROR_LOG("Internal error: " << stde.what());
+		return 1;
 	}
 }

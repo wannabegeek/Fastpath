@@ -7,11 +7,12 @@
 
 #include <string>
 #include <vector>
+#include "subscription.h"
 
 namespace fp {
     class peer_connection {
     private:
-        std::vector<std::string> m_subscriptions;
+        std::vector<subscription> m_subscriptions;
     public:
         peer_connection();
         ~peer_connection();

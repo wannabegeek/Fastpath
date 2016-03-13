@@ -41,6 +41,9 @@ namespace fp {
         ~subscription();
 
         bool matches(const std::string &subject) const;
+
+        const bool operator==(const subscription &other) const;
+        const bool operator==(const std::string &other) const;
     };
 }
 
