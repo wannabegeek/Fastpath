@@ -6,9 +6,7 @@
 sudo: required
 dist: trusty
 
-before_instll:
-  - sudo apt-get install -qq g++5
-  - sudo apt-get install libgtest-dev
+before_install:
   - "mkdir -p /tmp/gtest-build && cd /tmp/gtest-build && cmake -DCMAKE_BUILD_TYPE=RELEASE /usr/src/gtest/ && make && sudo make install && cd -"
   
 install:
@@ -35,6 +33,7 @@ addons:
     - g++-5
     - clang-3.7
     - valgrind
+    - libgtest-dev
 os:
   - linux
   - osx
