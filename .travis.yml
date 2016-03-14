@@ -9,7 +9,8 @@ dist: trusty
 before_instll:
   - sudo apt-get install -qq g++5
   - sudo apt-get install libgtest-dev
-
+  - "mkdir -p /tmp/gtest-build && cd /tmp/gtest-build && cmake -DCMAKE_BUILD_TYPE=RELEASE /usr/src/gtest/ && make && sudo mv libg* /usr/lib/ && cd -"
+  
 install:
   # /usr/bin/gcc is 4.6 always, but gcc-X.Y is available.
   - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
