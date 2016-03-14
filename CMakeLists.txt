@@ -10,10 +10,11 @@ CHECK_FUNCTION_EXISTS(pthread_setaffinity_np HAVE_PTHREAD_SETAFFINITY_NP)
 CHECK_FUNCTION_EXISTS(pthread_setname_np HAVE_PTHREAD_SETNAME_NP)
 CHECK_FUNCTION_EXISTS(pthread_getname_np HAVE_PTHREAD_GETNAME_NP)
 
-set(GENERIC_COMPILER_FLAGS "-Wall -pedantic -std=c++14 -fPIC -flto -mtune=native")
+set(GENERIC_COMPILER_FLAGS "-Wall -pedantic -std=c++14 -fPIC -mtune=native")
 IF (CMAKE_COMPILER_IS_GNUCXX)
-    set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wold-style-cast -Woverloaded-virtual")
+    set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wold-style-cast -Woverloaded-virtual -flto")
 ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+# This really need the -flto, but it is currently broken in clang
     set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wc++11-extensions")
 ENDIF (CMAKE_COMPILER_IS_GNUCXX)
 
