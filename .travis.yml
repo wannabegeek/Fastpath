@@ -30,7 +30,7 @@ addons:
     - g++-5
     - clang-3.7
     - valgrind
-    - libgtest-dev
+
 os:
   - linux
   - osx
