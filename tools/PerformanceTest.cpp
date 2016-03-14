@@ -3,8 +3,8 @@
 //
 
 #include "performance.h"
-#include <Messages/Message.h>
-#include <Utils/tfpool.h>
+#include <messages/Message.h>
+#include <utils/tfpool.h>
 
 int main(int argc, char *argv[])
 {
