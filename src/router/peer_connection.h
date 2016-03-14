@@ -9,12 +9,18 @@
 #include <vector>
 #include "subscription.h"
 
+namespace DCF {
+    class Socket;
+}
+
 namespace fp {
     class peer_connection {
     private:
         std::vector<subscription<>> m_subscriptions;
+        std::unique_ptr<DCF::Socket> m_socket;
     public:
-        peer_connection();
+        peer_connection(std::unique_ptr<DCF::Socket> socket);
+        peer_connection(peer_connection &&other);
         ~peer_connection();
 
         void add_subscription(const char *subject);

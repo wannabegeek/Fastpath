@@ -33,7 +33,7 @@ namespace fp {
         bool m_contains_wildcard;
         typename hasher::result_type m_subject_hash;
 
-        void split(const std::string &subject, std::vector<std::string> &out) const {
+        void split(const std::string &subject, std::vector<std::string> &out) const noexcept {
             const char delimiter = '.';
             size_t start = 0;
             size_t end = subject.find_first_of(delimiter);
@@ -92,11 +92,11 @@ namespace fp {
             m_subject_hash = hasher()(subject);
         }
 
-        subscription(subscription &&other) : m_components(std::move(other.m_components)), m_contains_wildcard(other.m_contains_wildcard), m_subject_hash(other.m_subject_hash) {}
+        subscription(subscription &&other) noexcept : m_components(std::move(other.m_components)), m_contains_wildcard(other.m_contains_wildcard), m_subject_hash(other.m_subject_hash) {}
 
         ~subscription() {};
 
-        bool matches(const subject<H> &subject) const {
+        bool matches(const subject<H> &subject) const noexcept {
             bool matches = false;
             if (!m_contains_wildcard) {
                 matches = (m_subject_hash == subject.m_subject_hash);

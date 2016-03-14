@@ -29,6 +29,7 @@ int main( int argc, char *argv[] )  {
     o.register_option(tf::option("help", "Displays help", false, false, "help", 'h'));
     o.register_option(tf::option("config", "Configuration file to load", true, false, "config", 'c'));
     o.register_option(tf::option("loglevel", "Logging level (DEBUG, INFO, WARNING, ERROR)", false, true, "loglevel", 'l'));
+    o.register_option(tf::option("interface", "Interface to bind to", false, true, "interface", 'i'));
     o.register_option(tf::option("service", "Service to process", true, true, "service", 's'));
 
     o.register_option(tf::option("nobanner", "Don't display startup banner", false, false, "nobanner", 'x'));
@@ -71,13 +72,14 @@ int main( int argc, char *argv[] )  {
     o.get("config", configFile);
     DEBUG_LOG("Using config file '" << configFile << "'");
 
-    if (!o.get("daemon", false)) {
+    if (o.get("daemon", false)) {
         tf::run_as_daemon();
     }
 
     try {
+        const std::string interface = o.getWithDefault("interface", "0.0.0.0");
         const std::string service = o.getWithDefault("service", "7900");
-        fp::bootstrap engine(service);
+        fp::bootstrap engine(interface, service);
         engine.run();
 	} catch (const std::exception &stde) {
 		ERROR_LOG("Internal error: " << stde.what());

@@ -20,7 +20,7 @@ namespace fp {
         std::vector<typename hasher::result_type> m_components;
         typename hasher::result_type m_subject_hash;
 
-        void hash_elements(const char *subject, std::vector<typename hasher::result_type> &out) const {
+        static void hash_elements(const char *subject, std::vector<typename hasher::result_type> &out) noexcept {
             const char delimiter = '.';
             const size_t len = strlen(subject);
             char *start_ptr = const_cast<char *>(&subject[0]);
@@ -38,7 +38,7 @@ namespace fp {
     public:
 
         subject(const char *subject) {
-            this->hash_elements(subject, m_components);
+            hash_elements(subject, m_components);
             m_subject_hash = hasher()(subject);
         }
 
