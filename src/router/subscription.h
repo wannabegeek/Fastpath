@@ -92,6 +92,8 @@ namespace fp {
             m_subject_hash = hasher()(subject);
         }
 
+        subscription(subscription &&other) : m_components(std::move(other.m_components)), m_contains_wildcard(other.m_contains_wildcard), m_subject_hash(other.m_subject_hash) {}
+
         ~subscription() {};
 
         bool matches(const subject<H> &subject) const {
