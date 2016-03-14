@@ -2,20 +2,21 @@
 set -evx
 env | sort
 
+cd $TRAVIS_BUILD_DIR
 mkdir external || true
 wget -qO- https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.gz/download | tar xz -C external/
 export BOOST_ROOT=external/boost_1_60_0/
 
-{
+cd $TRAVIS_BUILD_DIR
 wget -qO googletest.zip https://github.com/google/googletest/archive/master.zip
-unzip -d external googletest.zip
-mkdir -p build/googletest
-cd build/googletest
-cmake -DCMAKE_BUILD_TYPE=RELEASE ../../external/googletest-master
+unzip -qd external googletest.zip
+mkdir -p build/external/googletest
+cd build/external/googletest
+cmake -DCMAKE_BUILD_TYPE=RELEASE $TRAVIS_BUILD_DIR/external/googletest-master
 make
-}
 export GTEST_ROOT=external/googletest-master/
 
+cd $TRAVIS_BUILD_DIR
 mkdir build || true
 mkdir build/$BUILD_TYPE || true
 cd build/$BUILD_TYPE
