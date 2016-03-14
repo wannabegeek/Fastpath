@@ -12,9 +12,9 @@ wget -qO googletest.zip https://github.com/google/googletest/archive/master.zip
 unzip -qd external googletest.zip
 mkdir -p build/external/googletest
 cd build/external/googletest
-cmake -DCMAKE_BUILD_TYPE=RELEASE $TRAVIS_BUILD_DIR/external/googletest-master
+cmake -DCMAKE_BUILD_TYPE=RELEASE $TRAVIS_BUILD_DIR/external/googletest-master/googletest/
 make
-export GTEST_ROOT=$TRAVIS_BUILD_DIR/external/googletest-master/googletest
+export GTEST_ROOT=$TRAVIS_BUILD_DIR/external/googletest-master/googletest/
 mkdir -p $GTEST_ROOT/lib
 cp lib*.a $GTEST_ROOT/lib
 
