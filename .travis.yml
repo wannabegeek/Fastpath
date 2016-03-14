@@ -8,6 +8,7 @@ dist: trusty
 
 before_instll:
   - sudo apt-get install -qq g++5
+  - sudo apt-get install libgtest-dev
 
 install:
   # /usr/bin/gcc is 4.6 always, but gcc-X.Y is available.

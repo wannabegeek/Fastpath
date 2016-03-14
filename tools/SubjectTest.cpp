@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 
     std::cout << "encode x" << iterations << ": " << tf::measure<std::chrono::microseconds>::execution([&]() {
         fp::subject<> t("SOME.TEST.SUBJECT");
-        for (int i = 0; i < iterations; i++) {
+        for (size_t i = 0; i < iterations; i++) {
             s.matches(t);
         }
     }) / static_cast<float>(iterations) << "us" << std::endl;

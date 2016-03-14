@@ -8,6 +8,8 @@
 #include "stringhash.h"
 
 #include <vector>
+#include <cstring>
+#include <algorithm>
 
 namespace fp {
 
