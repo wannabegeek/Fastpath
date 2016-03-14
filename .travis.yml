@@ -6,9 +6,6 @@
 sudo: required
 dist: trusty
 
-before_install:
-  - "mkdir -p /tmp/gtest-build && cd /tmp/gtest-build && cmake -DCMAKE_BUILD_TYPE=RELEASE /usr/src/gtest/ && make && sudo make install && cd -"
-  
 install:
   # /usr/bin/gcc is 4.6 always, but gcc-X.Y is available.
   - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi

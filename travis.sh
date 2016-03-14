@@ -9,11 +9,11 @@ export BOOST_ROOT=external/boost_1_60_0/
 {
 mkdir -p /tmp/gtest-build
 cd /tmp/gtest-build
-cmake -DCMAKE_BUILD_TYPE=RELEASE /usr/src/gtest/
+cmake -DCMAKE_BUILD_TYPE=RELEASE /usr/src/gtest/ -DCMAKE_INSTALL_PREFIX=~/googletest /usr/src/gtest/ 
 make
-sudo make install
-#export GTEST_ROOT=
+make install
 }
+export GTEST_ROOT=~/googletest
 
 mkdir build || true
 mkdir build/$BUILD_TYPE || true
