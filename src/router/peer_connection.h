@@ -26,17 +26,20 @@ namespace fp {
         DCF::IOEvent m_socketEvent;
 
         DCF::MessageBuffer m_buffer;
+        const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> m_messageHandler;
         const std::function<void(peer_connection *)> m_disconnectionHandler;
 
         void data_handler(DCF::IOEvent *event, const DCF::EventType eventType);
     public:
-        peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *)> &disconnectionHandler);
+        peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
         peer_connection(peer_connection &&other);
         ~peer_connection();
 
         void add_subscription(const char *subject);
         void remove_subscription(const char *subject);
         bool is_interested(const subject<> &subject) const;
+
+        bool sendBuffer(const DCF::ByteStorage &buffer);
     };
 }
 

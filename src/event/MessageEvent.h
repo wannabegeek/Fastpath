@@ -7,34 +7,56 @@
 
 #include <messages/StorageTypes.h>
 #include <transport/Transport.h>
+#include <messages/Message.h>
 #include "Event.h"
 
 namespace DCF {
     class MessageEvent : public Event {
 
-        const char *m_subject[std::numeric_limits<uint16_t>::max()];
-        std::function<void(const MessageEvent *, const MessageType msg)> m_callback;
+        char m_subject[std::numeric_limits<uint16_t>::max()];
+        Transport *m_transport;
+        std::function<void(const MessageEvent *, const Message *)> m_callback;
+
+        void dispatch(MessageEvent *event, const Message *msg) {
+            this->__setAwaitingDispatch(false);
+            if (m_active) {
+                m_callback(event, msg);
+            }
+        }
 
     public:
-        MessageEvent(const Queue &queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const MessageType msg)> &callback) : Event(queue), m_callback(callback) {
-            std::copy(subject, &subject[std::numeric_limits<uint16_t>::max()], m_subject);
+        MessageEvent(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) : Event(queue), m_transport(transport), m_callback(callback) {
+            const size_t subject_length = strlen(subject);
+            std::copy(subject, &subject[subject_length], m_subject);
+            Message msg;
+            msg.setSubject("_FP.REGISTER.OBSERVER");
+            msg.addDataField("subject", subject);
+            msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
+            m_transport->sendMessage(msg);
         };
+
+        ~MessageEvent() {
+            Message msg;
+            msg.setSubject("_FP.UNREGISTER.OBSERVER");
+            msg.addDataField("subject", m_subject);
+            msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
+            m_transport->sendMessage(msg);
+        }
 
         const bool isEqual(const Event &other) const noexcept override {
             try {
                 const MessageEvent &f = dynamic_cast<const MessageEvent &>(other);
-                return m_callback == f.m_callback && strncmp(m_subject, other.m_subject, std::numeric_limits<uint16_t>::max()) == 0;
+                return strcmp(m_subject, f.m_subject) == 0;
             } catch (const std::bad_cast &e) {
                 return false;
             }
         }
 
-        void onEvent() const {
-            if (m_callback != nullptr) {
-                m_callback(this, nullptr);
-            }
-        }
-
+        const bool __notify(const EventType &eventType) noexcept override {
+//            std::function<void ()> dispatcher = std::bind(&MessageEvent::dispatch, this, static_cast<DCF::MessageEvent *>(this), eventType);
+//            return m_queue->__enqueue(dispatcher);
+            return false;
+        };
     };
 }
 

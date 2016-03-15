@@ -19,7 +19,10 @@ namespace fp {
         if (m_server.connect(DCF::SocketOptionsDisableNagle | DCF::SocketOptionsDisableSigPipe | DCF::SocketOptionsNonBlocking)) {
             DCF::IOEvent connectionAttempt(&m_dispatchQueue, m_server.getSocket(), DCF::EventType::READ, [&](DCF::IOEvent *event, const DCF::EventType eventType) {
                 INFO_LOG("Someone has tried to connect");
-                m_connections.emplace_back(std::make_unique<peer_connection>(&m_dispatchQueue, m_server.acceptPendingConnection(), std::bind(&bootstrap::disconnection_handler, this, std::placeholders::_1)));
+                m_connections.emplace_back(std::make_unique<peer_connection>(&m_dispatchQueue,
+                                                                             m_server.acceptPendingConnection(),
+                                                                             std::bind(&bootstrap::message_handler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+                                                                             std::bind(&bootstrap::disconnection_handler, this, std::placeholders::_1)));
             });
 
 
@@ -34,12 +37,16 @@ namespace fp {
         DEBUG_LOG("Shutting down");
     }
 
-    void bootstrap::message_handler(DCF::MessageType &msg) {
+    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, DCF::ByteStorage &msgData) {
+        DEBUG_LOG("Processing message");
         // send the message out to all local client who are interested
-        const subject<> s(msg->subject());
         std::for_each(m_connections.begin(), m_connections.end(), [&](auto &connection) {
-            if (connection->is_interested(s)) {
+            if (connection->is_interested(subject)) {
+                DEBUG_LOG("Connection is interested");
                 // dispatch the message
+                connection->sendBuffer(msgData);
+            } else {
+                DEBUG_LOG("Connection not interested");
             }
         });
     }

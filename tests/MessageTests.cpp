@@ -62,7 +62,7 @@ TEST(Message, AddMessageField) {
     DCF::MessageType m = std::make_shared<DCF::Message>();
     m->addDataField("TEST2", "TOMTOMTOM");
 
-    msg.addMessageField("MSG_TEST", m);
+    msg.addMessageField("MSG_TEST", m.get());
 
     DEBUG_LOG("Embedded msg: " << msg);
 }
@@ -171,7 +171,7 @@ TEST(Message, MultiPartialDecode) {
     for (int i = 0; i < 10; i++) {
         sprintf(subject, "SAMPLE.MSG.%i", i);
         in1.setSubject(subject);
-        EXPECT_TRUE( in1.addScalarField("id", i));
+        EXPECT_TRUE(in1.addScalarField("id", i));
         in1.encode(buffer);
         in1.clear();
     }

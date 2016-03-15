@@ -9,8 +9,8 @@
 #include "transport/Socket.h"
 
 namespace fp {
-    peer_connection::peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *)> &disconnectionHandler)
-            : m_queue(queue), m_socket(std::move(socket)), m_buffer(4500), m_disconnectionHandler(disconnectionHandler) {
+    peer_connection::peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
+            : m_queue(queue), m_socket(std::move(socket)), m_buffer(4500), m_messageHandler(messageHandler), m_disconnectionHandler(disconnectionHandler) {
 
         m_socketEvent.registerEvent(queue, m_socket->getSocket(), DCF::EventType::READ, std::bind(&peer_connection::data_handler, this, std::placeholders::_1, std::placeholders::_2));
     }
@@ -58,17 +58,34 @@ namespace fp {
             DCF::Socket::ReadResult result = m_socket->read(reinterpret_cast<const char *>(m_buffer.allocate(MTU_SIZE)), MTU_SIZE, size);
             m_buffer.erase_back(MTU_SIZE - size);
             if (result == DCF::Socket::MoreData) {
-                const byte *data = nullptr;
-                const size_t len = m_buffer.bytes(&data);
-                DEBUG_LOG("Received: [" << len << "]'" << std::string(reinterpret_cast<const char *>(data), len) << "'");
-                DCF::Message msg;
-
                 const DCF::ByteStorage &storage = m_buffer.byteStorage();
-                if (msg.decode(storage)) {
-                    m_buffer.erase_front(storage.bytesRead());
-                    INFO_LOG("Processing: " << msg);
-                } else {
-                    break;
+                const char *subject_ptr = nullptr;
+                size_t subject_length = 0;
+                uint8_t flags = 0;
+                size_t msg_length = 0;
+
+                try {
+                    if (DCF::Message::addressing_details(storage, &subject_ptr, subject_length, flags, msg_length)) {
+                        INFO_LOG("Received message [" << subject_ptr << "] of length " << msg_length);
+                        const byte *data = nullptr;
+                        m_buffer.bytes(&data);
+                        subject<> subject(subject_ptr);
+                        DCF::ByteStorage msgData(data, msg_length, true);
+                        if (tf::unlikely(subject.is_admin())) {
+                            DEBUG_LOG("Received admin message");
+                        } else {
+                            // other wise pass it to our handler
+                            m_messageHandler(this, subject, msgData);
+                        }
+                        m_buffer.erase_front(msg_length);
+                    } else {
+                        storage.resetRead();
+                        break;
+                    }
+                } catch (fp::exception &e) {
+                    ERROR_LOG(e);
+                    m_socket->disconnect();
+                    m_disconnectionHandler(this);
                 }
 
             } else if (result == DCF::Socket::NoData) {
@@ -79,5 +96,11 @@ namespace fp {
                 break;
             }
         }
+    }
+
+    bool peer_connection::sendBuffer(const DCF::ByteStorage &buffer) {
+        const byte *data;
+        const size_t len = buffer.bytes(&data);
+        return m_socket->send(reinterpret_cast<const char *>(data), len);
     }
 }

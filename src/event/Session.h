@@ -80,6 +80,10 @@ namespace DCF {
             return Session::instance().stop();
         }
 
+        static bool is_started() {
+            return Session::instance().m_started;
+        }
+
         friend class Queue;
     };
 }

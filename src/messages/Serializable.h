@@ -46,7 +46,7 @@ namespace DCF {
         virtual ~Serializable() {}
 
         virtual const size_t encode(MessageBuffer &buffer) const noexcept = 0;
-        virtual const bool decode(const ByteStorage &buffer) noexcept = 0;
+        virtual const bool decode(const ByteStorage &buffer) = 0;
     };
 
 }

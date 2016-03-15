@@ -22,6 +22,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -Ofast
 #################################
 
 add_executable(fpsend fpsend.cpp)
-
 target_link_libraries(fpsend TFDCF ${CMAKE_THREAD_LIBS_INIT})
 
+add_executable(fplisten fplisten.cpp)
+target_link_libraries(fplisten TFDCF ${CMAKE_THREAD_LIBS_INIT})

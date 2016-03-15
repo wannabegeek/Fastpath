@@ -73,7 +73,7 @@ namespace DCF {
         return false;
     }
 
-    void ByteStorage::resetRead() const {
+    void ByteStorage::resetRead() const noexcept {
         m_read_ptr = m_storage.first;
     }
 

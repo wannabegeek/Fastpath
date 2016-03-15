@@ -6,13 +6,12 @@
 #define TFDCF_MESSAGEFIELD_H
 
 #include "Field.h"
-#include "StorageTypes.h"
+#include "BaseMessage.h"
 
 namespace DCF {
-
     class MessageField: public Field {
     private:
-        MessageType m_msg;
+        const BaseMessage *m_msg;
 
     protected:
         virtual const bool isEqual(const Field &other) const override {
@@ -30,8 +29,8 @@ namespace DCF {
         const StorageType type() const noexcept override { return StorageType::message; }
         const size_t size() const noexcept override { return 0; }
 
-        void set(const char *identifier, const MessageType &msg);
-        const MessageType get() const;
+        void set(const char *identifier, const BaseMessage *msg);
+        const BaseMessage *get() const;
 
         const size_t encode(MessageBuffer &buffer) const noexcept override {
 //            byte *b = buffer.allocate(sizeof(MsgField));

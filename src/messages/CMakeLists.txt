@@ -3,6 +3,8 @@ set(SOURCE_FILES
         DateTimeField.h
         Field.h
         FieldTraits.h
+        BaseMessage.cpp
+        BaseMessage.h
         Message.cpp
         Message.h
         MessageField.cpp
@@ -10,6 +12,6 @@ set(SOURCE_FILES
         ScalarField.h
         Serializable.h
         StorageTypes.h
-        MessageAddressing.cpp MessageAddressing.h)
+        )
 
 add_library(messages OBJECT ${SOURCE_FILES})

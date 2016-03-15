@@ -17,8 +17,11 @@ namespace fp {
     private:
         using hasher = H;
 
+        constexpr typename hasher::result_type admin_identifier() { return hasher()("_FP."); }
+
         std::vector<typename hasher::result_type> m_components;
         typename hasher::result_type m_subject_hash;
+        bool m_is_admin = false;
 
         static void hash_elements(const char *subject, std::vector<typename hasher::result_type> &out) noexcept {
             const char delimiter = '.';
@@ -40,6 +43,11 @@ namespace fp {
         subject(const char *subject) {
             hash_elements(subject, m_components);
             m_subject_hash = hasher()(subject);
+            m_is_admin = (m_components[0] == admin_identifier());
+        }
+
+        const bool is_admin() const noexcept {
+            return m_is_admin;
         }
 
         template <typename T> friend class subscription;

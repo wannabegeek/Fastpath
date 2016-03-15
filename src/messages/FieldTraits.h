@@ -13,9 +13,10 @@
 
 namespace DCF {
 
-    class Message;
+    class BaseMessage;
     class ScalarField;
     class DataField;
+    class MessageField;
 
     template<typename T>
     struct field_traits {
@@ -133,7 +134,7 @@ namespace DCF {
     };
 
     template<>
-    struct field_traits<Message> {
+    struct field_traits<BaseMessage> {
         static const bool value = true;
         static const StorageType type = StorageType::message;
         const constexpr char *description() { return "message"; }
@@ -201,6 +202,11 @@ namespace DCF {
 
     template<> struct storage_traits<StorageType::float64> {
         using storage_type = ScalarField;
+        using field = field_traits<float64_t>;
+    };
+
+    template<> struct storage_traits<StorageType::message> {
+        using storage_type = MessageField;
         using field = field_traits<float64_t>;
     };
 

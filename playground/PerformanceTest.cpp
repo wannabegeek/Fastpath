@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
             msg->addDataField("Name", "Zac");
 
             const size_t encoded_len = msg->encode(buffer);
-            encoded_messages.emplace_back(std::move(msg));
+            //encoded_messages.emplace_back(std::move(msg));
         }
     }) / static_cast<float>(iterations) << "us" << std::endl;
 
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
             }
             buffer.erase_front(storage.bytesRead());
 
-            decoded_messages.emplace_back(std::move(msg));
+            //decoded_messages.emplace_back(std::move(msg));
         }
     }) / static_cast<float>(iterations) << "us" << std::endl;
 

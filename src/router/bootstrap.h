@@ -21,7 +21,7 @@ namespace fp{
 
         std::vector<std::unique_ptr<peer_connection>> m_connections;
 
-        void message_handler(DCF::MessageType &msg);
+        void message_handler(peer_connection *source, const subject<> &subject, DCF::ByteStorage &msgData);
         void disconnection_handler(peer_connection *connection);
     public:
         bootstrap(const std::string &interface, const std::string &service);

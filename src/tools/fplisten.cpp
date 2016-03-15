@@ -8,6 +8,8 @@
 #include <event/Session.h>
 #include <transport/TCPTransport.h>
 #include <messages/Message.h>
+#include <event/MessageEvent.h>
+#include <event/BlockingQueue.h>
 
 int main( int argc, char *argv[] )  {
     tf::options o;
@@ -52,20 +54,29 @@ int main( int argc, char *argv[] )  {
             ERROR_LOG("You must specify a subject");
         }
 
+        DCF::BlockingQueue queue;
         DCF::TCPTransport transport(url.c_str(), "");
 
-        if (transport.valid()) {
-            DCF::Message msg;
-            msg.setSubject(subject.c_str());
-            msg.addDataField("name", "tom");
-            if (transport.sendMessage(msg) == DCF::OK) {
-                INFO_LOG("Message send successfully");
-            } else {
-                ERROR_LOG("Failed to send message");
-            }
-        } else {
-            ERROR_LOG("Failed to send message - transport not connected");
+        DCF::MessageEvent msgEvent(&queue, &transport, subject.c_str(), [&](const DCF::MessageEvent *event, const DCF::Message *msg){
+            INFO_LOG(msg);
+        });
+
+        while (true) {
+            queue.dispatch();
         }
+
+//        if (transport.valid()) {
+//            DCF::Message msg;
+//            msg.setSubject(subject.c_str());
+//            msg.addDataField("name", "tom");
+//            if (transport.sendMessage(msg) == DCF::OK) {
+//                INFO_LOG("Message send successfully");
+//            } else {
+//                ERROR_LOG("Failed to send message");
+//            }
+//        } else {
+//            ERROR_LOG("Failed to send message - transport not connected");
+//        }
         DCF::Session::destroy();
     } catch (const std::exception &stde) {
         ERROR_LOG("Internal error: " << stde.what());

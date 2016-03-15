@@ -48,7 +48,7 @@ namespace DCF {
         }
 
         // for reading as a stream
-        void resetRead() const;
+        void resetRead() const noexcept;
         void advanceRead(const size_t distance) const;
         const size_t remainingReadLength() const;
         const size_t bytesRead() const;
