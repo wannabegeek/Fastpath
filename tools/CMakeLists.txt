@@ -1,3 +1,4 @@
+INCLUDE(CheckIncludeFiles)
 
 find_package(Threads)
 

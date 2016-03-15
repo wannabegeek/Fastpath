@@ -97,7 +97,7 @@ namespace DCF {
         bool send(const struct iovec *vec, const int &count) noexcept;
 
         const ReadResult read(std::string &data) noexcept;
-        const ReadResult read(char *data, size_t maxLength, ssize_t &length) noexcept;
+        const ReadResult read(const char *data, size_t maxLength, ssize_t &length) noexcept;
     };
 }
 #endif /* defined(__TFFIXEngine__TFSocket__) */

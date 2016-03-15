@@ -26,7 +26,15 @@ namespace fp {
             component_type type;
 
             component(const typename hasher::result_type &h, const component_type &t) : component_hash(h), type(t) {}
+            component(const component &other) : component_hash(other.component_hash), type(other.type) {}
             component(component &&other) : component_hash(other.component_hash), type(other.type) {}
+
+            component& operator=(const component& other) {
+                component_hash = other.component_hash;
+                type = other.type;
+
+                return *this;
+            }
         };
 
         std::vector<component> m_components;
@@ -95,6 +103,14 @@ namespace fp {
         subscription(subscription &&other) noexcept : m_components(std::move(other.m_components)), m_contains_wildcard(other.m_contains_wildcard), m_subject_hash(other.m_subject_hash) {}
 
         ~subscription() {};
+
+        subscription& operator=(const subscription& other) {
+            std::copy(other.m_components.begin(), other.m_components.end(), std::back_inserter(m_components));
+            m_contains_wildcard = other.m_contains_wildcard;
+            m_subject_hash = other.m_subject_hash;
+
+            return *this;
+        }
 
         bool matches(const subject<H> &subject) const noexcept {
             bool matches = false;

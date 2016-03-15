@@ -6,6 +6,7 @@
 #define TFDCF_BOOTSTRAP_H
 
 #include <iosfwd>
+#include <memory>
 #include <transport/SocketServer.h>
 #include <event/InlineQueue.h>
 #include "peer_connection.h"
@@ -18,7 +19,10 @@ namespace fp{
         DCF::SocketServer m_server;
         bool m_shutdown = false;
 
-        std::vector<peer_connection> m_connections;
+        std::vector<std::unique_ptr<peer_connection>> m_connections;
+
+        void message_handler(DCF::MessageType &msg);
+        void disconnection_handler(peer_connection *connection);
     public:
         bootstrap(const std::string &interface, const std::string &service);
         ~bootstrap();

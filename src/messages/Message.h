@@ -86,8 +86,6 @@ namespace DCF {
         PayloadContainer m_payload;
         KeyMappingsContainer m_keys;
 
-        const uint16_t findIdentifierByName(const std::string &field, const size_t instance = 0) const noexcept;
-
         static const DataStorageType getStorageType(const StorageType type);
 
         const size_t encodeAddressing(MessageBuffer &buffer) const noexcept;

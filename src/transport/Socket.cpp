@@ -225,10 +225,10 @@ namespace DCF {
         return result;
     }
 
-    const Socket::ReadResult Socket::read(char *data, size_t maxLength, ssize_t &length) noexcept {
+    const Socket::ReadResult Socket::read(const char *data, size_t maxLength, ssize_t &length) noexcept {
         ReadResult result = MoreData;
 
-        ssize_t readSize = ::recv(m_socket, data, maxLength, MSG_DONTWAIT);
+        ssize_t readSize = ::recv(m_socket, const_cast<char *>(data), maxLength, MSG_DONTWAIT);
         if (readSize > 0) {
             length = readSize;
         } else if (readSize == -1) {
