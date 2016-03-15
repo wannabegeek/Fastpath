@@ -10,6 +10,6 @@ set(SOURCE_FILES
         ScalarField.h
         Serializable.h
         StorageTypes.h
-        )
+        MessageAddressing.cpp MessageAddressing.h)
 
 add_library(messages OBJECT ${SOURCE_FILES})

@@ -3,6 +3,7 @@
 //
 
 #include <event/Queue.h>
+#include <messages/Message.h>
 #include "peer_connection.h"
 #include "subject.h"
 #include "transport/Socket.h"
@@ -23,7 +24,7 @@ namespace fp {
     }
 
     peer_connection::~peer_connection() {
-        INFO_LOG("Peer connection destroyed");
+        DEBUG_LOG("Peer connection destroyed");
     }
 
     void peer_connection::add_subscription(const char *subject) {
@@ -60,6 +61,15 @@ namespace fp {
                 const byte *data = nullptr;
                 const size_t len = m_buffer.bytes(&data);
                 DEBUG_LOG("Received: [" << len << "]'" << std::string(reinterpret_cast<const char *>(data), len) << "'");
+                DCF::Message msg;
+
+                const DCF::ByteStorage &storage = m_buffer.byteStorage();
+                if (msg.decode(storage)) {
+                    m_buffer.erase_front(storage.bytesRead());
+                    INFO_LOG("Processing: " << msg);
+                } else {
+                    break;
+                }
 
             } else if (result == DCF::Socket::NoData) {
                 break;

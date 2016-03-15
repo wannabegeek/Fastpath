@@ -85,10 +85,10 @@ namespace DCF {
                         m_eventLoop.remove({event.fileDescriptor(), event.eventTypes()});
                     }
                     // upgrade read lock to write lock
-                    registered_events.erase(t);
+                    m_ioHandlerLookup.erase(it);
                 } else {
                     // upgrade read lock to write lock
-                    m_ioHandlerLookup.erase(it);
+                    registered_events.erase(t);
                 }
 
                 if (event.__awaitingDispatch()) {
