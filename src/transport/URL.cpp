@@ -66,6 +66,14 @@ namespace DCF {
         }
     }
 
+    url::url(const url &other) : m_protocol(other.m_protocol),
+                                     m_host(other.m_host),
+                                     m_port(other.m_port),
+                                     m_path(other.m_path),
+                                     m_query(other.m_query) {
+
+    }
+
     const bool url::operator==(const url &other) const {
         return m_protocol == other.m_protocol
                 && m_host == other.m_host

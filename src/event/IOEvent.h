@@ -103,7 +103,7 @@ namespace DCF {
 		}
 
         const bool __notify(const EventType &eventType) noexcept override {
-            std::function<void ()> dispatcher = std::bind(&IOEvent::dispatch, this, static_cast<DCF::IOEvent *>(this), eventType);
+            std::function<void ()> dispatcher = std::bind(&IOEvent::dispatch, this, this, eventType);
             return m_queue->__enqueue(dispatcher);
         };
     };

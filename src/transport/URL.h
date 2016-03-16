@@ -19,9 +19,9 @@ namespace DCF {
         std::string m_path;
         query_type m_query;
     public:
-        url(const std::string& url_s); // omitted copy, ==, accessors, ...
+        url(const std::string& url_s);
+        url(const url &);
 
-        url(const url &) = delete;
         const url &operator=(const url &) = delete;
 
         const bool operator==(const url &other) const;

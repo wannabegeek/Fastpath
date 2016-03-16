@@ -17,10 +17,10 @@ namespace DCF {
         Transport *m_transport;
         std::function<void(const MessageEvent *, const Message *)> m_callback;
 
-        void dispatch(MessageEvent *event, const Message *msg) {
+        void dispatch(MessageEvent *event, const std::shared_ptr<Message> msg) {
             this->__setAwaitingDispatch(false);
             if (m_active) {
-                m_callback(event, msg);
+                m_callback(event, msg.get());
             }
         }
 
@@ -78,9 +78,14 @@ namespace DCF {
         }
 
         const bool __notify(const EventType &eventType) noexcept override {
-//            std::function<void ()> dispatcher = std::bind(&MessageEvent::dispatch, this, static_cast<DCF::MessageEvent *>(this), eventType);
-//            return m_queue->__enqueue(dispatcher);
+            // no-op - we should never get here, but we require it to conform to Event interface
+            assert(true);
             return false;
+        }
+
+        const bool __notify(const std::shared_ptr<Message> message) noexcept {
+            std::function<void ()> dispatcher = std::bind(&MessageEvent::dispatch, this, this, message);
+            return m_queue->__enqueue(dispatcher);
         };
     };
 }

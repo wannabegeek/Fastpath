@@ -28,7 +28,10 @@ namespace DCF {
     };
 
 
-    TCPTransport::TCPTransport(const char *url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024) {
+    TCPTransport::TCPTransport(const char *url_ptr, const char *description) : TCPTransport(url(url_ptr), description) {
+    }
+
+    TCPTransport::TCPTransport(const url &url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024) {
         INFO_LOG("Connecting to: " << m_url);
         m_peer = std::make_unique<SocketClient>(m_url.host(), m_url.port());
         if (!m_peer->connect()) {

@@ -131,7 +131,7 @@ namespace  DCF {
 		}
 
         const bool __notify(const EventType &eventType) noexcept override {
-            std::function<void ()> dispatcher = std::bind(&TimerEvent::dispatch, this, static_cast<DCF::TimerEvent *>(this));
+            std::function<void ()> dispatcher = std::bind(&TimerEvent::dispatch, this, this);
             return m_queue->__enqueue(dispatcher);
         };
     };

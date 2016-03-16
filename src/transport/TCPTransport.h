@@ -28,6 +28,7 @@ namespace DCF {
     public:
         // This should have the format dcf://localhost:1234
         TCPTransport(const char *url, const char *description);
+        TCPTransport(const url &url, const char *description);
 
         TCPTransport(const TCPTransport &) = delete;
         TCPTransport &operator=(const TCPTransport &) = delete;
