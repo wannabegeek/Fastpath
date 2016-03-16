@@ -24,23 +24,48 @@ namespace DCF {
             }
         }
 
-    public:
-        MessageEvent(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) : Event(queue), m_transport(transport), m_callback(callback) {
-            const size_t subject_length = strlen(subject);
-            std::copy(subject, &subject[subject_length], m_subject);
+        inline void subscribe() noexcept {
             Message msg;
             msg.setSubject("_FP.REGISTER.OBSERVER");
-            msg.addDataField("subject", subject);
+            msg.addDataField("subject", m_subject);
             msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
             m_transport->sendMessage(msg);
-        };
+        }
 
-        ~MessageEvent() {
+        inline void unsubscribe() noexcept {
             Message msg;
             msg.setSubject("_FP.UNREGISTER.OBSERVER");
             msg.addDataField("subject", m_subject);
             msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
             m_transport->sendMessage(msg);
+        }
+
+    public:
+        MessageEvent(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) : Event(queue), m_transport(transport), m_callback(callback) {
+            const size_t subject_length = strlen(subject);
+            std::copy(subject, &subject[subject_length], m_subject);
+            this->subscribe();
+        };
+
+        ~MessageEvent() {
+            this->unsubscribe();
+        }
+
+        void registerEvent(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) {
+            setQueue(queue);
+            m_callback = callback;
+            const size_t subject_length = strlen(subject);
+            std::copy(subject, &subject[subject_length], m_subject);
+
+            this->subscribe();
+            m_active = true;
+        }
+
+        void unregisterEvent() {
+            if (m_active && m_isRegistered.load()) {
+                m_active = false;
+                this->unsubscribe();
+            }
         }
 
         const bool isEqual(const Event &other) const noexcept override {

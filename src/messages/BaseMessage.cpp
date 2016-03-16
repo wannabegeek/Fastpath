@@ -109,7 +109,9 @@ namespace DCF {
 
                 MsgHeader::header_start chk = readScalar<MsgHeader::header_start>(buffer.readBytes());
                 buffer.advanceRead(sizeof(MsgHeader::header_start));
-                assert(chk == body_flag);
+                if (chk != body_flag) {
+                    throw fp::exception("Received corrupt message");
+                }
 
                 const MsgHeader::field_count field_count = readScalar<MsgHeader::field_count>(buffer.readBytes());
                 buffer.advanceRead(sizeof(MsgHeader::field_count));
