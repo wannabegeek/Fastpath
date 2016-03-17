@@ -125,7 +125,7 @@ TEST(Socket, NonBlockingReadWrite) {
         }
     });
 
-    queue.__registerEvent(handler);
+    queue.registerEvent(handler);
 
     EXPECT_TRUE(handler.isRegistered());
 
@@ -192,13 +192,13 @@ TEST(Socket, NonBlockingServerReadWrite) {
                 DEBUG_LOG("out of accept");
 
                 clientHandler = std::make_unique<DCF::IOEvent>(connection->getSocket(), DCF::EventType::READ, client);
-                queue.__registerEvent(*(clientHandler.get()));
+                queue.registerEvent(*(clientHandler.get()));
 
                 DEBUG_LOG("registered new client");
             }
         });
 
-        queue.__registerEvent(handler);
+        queue.registerEvent(handler);
 
         for (int i = 0; !finished && i < 15; i++) {
             DEBUG_LOG("wait...");
@@ -241,7 +241,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     });
 
     EXPECT_TRUE(client.send("hello", 6));
-    queue.__registerEvent(handler);
+    queue.registerEvent(handler);
 
     queue.dispatch(std::chrono::seconds(5));
     EXPECT_TRUE(callbackFired);

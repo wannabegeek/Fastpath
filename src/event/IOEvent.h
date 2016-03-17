@@ -44,7 +44,7 @@ namespace DCF {
 		std::function<void(IOEvent *, const EventType)> m_callback;
 
         void dispatch(IOEvent *event, const EventType &eventType) {
-            this->__setAwaitingDispatch(false);
+            this->__popDispatch();
             if (m_active) {
                 m_callback(event, eventType);
             }
@@ -55,6 +55,7 @@ namespace DCF {
 
 		IOEvent(const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback)
 				: m_fd(fd), m_eventTypes(eventType), m_callback(callback) {
+            m_active = true;
 		};
 
 		IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes), m_pendingRemoval(other.m_pendingRemoval), m_callback(std::move(other.m_callback)) {
@@ -71,7 +72,7 @@ namespace DCF {
                 m_callback = callback;
                 m_active = true;
             } else {
-                return ALREADY_ACTIVE;
+                return CANNOT_CREATE;
             }
             return OK;
         }
@@ -80,7 +81,7 @@ namespace DCF {
             if (m_active) {
                 m_active = false;
                 if (m_isRegistered.load()) {
-                    m_queue->__unregisterEvent(*this);
+                    m_queue->unregisterEvent(*this);
                 }
             } else {
                 return CANNOT_DESTROY;
@@ -106,7 +107,7 @@ namespace DCF {
 		}
 
         const bool __notify(const EventType &eventType) noexcept override {
-            assert( m_queue != nullptr);
+            assert(m_queue != nullptr);
             std::function<void ()> dispatcher = std::bind(&IOEvent::dispatch, this, this, eventType);
             return m_queue->__enqueue(dispatcher);
         };

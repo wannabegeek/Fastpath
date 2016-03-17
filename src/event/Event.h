@@ -22,7 +22,7 @@ namespace DCF {
         Queue *m_queue;
 
         std::atomic<bool> m_isRegistered = ATOMIC_VAR_INIT(false);
-        std::atomic<bool> m_awaitingDispatch = ATOMIC_VAR_INIT(false);
+        std::atomic<uint16_t> m_awaitingDispatch = ATOMIC_VAR_INIT(0);
 //        std::atomic<bool> m_inCallback = ATOMIC_VAR_INIT(false);
 
         bool m_active;
@@ -34,7 +34,7 @@ namespace DCF {
         }
 
     public:
-        Event() : m_active(false) {
+        Event() : m_queue(nullptr), m_active(false) {
         }
 
         Event(Event &&other) : m_queue(other.m_queue), m_isRegistered(static_cast<bool>(other.m_isRegistered)) {
@@ -56,11 +56,15 @@ namespace DCF {
         }
 
         const bool __awaitingDispatch() const noexcept {
-            return m_awaitingDispatch;
+            return m_awaitingDispatch.load(std::memory_order_relaxed) != 0;
         }
 
-        void __setAwaitingDispatch(const bool value) noexcept {
-            m_awaitingDispatch = value;
+        void __pushDispatch() noexcept {
+            m_awaitingDispatch++;
+        }
+
+        void __popDispatch() noexcept {
+            m_awaitingDispatch--;
         }
 
         bool operator==(const Event &other) {

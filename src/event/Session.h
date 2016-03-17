@@ -47,12 +47,13 @@ namespace DCF {
             });
 
             condition.wait(lock);
+            m_started = true;
 
             return OK;
         }
 
         const status stop() {
-            if (m_started) {
+            if (!m_started) {
                 return EVM_NOTRUNNING;
             }
 
@@ -80,7 +81,7 @@ namespace DCF {
             return Session::instance().stop();
         }
 
-        static bool is_started() {
+        static inline bool is_started() {
             return Session::instance().m_started;
         }
 

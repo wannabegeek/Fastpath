@@ -16,7 +16,6 @@ namespace DCF {
     InlineEventManager::~InlineEventManager() {
     }
 
-
     void InlineEventManager::processPendingRegistrations() {
         if (m_pendingTimerRegistrationEvents) {
             m_timerHandlers = m_pendingTimerHandlers;

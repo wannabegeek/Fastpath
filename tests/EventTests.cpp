@@ -46,7 +46,7 @@ TEST(EventManager, Notifier) {
 
 TEST(EventManager, SimpleRead) {
 
-    LOG_LEVEL(tf::logger::info);
+    LOG_LEVEL(tf::logger::debug);
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
@@ -61,7 +61,7 @@ TEST(EventManager, SimpleRead) {
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
 
-    queue.__registerEvent(handler);
+    EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
 
     std::thread signal([&]() {
         DEBUG_LOG("sleeping");
@@ -70,7 +70,7 @@ TEST(EventManager, SimpleRead) {
         ASSERT_NE(-1, write(fd[1], "x", 1));
     });
     DEBUG_LOG("Dispatching");
-    queue.dispatch(std::chrono::seconds(5));
+    EXPECT_NE(DCF::EVM_NOTRUNNING, queue.dispatch(std::chrono::seconds(5)));
     DEBUG_LOG("...complete, waiting for thread to exit");
     signal.join();
     EXPECT_TRUE(callbackFired);
@@ -86,7 +86,7 @@ TEST(EventManager, SimpleTimer) {
         callbackFired = true;
     });
 
-    queue.__registerEvent(handler);
+    queue.registerEvent(handler);
 
     queue.dispatch(std::chrono::seconds(3));
     EXPECT_TRUE(callbackFired);
@@ -99,7 +99,7 @@ TEST(EventManager, ResetTimer) {
     DCF::TimerEvent handler(std::chrono::seconds(1), [&](const DCF::TimerEvent *event) {
         callbackFired = true;
     });
-    queue.__registerEvent(handler);
+    queue.registerEvent(handler);
 
     const auto startTime = std::chrono::steady_clock::now();
     queue.dispatch(std::chrono::milliseconds(500)); //0.5 seconds
@@ -135,8 +135,8 @@ TEST(EventManager, ComplexRead) {
         // We can't have both handlers reading the data
     });
 
-    queue.__registerEvent(handler1);
-    queue.__registerEvent(handler2);
+    queue.registerEvent(handler1);
+    queue.registerEvent(handler2);
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -169,8 +169,8 @@ TEST(EventManager, SimpleTimeoutWithActiveFD) {
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
 
-    queue.__registerEvent(timeoutHandler);
-    queue.__registerEvent(pipeHandler);
+    queue.registerEvent(timeoutHandler);
+    queue.registerEvent(pipeHandler);
 
     queue.dispatch(std::chrono::seconds(5));
 

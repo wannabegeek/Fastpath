@@ -32,28 +32,31 @@ namespace DCF {
     typedef enum {
         OK = 0,
 
-        EVM_NOTRUNNING = 1,
+        EVM_NOTRUNNING,
+        NO_EVENTS,
 
-        INTERNAL_ERROR = 2,
-        CANNOT_SEND = 3,
-        ALREADY_ACTIVE = 4,
-        CANNOT_DESTROY = 5,
-        CANNOT_CONNECT = 6,
-        NOT_VALID = 7,
+        INTERNAL_ERROR,
+        CANNOT_SEND,
+        ALREADY_ACTIVE,
+        NOT_ACTIVE,
+        CANNOT_CREATE,
+        CANNOT_DESTROY,
+        CANNOT_CONNECT,
 
-        INVALID_SERVICE = 8,
-        INVALID_DAEMON = 9,
+        NOT_VALID,
 
-        INVALID_MSG = 10,
-        INVALID_SUBJECT = 11,
-        INVALID_NAME = 12,
-        INVALID_QUEUE = 13,
-        INVALID_TRANSPORT = 14,
-        INVALID_CALLBACK = 15,
+        INVALID_SERVICE,
+        INVALID_DAEMON,
 
-        NOT_FOUND = 16,
-        CONVERSION_FAILED = 17,
-        UPDATE_FAILED = 18,
+        INVALID_MSG,
+        INVALID_SUBJECT,
+        INVALID_NAME,
+        INVALID_QUEUE,
+        INVALID_TRANSPORT,
+
+        NOT_FOUND,
+        CONVERSION_FAILED,
+        UPDATE_FAILED,
 
         TIMEOUT = 19
     } status;

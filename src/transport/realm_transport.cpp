@@ -37,10 +37,13 @@ namespace fp {
 
     void realm_transport::broadcastConnectionStateChange(bool connected) {
         auto msg = std::make_shared<DCF::Message>();
-        msg->setSubject(connected ? connected_subject() : disconnected_subject());
+        msg->setSubject(connected ? subject::daemon_connected : subject::daemon_disconnected);
         std::for_each(m_subscribers.begin(), m_subscribers.end(), [&](DCF::MessageEvent *msgEvent) {
             // TODO: check if the handler is interested in this message
             msgEvent->__notify(msg);
         });
     }
+
+    const char *realm_transport::subject::daemon_connected = "_FP.INFO.DAEMON.CONNECTED";
+    const char *realm_transport::subject::daemon_disconnected = "_FP.INFO.DAEMON.DISCONNECTED";
 }

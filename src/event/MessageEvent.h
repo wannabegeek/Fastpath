@@ -18,7 +18,7 @@ namespace DCF {
         std::function<void(const MessageEvent *, const Message *)> m_callback;
 
         void dispatch(MessageEvent *event, const std::shared_ptr<Message> msg) {
-            this->__setAwaitingDispatch(false);
+            this->__popDispatch();
             if (m_active) {
                 m_callback(event, msg.get());
             }
@@ -61,7 +61,7 @@ namespace DCF {
                 m_callback = callback;
                 m_active = true;
             } else {
-                return ALREADY_ACTIVE;
+                return CANNOT_CREATE;
             }
             return OK;
         }
@@ -71,7 +71,7 @@ namespace DCF {
                 m_active = false;
                 if (m_isRegistered.load()) {
                     this->unsubscribe();
-//                    m_queue->__unregisterEvent(*this);
+//                    m_queue->unregisterEvent(*this);
                 }
             } else {
                 return CANNOT_DESTROY;

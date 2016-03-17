@@ -17,22 +17,28 @@ namespace DCF {
             return m_eventManager;
         }
 
+        virtual inline const bool isInitialised() const override {
+            return true;
+        }
+
     public:
         InlineQueue() {
         }
 
         virtual ~InlineQueue() { }
 
-        const bool try_dispatch() override {
-            return false;
+        inline const status try_dispatch() override {
+            return NO_EVENTS;
         }
 
-        void dispatch() override {
+        inline const status dispatch() override {
             m_eventManager.waitForEvent();
+            return OK;
         }
 
-        void dispatch(const std::chrono::milliseconds &timeout) override {
+        inline const status dispatch(const std::chrono::milliseconds &timeout) override {
             m_eventManager.waitForEvent(timeout);
+            return OK;
         }
 
         const size_t eventsInQueue() const noexcept override {

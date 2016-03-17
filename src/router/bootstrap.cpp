@@ -25,7 +25,7 @@ namespace fp {
                                                                              std::bind(&bootstrap::disconnection_handler, this, std::placeholders::_1)));
             });
 
-            m_dispatchQueue.__registerEvent(connectionAttempt);
+            m_dispatchQueue.registerEvent(connectionAttempt);
 
             // todo:
             // Start heartbeat thread

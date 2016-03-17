@@ -96,12 +96,12 @@ TEST(TCPTransport, TryConnectSuccess) {
                 DEBUG_LOG("out of accept");
 
                 EXPECT_EQ(DCF::OK, clientHandler.create(connection->getSocket(), DCF::EventType::READ, client));
-                queue.__registerEvent(clientHandler);
+                queue.registerEvent(clientHandler);
                 DEBUG_LOG("registered new client on socket: " << connection->getSocket());
             }
         });
 
-        queue.__registerEvent(handler);
+        queue.registerEvent(handler);
         DEBUG_LOG("Ready to dispatch");
         while(!finished) {
             queue.dispatch(std::chrono::seconds(3));
@@ -193,12 +193,12 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
                 DEBUG_LOG("out of accept");
 
                 EXPECT_EQ(DCF::OK, clientHandler.create(connection->getSocket(), DCF::EventType::READ, client));
-                queue.__registerEvent(clientHandler);
+                queue.registerEvent(clientHandler);
                 DEBUG_LOG("registered new client on socket: " << connection->getSocket());
             }
         });
 
-        queue.__registerEvent(handler);
+        queue.registerEvent(handler);
         DEBUG_LOG("Ready to dispatch");
         while(!finished) {
             queue.dispatch(std::chrono::seconds(3));

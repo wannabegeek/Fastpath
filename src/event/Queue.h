@@ -5,6 +5,7 @@
 #ifndef TFDCF_QUEUE_H
 #define TFDCF_QUEUE_H
 
+#include <utils/optimize.h>
 #include "messages/StorageTypes.h"
 #include "Session.h"
 #include "event/EventManager.h"
@@ -18,14 +19,19 @@ namespace DCF {
         virtual EventManager &eventManager() {
             return Session::instance().m_eventManager;
         }
+
+        virtual inline const bool isInitialised() const {
+            return Session::instance().m_started;
+        }
+
     public:
         using queue_value_type = std::function<void ()>;
 
         virtual ~Queue() {}
 
-        virtual void dispatch() = 0;
-        virtual void dispatch(const std::chrono::milliseconds &timeout) = 0;
-        virtual const bool try_dispatch() = 0;
+        virtual const status dispatch() = 0;
+        virtual const status dispatch(const std::chrono::milliseconds &timeout) = 0;
+        virtual const status try_dispatch() = 0;
         virtual const size_t eventsInQueue() const noexcept = 0;
         virtual const bool __enqueue(queue_value_type &event) noexcept = 0;
 
@@ -33,15 +39,25 @@ namespace DCF {
             this->eventManager().notify();
         }
 
-        template <typename T> void __registerEvent(T &evt) {
-            evt.setQueue(this);
-            this->eventManager().registerHandler(evt);
+        template <typename T> status registerEvent(T &evt) {
+            if (tf::unlikely(!evt.m_active)) {
+                return ALREADY_ACTIVE;
+            } else {
+                evt.setQueue(this);
+                this->eventManager().registerHandler(evt);
+                return OK;
+            }
         }
 
-        template <typename T> void __unregisterEvent(T &evt) {
-            // TODO - remove any pending items from the queue
-            evt.setQueue(nullptr);
-            this->eventManager().unregisterHandler(evt);
+        template <typename T> status unregisterEvent(T &evt) {
+            if (tf::unlikely(evt.m_active)) {
+                return NOT_ACTIVE;
+            } else {
+                // TODO - remove any pending items from the queue
+                evt.setQueue(nullptr);
+                this->eventManager().unregisterHandler(evt);
+                return OK;
+            }
         }
     };
 }

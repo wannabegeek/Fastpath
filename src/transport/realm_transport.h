@@ -12,8 +12,10 @@
 namespace fp {
     class realm_transport : public DCF::TCPTransport {
     private:
-        constexpr const char *connected_subject() { return "_FP.INFO.DAEMON.CONNECTED"; }
-        constexpr const char *disconnected_subject() { return "_FP.ERROR.DAEMON.DISCONNECTED"; }
+        struct subject {
+            static const char *daemon_connected;
+            static const char *daemon_disconnected;
+        };
 
         std::vector<DCF::MessageEvent *> m_subscribers;
         const DCF::Queue *m_associatedQueue;

@@ -60,7 +60,7 @@ namespace  DCF {
         std::function<void(TimerEvent *)> m_callback;
 
         void dispatch(TimerEvent *event) {
-            this->__setAwaitingDispatch(false);
+            this->__popDispatch();
             if (m_active) {
                 m_callback(event);
             }
@@ -72,6 +72,7 @@ namespace  DCF {
 
 		TimerEvent(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback)
 				: m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
+			m_active = true;
 		}
 
 		TimerEvent(TimerEvent &&other) : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)) {
@@ -79,7 +80,7 @@ namespace  DCF {
 
 //		TimerEvent(Queue *queue, const uint64_t &timeout, const std::function<void(const TimerEvent *)> &callback)
 //				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
-//			m_queue->__registerEvent(*this);
+//			m_queue->registerEvent(*this);
 //		}
 
 		~TimerEvent() {
@@ -96,14 +97,14 @@ namespace  DCF {
                 return OK;
             }
 
-            return ALREADY_ACTIVE;
+            return CANNOT_CREATE;
         }
 
         status destroy() {
 			if (m_active) {
 				m_active = false;
 				if (m_isRegistered.load()) {
-					m_queue->__unregisterEvent(*this);
+                    m_queue->unregisterEvent(*this);
 				}
 			} else {
 				return CANNOT_DESTROY;
@@ -133,7 +134,7 @@ namespace  DCF {
 		}
 
         const bool __notify(const EventType &eventType) noexcept override {
-            assert( m_queue != nullptr);
+            assert(m_queue != nullptr);
             std::function<void ()> dispatcher = std::bind(&TimerEvent::dispatch, this, this);
             return m_queue->__enqueue(dispatcher);
         };

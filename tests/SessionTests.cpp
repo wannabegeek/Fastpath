@@ -42,8 +42,8 @@ TEST(Session, SimpleTimeout) {
         callbackFired = true;
     });
 
-    queue.__registerEvent(handler);
-    queue.dispatch();
+    EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
+    EXPECT_EQ(DCF::OK, queue.dispatch());
     const auto endTime = std::chrono::steady_clock::now();
     const auto actual = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
 
@@ -69,13 +69,13 @@ TEST(Session, SimpleReadInline) {
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
-    queue.__registerEvent(handler);
+    EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         ASSERT_NE(-1, write(fd[1], "x", 1));
     });
-    queue.dispatch(std::chrono::seconds(5));
+    EXPECT_EQ(DCF::OK, queue.dispatch(std::chrono::seconds(5)));
 
     signal.join();
     EXPECT_TRUE(callbackFired);
@@ -102,7 +102,7 @@ TEST(Session, SimpleReadBusySpin) {
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
 
-    queue.__registerEvent(handler);
+    EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
     // we need to make sure wwe have registered with the event loop
     while(!handler.isRegistered());
 
@@ -112,7 +112,7 @@ TEST(Session, SimpleReadBusySpin) {
         DEBUG_LOG("Written to pipe");
     });
     DEBUG_LOG("Dispatching...");
-    queue.dispatch(std::chrono::seconds(5));
+    EXPECT_EQ(DCF::OK, queue.dispatch(std::chrono::seconds(5)));
     DEBUG_LOG("done disptach");
 
     signal.join();
@@ -143,7 +143,7 @@ TEST(Session, SimpleReadBlocking) {
         DEBUG_LOG("Out read");
         done = true;
     });
-    queue.__registerEvent(handler);
+    EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -192,12 +192,12 @@ TEST(Session, ReadTimerInline) {
         if (timerCounter == 0) {
             ASSERT_FALSE(handler.isRegistered());
             EXPECT_EQ(DCF::OK, handler.create(fd[0], DCF::EventType::READ, callback));
-            queue.__registerEvent(handler);
+            EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
         }
         EXPECT_TRUE(handler.isRegistered());
         timerCounter++;
     });
-    queue.__registerEvent(timer);
+    EXPECT_EQ(DCF::OK, queue.registerEvent(timer));
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -245,10 +245,11 @@ TEST(Session, ReadTimerBusySpin) {
         if (timerCounter == 0) {
             ASSERT_FALSE(handler.isRegistered());
             EXPECT_EQ(DCF::OK, handler.create(fd[0], DCF::EventType::READ, callback));
+            EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
         }
         timerCounter++;
     });
-    queue.__registerEvent(timer);
+    EXPECT_EQ(DCF::OK, queue.registerEvent(timer));
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -293,12 +294,12 @@ TEST(Session, ReadTimerBlocking) {
         if (timerCounter == 0) {
             ASSERT_FALSE(handler.isRegistered());
             EXPECT_EQ(DCF::OK, handler.create(fd[0], DCF::EventType::READ, callback));
-            queue.__registerEvent(handler);
+            EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
         }
         EXPECT_TRUE(handler.isRegistered());
         timerCounter++;
     });
-    queue.__registerEvent(timer);
+    EXPECT_EQ(DCF::OK, queue.registerEvent(timer));
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));

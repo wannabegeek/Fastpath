@@ -20,7 +20,7 @@ namespace DCF {
 
     Message::~Message() {
         delete [] m_subject;
-    };
+    }
 
     const bool Message::operator==(const Message &other) const {
         return m_flags == other.m_flags
