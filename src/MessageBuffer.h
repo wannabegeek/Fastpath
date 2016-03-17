@@ -11,25 +11,52 @@
 #include "MutableByteStorage.h"
 
 namespace DCF {
+    struct MsgAddressing {
+        using addressing_start = uint8_t;
+        using msg_length = uint64_t;
+        using flags = uint8_t;
+        using reserved = uint32_t;
+        using subject_length = uint16_t;
 
-    struct alignas(16) MsgHeader {
-        uint64_t msg_length;     // len:8 off:0   Message Length
-        uint8_t flags;           // len:1 off:8   Flags
-        uint32_t reserved;       // len:4 off:9   Reserved for future use
-        uint32_t field_count;    // len:4 off:11  Number of fields in main body
-        uint32_t mapping_count;  // len:4 off:15  Number of fields in main body
-        uint16_t subject_length; // len:2 off:19  Length of subject
+        static constexpr const size_t msg_length_offset() {
+            return sizeof(addressing_start)
+                   + sizeof(msg_length);
+        }
+
+        static constexpr const size_t size() {
+            return sizeof(addressing_start)
+                   + sizeof(msg_length)
+                   + sizeof(flags)
+                   + sizeof(reserved)
+                   + sizeof(subject_length);
+        }
     };
 //  char *subject;
 
-    struct alignas(16) MsgField {
-        uint16_t identifier;
-        int8_t type;
-        uint32_t data_length;
+    struct MsgHeader {
+        using header_start = uint8_t;
+        using field_count = uint32_t;    // len:4 off:11  Number of fields in main body
+
+        static constexpr const size_t size() {
+            return sizeof(header_start)
+                   + sizeof(field_count);
+        }
+    };
+
+    struct MsgField {
+        using type = int8_t;
+        using identifier_length = uint8_t;
+        using data_length = uint32_t;
+
+        static constexpr const size_t size() {
+            return sizeof(type)
+                   + sizeof(identifier_length)
+                   + sizeof(data_length);
+        }
     };
 //  void *data;
 
-    struct alignas(16) MsgMappings {
+    struct alignas(8) MsgMappings {
         uint16_t identifier;
         uint16_t name_length;
     };
@@ -40,7 +67,7 @@ namespace DCF {
         size_t m_startIndex = 0;
 
         MutableByteStorage m_storage;
-        const size_t visible_length() const { return m_storage.length() - m_startIndex; }
+        const size_t visible_length() const { return m_storage.length() > m_startIndex ? m_storage.length() - m_startIndex : 0; }
 
     public:
 
@@ -68,7 +95,7 @@ namespace DCF {
 
         const ByteStorage byteStorage() const noexcept {
             const byte *bytes = nullptr;
-            const size_t len = m_storage.bytes(&bytes);
+            m_storage.bytes(&bytes);
             return ByteStorage(&bytes[m_startIndex], visible_length(), true);
         }
 

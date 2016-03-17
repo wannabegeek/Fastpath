@@ -1,7 +1,5 @@
-set(GTEST_SRC_DIR googletest)
-set(GTEST_LIBS gtest gtest_main)
-
-include_directories(${GTEST_SRC_DIR}/include ${GTEST_SRC_DIR})
+find_package(GTest REQUIRED)
+find_package(Threads)
 
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
@@ -16,16 +14,26 @@ ENDIF (CMAKE_COMPILER_IS_GNUCXX)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -g -gdwarf-2 -DDEBUG -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -Ofast")
 
-add_subdirectory(${GTEST_SRC_DIR})
+include_directories(${GTEST_INCLUDE_DIRS})
 
 #################################
 
 add_executable(tests
         MessageTests.cpp
-        ElementTests.cpp
-        MessageBufferTests.cpp ByteStorageTests.cpp MutableByteStorageTests.cpp)
+        FieldTests.cpp
+        MessageBufferTests.cpp
+        ByteStorageTests.cpp
+        MutableByteStorageTests.cpp
+        EventTests.cpp
+        SessionTests.cpp
+        QueueTests.cpp
+        SocketTests.cpp
+        URLTests.cpp
+        TCPTransportTests.cpp
+        SubscriptionTests.cpp
+        )
 
-target_link_libraries(tests TFDCF ${GTEST_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tests TFDCF ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(
         NAME tests

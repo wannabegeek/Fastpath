@@ -46,11 +46,11 @@ TEST(MutableByteStorage, Clear) {
 
     buffer.clear();
 
-    ASSERT_EQ(0, buffer.length());
+    ASSERT_EQ(0u, buffer.length());
     ASSERT_EQ(capacity, buffer.capacity());
 
     const byte *bytes = nullptr;
-    ASSERT_EQ(0, buffer.bytes(&bytes));
+    ASSERT_EQ(0u, buffer.bytes(&bytes));
     ASSERT_EQ(nullptr, bytes);
 }
 

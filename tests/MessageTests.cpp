@@ -3,7 +3,8 @@
 //
 
 #include <gtest/gtest.h>
-#include <Message.h>
+#include <messages/Message.h>
+#include <utils/logger.h>
 
 TEST(Message, SetSubject) {
     DCF::Message msg;
@@ -19,44 +20,58 @@ TEST(Message, SetSubject) {
 TEST(Message, AddStringField) {
 
     DCF::Message msg;
-    msg.addField(1234, "TEST");
+    ASSERT_TRUE(msg.addDataField("1234", "TEST"));
 
-    std::string v;
-    ASSERT_TRUE(msg.getField(1234, v));
-    ASSERT_STREQ("TEST", v.c_str());
+    const char * v = nullptr;
+    size_t len = 0;
+    EXPECT_TRUE(msg.getDataField("1234", &v, len));
+    EXPECT_EQ(5u, len);
+    EXPECT_STREQ("TEST", v);
 
-    msg.addField("TEST", "AGAIN");
-    ASSERT_TRUE(msg.getField("TEST", v));
-    ASSERT_STREQ("AGAIN", v.c_str());
+    msg.addDataField("TEST", "AGAIN");
+    ASSERT_TRUE(msg.getDataField("TEST", &v, len));
+    ASSERT_EQ(6u, len);
+    ASSERT_STREQ("AGAIN", v);
 }
 
 TEST(Message, AddFloatField) {
     DCF::Message msg;
-    msg.addField("TEST", static_cast<float32_t>(1.4));
+    msg.addScalarField("TEST", static_cast<float32_t>(1.4));
     float32_t t = 0.0;
-    ASSERT_TRUE(msg.getField("TEST", t));
+    ASSERT_TRUE(msg.getScalarField("TEST", t));
     ASSERT_FLOAT_EQ(1.4, t);
 }
 
 TEST(Message, AddMixedDuplicateField) {
     DCF::Message msg;
-    msg.addField("TEST", "AGAIN");
+    msg.addDataField("TEST", "AGAIN");
 
-    msg.addField("TEST", static_cast<float32_t>(1.4));
-    float32_t t = 0.0;
-    std::string v;
-    ASSERT_TRUE(msg.getField("TEST", v, 0));
-    ASSERT_STREQ("AGAIN", v.c_str());
-    ASSERT_TRUE(msg.getField("TEST", t, 1));
-    ASSERT_FLOAT_EQ(1.4, t);
+    ASSERT_FALSE(msg.addScalarField("TEST", static_cast<float32_t>(1.4)));
+    ASSERT_EQ(DCF::StorageType::string, msg.storageType("TEST"));
+    const char *t = nullptr;
+    size_t length = 0;
+    ASSERT_TRUE(msg.getDataField("TEST", &t, length));
+    ASSERT_STREQ("AGAIN", t);
 
+}
+
+TEST(Message, AddMessageField) {
+    DCF::Message msg;
+    msg.addScalarField("TEST", static_cast<float32_t>(1.4));
+
+    DCF::MessageType m = std::make_shared<DCF::Message>();
+    m->addDataField("TEST2", "TOMTOMTOM");
+
+    msg.addMessageField("MSG_TEST", m.get());
+
+    DEBUG_LOG("Embedded msg: " << msg);
 }
 
 TEST(Message, RemoveFieldByString) {
     DCF::Message msg;
     float32_t t = 22.0;
-    msg.addField("TEST", t);
-    ASSERT_TRUE(msg.getField("TEST", t));
+    msg.addScalarField("TEST", t);
+    ASSERT_TRUE(msg.getScalarField("TEST", t));
     ASSERT_FLOAT_EQ(22, t);
 
     ASSERT_EQ(1u, msg.size());
@@ -69,32 +84,112 @@ TEST(Message, Encode) {
     DCF::Message msg;
     msg.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
-    msg.addField("TEST", t);
-    msg.addField("Name", "Tom");
-    msg.addField("Name", "Zac");
+    msg.addScalarField("TEST", t);
+    msg.addDataField("Name", "Tom");
+    msg.addDataField("Name", "Zac");
 
     DCF::MessageBuffer buffer(1024);
-    msg.encode(buffer);
+    const size_t encoded_len = msg.encode(buffer);
+    EXPECT_EQ(buffer.length(), encoded_len);
 
-    std::cout << buffer << std::endl;
+    DEBUG_LOG(buffer);
 }
 
 TEST(Message, Decode) {
     DCF::Message in;
     in.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
-    in.addField("TEST", t);
-    in.addField("Name", "Tom");
-    in.addField("Name", "Zac");
+    EXPECT_TRUE(in.addScalarField("TEST1", t));
+    EXPECT_TRUE(in.addScalarField("TEST2", true));
+    EXPECT_TRUE(in.addDataField("Name1", "Tom"));
+    EXPECT_TRUE(in.addDataField("Name2", "Zac"));
 
     DCF::MessageBuffer buffer(1024);
-    in.encode(buffer);
+    const size_t encoded_len = in.encode(buffer);
+    EXPECT_EQ(buffer.length(), encoded_len);
 
-    std::cout << buffer << std::endl;
-    std::cout << buffer.byteStorage() << std::endl;
+    DEBUG_LOG(buffer);
+    DEBUG_LOG(buffer.byteStorage());
     DCF::Message out;
-    out.decode(buffer.byteStorage());
+    const DCF::ByteStorage &b = buffer.byteStorage();
+    EXPECT_TRUE(out.decode(b));
+    EXPECT_EQ(encoded_len, b.bytesRead());
 
-    std::cout << in << std::endl;
-    std::cout << out << std::endl;
+    DEBUG_LOG("IN:  " << in);
+    DEBUG_LOG("OUT: " << out);
+    EXPECT_EQ(in, out);
+}
+
+TEST(Message, MultiDecode) {
+    LOG_LEVEL(tf::logger::info);
+
+    DCF::Message in1;
+    in1.setSubject("SAMPLE.MSG.1");
+    float32_t t = 22.0;
+    in1.addScalarField("TEST", t);
+    in1.addScalarField("TEST", true);
+    in1.addDataField("Name", "Tom");
+    in1.addDataField("Name", "Zac");
+
+    DCF::Message in2;
+    in2.setSubject("SAMPLE.MSG.2");
+    t = 26.0;
+    in2.addScalarField("TEST", t);
+    in2.addScalarField("TEST", false);
+    in2.addDataField("Name", "Caroline");
+    in2.addDataField("Name", "Heidi");
+
+    DCF::MessageBuffer buffer(1024);
+    in1.encode(buffer);
+    in2.encode(buffer);
+
+    DEBUG_LOG(buffer);
+
+    DEBUG_LOG("Msg 1: " << in1);
+    DEBUG_LOG("Msg 2: " << in2);
+
+    DCF::Message out;
+//    size_t offset = 0;
+//    while (buffer.length() != 0 && (offset = out.decode(buffer.byteStorage())) != 0) {
+//        std::cout << "Decoded: " << out << std::endl;
+//        out.clear();
+//        buffer.erase_front(offset);
+//    }
+}
+
+
+TEST(Message, MultiPartialDecode) {
+    DCF::Message in1;
+    float32_t t = 22.0;
+    in1.addScalarField("TEST", t);
+    in1.addScalarField("TEST", true);
+    in1.addDataField("Name", "Tom");
+    in1.addDataField("Name", "Zac");
+
+    DCF::MessageBuffer buffer(1024);
+    char subject[256];
+    for (int i = 0; i < 10; i++) {
+        sprintf(subject, "SAMPLE.MSG.%i", i);
+        in1.setSubject(subject);
+        EXPECT_TRUE(in1.addScalarField("id", i));
+        in1.encode(buffer);
+        in1.clear();
+    }
+
+    DEBUG_LOG(buffer);
+
+    const byte *bytes = nullptr;
+    size_t len = 0;
+    DCF::Message out;
+    for (size_t i = 0; i < buffer.length(); i++) {
+        len += 10;
+        buffer.bytes(&bytes);
+        DCF::ByteStorage storage(bytes, std::min(len, buffer.length()), true);
+
+        if (out.decode(storage)) {
+            buffer.erase_front(storage.bytesRead());
+            DEBUG_LOG("Msg decoded: " << out);
+            out.clear();
+        }
+    }
 }

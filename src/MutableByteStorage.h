@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <utility>
 #include <limits>
-#include "Types.h"
+#include "types.h"
 #include "ByteStorage.h"
 
 namespace DCF {

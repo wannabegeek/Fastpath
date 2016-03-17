@@ -7,30 +7,33 @@
 #include <ostream>
 #include <iomanip>
 #include "ByteStorage.h"
-#include "Types.h"
+#include "types.h"
 
 namespace DCF {
-    ByteStorage::ByteStorage(const size_t allocation) : m_no_copy(false), m_storedLength(0) {
+    ByteStorage::ByteStorage(const size_t allocation) : m_storedLength(0), m_no_copy(false), m_read_ptr(m_storage.first) {
         allocateStorage(allocation);
     }
 
-    ByteStorage::ByteStorage(const byte *bytes, size_t length, bool no_copy) : m_no_copy(no_copy), m_storedLength(0) {
+    ByteStorage::ByteStorage(const byte *bytes, size_t length, bool no_copy) : m_storedLength(0), m_no_copy(no_copy) {
         if (m_no_copy) {
             m_storage.first = const_cast<byte *>(bytes);
             m_storage.second = 0;
             m_storedLength = length;
         } else {
             allocateStorage(length);
-            memcpy(m_storage.first, reinterpret_cast<const void *>(bytes), length);
+            std::copy(bytes, &bytes[length], m_storage.first);
             m_storedLength = length;
         }
+        m_read_ptr = m_storage.first;
     }
 
-    ByteStorage::ByteStorage(ByteStorage &&orig) : m_storage(orig.m_storage), m_no_copy(orig.m_no_copy), m_storedLength(orig.m_storedLength) {
+    ByteStorage::ByteStorage(ByteStorage &&orig) : m_storage(orig.m_storage), m_storedLength(orig.m_storedLength), m_no_copy(orig.m_no_copy) {
         orig.m_storage.first = nullptr;
         orig.m_storage.second = 0;
         orig.m_storedLength = 0;
         orig.m_no_copy = true;
+        orig.m_read_ptr = orig.m_storage.first;
+        m_read_ptr = m_storage.first;
     }
 
     ByteStorage::~ByteStorage() noexcept {
@@ -56,6 +59,43 @@ namespace DCF {
     const size_t ByteStorage::bytes(const byte **data) const {
         *data = m_storedLength > 0 ? m_storage.first : nullptr;
         return m_storedLength;
+    }
+
+    const bool ByteStorage::operator==(const ByteStorage &other) const {
+        if (m_storedLength == other.m_storedLength) {
+            for (size_t i = 0; i < m_storedLength; i++) {
+                if (m_storage.first[i] != other.m_storage.first[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    void ByteStorage::resetRead() const noexcept {
+        m_read_ptr = m_storage.first;
+    }
+
+    void ByteStorage::advanceRead(const size_t distance) const {
+        m_read_ptr += distance;
+    }
+
+    const size_t ByteStorage::remainingReadLength() const {
+        size_t v =  m_storedLength - (m_read_ptr - m_storage.first);
+        return v;
+    }
+
+    const size_t ByteStorage::bytesRead() const {
+        return m_read_ptr - m_storage.first;
+    }
+
+    const byte *ByteStorage::readBytes() const {
+        return m_read_ptr;
+    }
+
+    const byte *ByteStorage::operator*() const {
+        return this->readBytes();
     }
 
     std::ostream &operator<<(std::ostream &out, const ByteStorage &msg) {

@@ -7,7 +7,7 @@
 
 #include <ostream>
 #include <memory>
-#include "Types.h"
+#include "types.h"
 
 namespace DCF {
     class ByteStorage {
@@ -22,6 +22,8 @@ namespace DCF {
         storage_alloc m_allocator;
 
         bool m_no_copy;
+
+        mutable byte *m_read_ptr;
 
         void allocateStorage(const size_t length);
 
@@ -44,6 +46,16 @@ namespace DCF {
         const byte operator[](const size_t index) const {
             return m_storage.first[index];
         }
+
+        // for reading as a stream
+        void resetRead() const noexcept;
+        void advanceRead(const size_t distance) const;
+        const size_t remainingReadLength() const;
+        const size_t bytesRead() const;
+        const byte *readBytes() const;
+        const byte *operator*() const;
+
+        const bool operator==(const ByteStorage &other) const;
 
         friend std::ostream &operator<<(std::ostream &out, const ByteStorage &msg);
     };
