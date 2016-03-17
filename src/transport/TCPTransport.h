@@ -14,7 +14,7 @@
 namespace DCF {
 
     class TCPTransport : public Transport {
-    private:
+    protected:
         std::unique_ptr<SocketClient> m_peer;
         const url m_url;
 

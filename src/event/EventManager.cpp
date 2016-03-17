@@ -112,7 +112,7 @@ namespace DCF {
 	}
 
 	void EventManager::serviceEvent(const EventPollElement &event) {
-        foreach_event_matching(event, [&](IOEvent *handler) {
+        foreach_event_matching(event, [&](auto handler) {
             if (!handler->__awaitingDispatch()) {
                 handler->__setAwaitingDispatch(true);
                 handler->__notify(static_cast<EventType>(handler->eventTypes() & event.filter));

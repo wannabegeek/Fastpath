@@ -7,8 +7,17 @@
 
 namespace fp {
 
-    realm_transport::realm_transport(const char *url, const char *description) {
-        m_transport = std::make_unique<DCF::TCPTransport>(url, description);
+    realm_transport::realm_transport(const char *url, const char *description) : DCF::TCPTransport(url, description) {
+        m_peer->setConnectionStateHandler([&](bool connected) {
+            INFO_LOG("Transport connected: " << std::boolalpha << connected);
+            this->broadcastConnectionStateChange(connected);
+
+            if (!m_shouldDisconnect) {
+                this->__connect();
+            }
+        });
+
+        // add transport to the global event manager
     }
 
     bool realm_transport::set_queue(const DCF::Queue *queue) {
@@ -26,4 +35,12 @@ namespace fp {
         return true;
     }
 
+    void realm_transport::broadcastConnectionStateChange(bool connected) {
+        auto msg = std::make_shared<DCF::Message>();
+        msg->setSubject(connected ? connected_subject() : disconnected_subject());
+        std::for_each(m_subscribers.begin(), m_subscribers.end(), [&](DCF::MessageEvent *msgEvent) {
+            // TODO: check if the handler is interested in this message
+            msgEvent->__notify(msg);
+        });
+    }
 }

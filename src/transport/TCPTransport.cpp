@@ -34,6 +34,7 @@ namespace DCF {
     TCPTransport::TCPTransport(const url &url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024) {
         INFO_LOG("Connecting to: " << m_url);
         m_peer = std::make_unique<SocketClient>(m_url.host(), m_url.port());
+
         if (!m_peer->connect()) {
             m_connectionAttemptInProgress = std::async(std::launch::async, &TCPTransport::__connect, this);
         }
@@ -57,12 +58,12 @@ namespace DCF {
     }
 
     bool TCPTransport::__disconnect() {
+        m_shouldDisconnect = true;
         if (m_peer->isConnected()) {
             return m_peer->disconnect();
         } else {
             if (m_connectionAttemptInProgress.valid()) {
                 DEBUG_LOG("Shutting down our connection attempt loop");
-                m_shouldDisconnect = true;
                 m_connectionAttemptInProgress.wait();
             }
         }
