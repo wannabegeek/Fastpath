@@ -33,8 +33,6 @@
 
 namespace DCF {
 
-    class Queue;
-
 	class IOEvent final : public Event {
         friend class EventManager;
 
@@ -55,34 +53,39 @@ namespace DCF {
 	public:
         IOEvent() : m_fd(-1), m_callback(nullptr) {}
 
-		IOEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback)
-				: Event(queue), m_fd(fd), m_eventTypes(eventType), m_callback(callback) {
-            m_queue->__registerEvent(*this);
+		IOEvent(const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback)
+				: m_fd(fd), m_eventTypes(eventType), m_callback(callback) {
 		};
 
 		IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes), m_pendingRemoval(other.m_pendingRemoval), m_callback(std::move(other.m_callback)) {
 		}
 
 		~IOEvent() {
+            this->destroy();
+        }
+
+        status create(const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback) {
+            if (!m_active) {
+                m_fd = fd;
+                m_eventTypes = eventType;
+                m_callback = callback;
+                m_active = true;
+            } else {
+                return ALREADY_ACTIVE;
+            }
+            return OK;
+        }
+
+        status destroy() {
             if (m_active) {
-                m_queue->__unregisterEvent(*this);
-            }
-        }
-
-        void registerEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback) {
-            setQueue(queue);
-            m_fd = fd;
-            m_eventTypes = eventType;
-            m_callback = callback;
-            m_queue->__registerEvent(*this);
-            m_active = true;
-        }
-
-        void unregisterEvent() {
-            if (m_active && m_isRegistered.load()) {
                 m_active = false;
-                m_queue->__unregisterEvent(*this);
+                if (m_isRegistered.load()) {
+                    m_queue->__unregisterEvent(*this);
+                }
+            } else {
+                return CANNOT_DESTROY;
             }
+            return OK;
         }
 
         inline const int fileDescriptor() const noexcept {
@@ -103,42 +106,11 @@ namespace DCF {
 		}
 
         const bool __notify(const EventType &eventType) noexcept override {
+            assert( m_queue != nullptr);
             std::function<void ()> dispatcher = std::bind(&IOEvent::dispatch, this, this, eventType);
             return m_queue->__enqueue(dispatcher);
         };
     };
 }
-
-//class SigIOCallback;
-//class DCQueue;
-//
-//#include "EventHandler.h"
-//#include "DCEvent.h"
-//#include <DCStatus.h>
-//
-//#include <Win32DLL.h>
-//
-//class SigIO : public EventHandler, public DCEvent
-//{
-//	public:
-//		WIN32DLL SigIO();
-//		WIN32DLL ~SigIO();
-//
-//		WIN32DLL DCStatus create( DCQueue *queue, SigIOCallback *callback, DCEVENTHANDLER fileDesc, int registerFor, void *closure = NULL );
-//		WIN32DLL DCStatus destroy();
-//
-//		void readCallback();
-//		void writeCallback();
-//		void onEvent();
-//
-//		WIN32DLL EventType getEventType() { return DC_SIGIO; }
-//		WIN32DLL dc_bool isValid() const;
-//	private:
-//		DCQueue *m_queue;
-//		SigIOCallback *m_callback;
-//		int m_registerFor;
-//
-//		dc_bool m_isValid;
-//};
 
 #endif

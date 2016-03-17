@@ -17,6 +17,8 @@ namespace DCF {
     class Event {
     protected:
 
+        friend class Queue;
+
         Queue *m_queue;
 
         std::atomic<bool> m_isRegistered = ATOMIC_VAR_INIT(false);
@@ -33,9 +35,6 @@ namespace DCF {
 
     public:
         Event() : m_active(false) {
-        }
-
-        Event(Queue *queue) : m_queue(queue), m_active(true) {
         }
 
         Event(Event &&other) : m_queue(other.m_queue), m_isRegistered(static_cast<bool>(other.m_isRegistered)) {

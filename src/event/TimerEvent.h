@@ -70,9 +70,8 @@ namespace  DCF {
         TimerEvent() : m_callback(nullptr) {
         }
 
-		TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback)
-				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
-			m_queue->__registerEvent(*this);
+		TimerEvent(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback)
+				: m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
 		}
 
 		TimerEvent(TimerEvent &&other) : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)) {
@@ -84,19 +83,15 @@ namespace  DCF {
 //		}
 
 		~TimerEvent() {
-            if (m_active) {
-                m_queue->__unregisterEvent(*this);
-            }
+			this->destroy();
         }
 
-        status registerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback) {
+        status create(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback) {
             if (!m_active) {
-                setQueue(queue);
                 m_timeoutState = TIMEOUTSTATE_START;
                 m_timeout = timeout;
                 m_timeLeft = timeout;
                 m_callback = callback;
-                m_queue->__registerEvent(*this);
                 m_active = true;
                 return OK;
             }
@@ -104,16 +99,23 @@ namespace  DCF {
             return ALREADY_ACTIVE;
         }
 
-        void unregisterEvent() {
-            if (m_active && m_isRegistered.load()) {
-                m_active = false;
-                m_queue->__unregisterEvent(*this);
-            }
+        status destroy() {
+			if (m_active) {
+				m_active = false;
+				if (m_isRegistered.load()) {
+					m_queue->__unregisterEvent(*this);
+				}
+			} else {
+				return CANNOT_DESTROY;
+			}
+			return OK;
         }
 
         void reset() {
-			m_timeLeft = m_timeout;
-			m_queue->__notifyEventManager();
+            m_timeLeft = m_timeout;
+            if (m_isRegistered.load()) {
+                m_queue->__notifyEventManager();
+            }
 		}
 
 		void setTimeout(const std::chrono::microseconds &timeout) {
@@ -131,34 +133,11 @@ namespace  DCF {
 		}
 
         const bool __notify(const EventType &eventType) noexcept override {
+            assert( m_queue != nullptr);
             std::function<void ()> dispatcher = std::bind(&TimerEvent::dispatch, this, this);
             return m_queue->__enqueue(dispatcher);
         };
     };
 }
-
-
-//class TimerEvent : public EventHandler, public DCEvent
-//{
-//	public:
-//		WIN32DLL TimerEvent();
-//		WIN32DLL ~TimerEvent();
-//
-//		WIN32DLL DCStatus create( DCQueue *queue, TimerCallback *callback, dc_u32 period, void *closure = NULL );
-//		WIN32DLL DCStatus destroy();
-//
-//		void timerCallback();
-//		void onEvent();
-//
-//		WIN32DLL EventType getEventType() { return DC_TIMER; }
-//		WIN32DLL dc_bool isValid() const;
-//	private:
-//
-//		DCQueue *m_queue;
-//		TimerCallback *m_callback;
-//		dc_u32 m_period;
-//
-//		dc_bool m_isValid;
-//};
 
 #endif

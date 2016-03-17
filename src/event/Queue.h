@@ -7,6 +7,7 @@
 
 #include "messages/StorageTypes.h"
 #include "Session.h"
+#include "event/EventManager.h"
 
 namespace DCF {
     class Event;
@@ -33,11 +34,13 @@ namespace DCF {
         }
 
         template <typename T> void __registerEvent(T &evt) {
+            evt.setQueue(this);
             this->eventManager().registerHandler(evt);
         }
 
         template <typename T> void __unregisterEvent(T &evt) {
             // TODO - remove any pending items from the queue
+            evt.setQueue(nullptr);
             this->eventManager().unregisterHandler(evt);
         }
     };

@@ -41,31 +41,42 @@ namespace DCF {
         }
 
     public:
-        MessageEvent(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) : Event(queue), m_transport(transport), m_callback(callback) {
+        MessageEvent(Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) : m_transport(transport), m_callback(callback) {
             const size_t subject_length = strlen(subject);
             std::copy(subject, &subject[subject_length], m_subject);
             this->subscribe();
+            m_active = true;
         };
 
         ~MessageEvent() {
-            this->unsubscribe();
+            this->destroy();
         }
 
-        void registerEvent(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) {
-            setQueue(queue);
-            m_callback = callback;
-            const size_t subject_length = strlen(subject);
-            std::copy(subject, &subject[subject_length], m_subject);
+        status create(Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) {
+            if (!m_active) {
+                const size_t subject_length = strlen(subject);
+                std::copy(subject, &subject[subject_length], m_subject);
 
-            this->subscribe();
-            m_active = true;
-        }
-
-        void unregisterEvent() {
-            if (m_active && m_isRegistered.load()) {
-                m_active = false;
-                this->unsubscribe();
+                this->subscribe();
+                m_callback = callback;
+                m_active = true;
+            } else {
+                return ALREADY_ACTIVE;
             }
+            return OK;
+        }
+
+        status destroy() {
+            if (m_active) {
+                m_active = false;
+                if (m_isRegistered.load()) {
+                    this->unsubscribe();
+//                    m_queue->__unregisterEvent(*this);
+                }
+            } else {
+                return CANNOT_DESTROY;
+            }
+            return OK;
         }
 
         const bool isEqual(const Event &other) const noexcept override {

@@ -45,9 +45,11 @@ namespace DCF {
                 if (m_timeout) {
                     m_timeout->setTimeout(timeout);
                 } else {
-                    m_timeout = std::make_unique<TimerEvent>(static_cast<BusySpinQueue *>(this), timeout, [](const TimerEvent *) {
+                    m_timeout = std::make_unique<TimerEvent>(timeout, [this](TimerEvent *event) {
                         // noop - this will cause us to drop out of the dispatch loop
+                        this->__unregisterEvent(*event);
                     });
+                    this->__registerEvent(*(m_timeout.get()));
                 }
                 this->dispatch();
             }

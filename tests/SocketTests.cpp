@@ -99,7 +99,7 @@ TEST(Socket, NonBlockingReadWrite) {
     EXPECT_NE(-1, client.getSocket());
     DEBUG_LOG("Client connected");
 
-    DCF::IOEvent handler(&queue, client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, DCF::EventType eventType) {
+    DCF::IOEvent handler(client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         DEBUG_LOG("Client received data");
         callbackFired = true;
@@ -124,6 +124,8 @@ TEST(Socket, NonBlockingReadWrite) {
             }
         }
     });
+
+    queue.__registerEvent(handler);
 
     EXPECT_TRUE(handler.isRegistered());
 
@@ -182,17 +184,21 @@ TEST(Socket, NonBlockingServerReadWrite) {
 
         std::unique_ptr<DCF::IOEvent> clientHandler;
 
-        DCF::IOEvent handler(&queue, svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+        DCF::IOEvent handler(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
                 DEBUG_LOG("out of accept");
 
-                clientHandler = std::make_unique<DCF::IOEvent>(&queue, connection->getSocket(), DCF::EventType::READ, client);
+                clientHandler = std::make_unique<DCF::IOEvent>(connection->getSocket(), DCF::EventType::READ, client);
+                queue.__registerEvent(*(clientHandler.get()));
+
                 DEBUG_LOG("registered new client");
             }
         });
+
+        queue.__registerEvent(handler);
 
         for (int i = 0; !finished && i < 15; i++) {
             DEBUG_LOG("wait...");
@@ -209,7 +215,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     ASSERT_TRUE(client.connect(DCF::SocketOptionsDisableSigPipe));
     EXPECT_NE(-1, client.getSocket());
 
-    DCF::IOEvent handler(&queue, client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+    DCF::IOEvent handler( client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
 
@@ -235,6 +241,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     });
 
     EXPECT_TRUE(client.send("hello", 6));
+    queue.__registerEvent(handler);
 
     queue.dispatch(std::chrono::seconds(5));
     EXPECT_TRUE(callbackFired);

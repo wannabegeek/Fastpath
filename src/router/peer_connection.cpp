@@ -12,7 +12,9 @@ namespace fp {
     peer_connection::peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
             : m_queue(queue), m_socket(std::move(socket)), m_buffer(4500), m_messageHandler(messageHandler), m_disconnectionHandler(disconnectionHandler) {
 
-        m_socketEvent.registerEvent(queue, m_socket->getSocket(), DCF::EventType::READ, std::bind(&peer_connection::data_handler, this, std::placeholders::_1, std::placeholders::_2));
+        m_socketEvent.create(queue, m_socket->getSocket(), DCF::EventType::READ,
+                             std::bind(&peer_connection::data_handler, this, std::placeholders::_1,
+                                       std::placeholders::_2));
     }
 
     peer_connection::peer_connection(peer_connection &&other)
