@@ -11,7 +11,7 @@
 namespace DCF {
     template <typename T> class SharedQueue : public Queue {
     protected:
-        using QueueType = T<queue_value_type, 4096>;
+        using QueueType = T;
 
         QueueType m_queue;
         TimerEvent *m_timeout;

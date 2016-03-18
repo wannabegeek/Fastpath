@@ -11,7 +11,7 @@
 #include "SharedQueue.h"
 
 namespace DCF {
-    class BusySpinQueue : public SharedQueue<tf::ringbuffer> {
+    class BusySpinQueue : public SharedQueue<tf::ringbuffer<Queue::queue_value_type, 4096>> {
     public:
         virtual ~BusySpinQueue() { }
 
@@ -41,11 +41,16 @@ namespace DCF {
             status status = OK;
             if ((status = this->try_dispatch()) == NO_EVENTS) {
                 // Create a TimerEvent and add to the dispatch loop
-                m_timeout = this->registerEvent(timeout, [this](TimerEvent *event) {
-                    // noop - this will cause us to drop out of the dispatch loop
-                });
+                if (m_timeout != nullptr) {
+                    m_timeout->setTimeout(timeout);
+                } else {
+                    m_timeout = this->registerEvent(timeout, [this](TimerEvent *event) {
+                        // noop - this will cause us to drop out of the dispatch loop
+                        this->unregisterEvent(m_timeout);
+                        m_timeout = nullptr;
+                    });
+                }
                 status = this->dispatch();
-                this->unregisterEvent(m_timeout);
             }
 
             return status;
