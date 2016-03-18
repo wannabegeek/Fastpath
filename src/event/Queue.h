@@ -14,10 +14,36 @@
 namespace DCF {
     class Event;
 
+    template <typename T> struct unique_ptr_deleter {
+        bool m_owner;
+        explicit unique_ptr_deleter(bool owner = true) : m_owner(owner) {}
+
+        void operator()(T *p) const {
+            if (m_owner) {
+                delete p;
+            }
+        }
+    };
+
+    template<class T> using set_unique_ptr = std::unique_ptr<T, unique_ptr_deleter<T>>;
+
+    template<class T> set_unique_ptr<T> make_find_set_unique(T *ptr){
+        return set_unique_ptr<T>(ptr, unique_ptr_deleter<T>(false));
+    }
+
+    template<class T> set_unique_ptr<T> make_set_unique(T *ptr) {
+        return set_unique_ptr<T>(ptr, unique_ptr_deleter<T>(true));
+    }
+
+//    template<class T, class... Args> set_unique_ptr<T> make_set_unique(Args&&... args) {
+//        return set_unique_ptr<T>(new T(std::forward<Args>(args)...), unique_ptr_deleter<T>(true));
+////        return std::make_unique<T, unique_ptr_deleter<T>()>(std::forward<Args>(args)...));
+//    }
+
     class Queue {
-    private:
-        std::unordered_set<std::unique_ptr<Event>> m_registeredEvents;
     protected:
+        std::unordered_set<set_unique_ptr<Event>> m_registeredEvents;
+
         // The default implementation returns the global event manager
         virtual inline EventManager *eventManager() {
             return Session::instance().m_eventManager.get();

@@ -9,7 +9,7 @@
 #include "InlineEventManager.h"
 
 namespace DCF {
-    class InlineQueue : public Queue {
+    class InlineQueue final : public Queue {
     private:
         InlineEventManager m_eventManager;
 

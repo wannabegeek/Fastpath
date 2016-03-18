@@ -24,6 +24,7 @@ namespace DCF {
         std::atomic<uint16_t> m_awaitingDispatch = ATOMIC_VAR_INIT(0);
 
         virtual const bool isEqual(const Event &other) const noexcept = 0;
+
         inline void __pushDispatch() noexcept {
             m_awaitingDispatch++;
         }
@@ -57,6 +58,10 @@ namespace DCF {
 
         void __setPendingRemoval(const bool flag) {
             m_pendingRemoval = flag;
+        }
+
+        inline const bool __pendingRemoval() const {
+            return m_pendingRemoval;
         }
 
         const bool __awaitingDispatch() const noexcept {

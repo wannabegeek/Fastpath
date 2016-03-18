@@ -44,11 +44,7 @@ namespace DCF {
 
         void dispatch(IOEvent *event, const EventType &eventType) {
             this->__popDispatch();
-            if (tf::unlikely(m_pendingRemoval)) {
-                if (!this->__awaitingDispatch()) {
-                    // we're done, this event handler can now be removed
-                }
-            } else {
+            if (tf::likely(!m_pendingRemoval)) {
                 m_callback(event, eventType);
             }
         }

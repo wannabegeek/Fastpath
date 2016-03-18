@@ -61,14 +61,7 @@ namespace  DCF {
 
         void dispatch(TimerEvent *event) {
             this->__popDispatch();
-            if (tf::unlikely(m_pendingRemoval)) {
-                if (!this->__awaitingDispatch()) {
-                    // we're done, this event handler can now be removed
-                    DEBUG_LOG("Queue is fully drained now");
-                } else {
-                    DEBUG_LOG("items still pending dispatch");
-                }
-            } else {
+            if (tf::likely(!m_pendingRemoval)) {
                 m_callback(event);
             }
 		}

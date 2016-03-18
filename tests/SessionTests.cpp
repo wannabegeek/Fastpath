@@ -353,7 +353,7 @@ TEST(Session, TimerUnregisterWithBacklog) {
         DEBUG_LOG("Awaiting: " << std::boolalpha << e->__awaitingDispatch() << " Registered: " << std::boolalpha << e->isRegistered() << " Unregistering with " << queue.eventsInQueue() << " events left in queue");
         queue.unregisterEvent(e);
         counter++;
-        EXPECT_LT(2, counter);
+        EXPECT_EQ(1, counter);
     });
 
     EXPECT_EQ(1, queue.event_count());

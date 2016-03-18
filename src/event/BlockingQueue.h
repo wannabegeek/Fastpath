@@ -8,27 +8,17 @@
 #include <utils/blocking_ringbuffer.h>
 #include "Queue.h"
 #include "TimerEvent.h"
+#include "SharedQueue.h"
 
 namespace DCF {
-    class BlockingQueue : public Queue {
-    private:
-        using QueueType = tf::blocking_ringbuffer<queue_value_type, 4096>;
-
-        QueueType m_queue;
-        TimerEvent *m_timeout;
-
+    class BlockingQueue : public SharedQueue<tf::blocking_ringbuffer> {
     public:
-        BlockingQueue() : m_timeout(nullptr) {
-        }
-
-        virtual ~BlockingQueue() { }
-
         inline const status try_dispatch() override {
             if (tf::likely(this->isInitialised())) {
                 status result = NO_EVENTS;
                 queue_value_type dispatcher;
                 while (m_queue.pop(dispatcher)) {
-                    dispatcher.second();
+                    this->dispatch_event(dispatcher);
                     result = OK;
                 }
                 return result;
@@ -41,7 +31,7 @@ namespace DCF {
             status status = OK;
             queue_value_type dispatcher;
             m_queue.pop_wait(dispatcher);
-            dispatcher.second();
+            this->dispatch_event(dispatcher);
             return status;
         }
 
@@ -49,26 +39,14 @@ namespace DCF {
             status status = OK;
             if ((status = this->try_dispatch()) == NO_EVENTS) {
                 // Create a TimerEvent and add to the dispatch loop
-                if (m_timeout) {
-                    m_timeout->setTimeout(timeout);
-                } else {
-                    m_timeout = this->registerEvent(timeout, [this](TimerEvent *event) {
-                        // noop - this will cause us to drop out of the dispatch loop
-                        this->unregisterEvent(event);
-                    });
-                }
+                m_timeout = this->registerEvent(timeout, [this](TimerEvent *event) {
+                    // noop - this will cause us to drop out of the dispatch loop
+                });
                 status = this->dispatch();
+                this->unregisterEvent(m_timeout);
             }
 
             return status;
-        }
-
-        const size_t eventsInQueue() const noexcept override {
-            return m_queue.size();
-        }
-
-        const bool __enqueue(queue_value_type &&event) noexcept override {
-            return m_queue.push(event);
         }
 
     };
