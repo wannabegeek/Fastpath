@@ -19,7 +19,7 @@ namespace DCF {
 
         void dispatch(MessageEvent *event, const std::shared_ptr<Message> msg) {
             this->__popDispatch();
-            if (m_active) {
+            if (!m_pendingRemoval) {
                 m_callback(event, msg.get());
             }
         }
@@ -41,43 +41,45 @@ namespace DCF {
         }
 
     public:
-        MessageEvent(Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) : m_transport(transport), m_callback(callback) {
+        MessageEvent(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) : Event(queue), m_transport(transport), m_callback(callback) {
             const size_t subject_length = strlen(subject);
             std::copy(subject, &subject[subject_length], m_subject);
             this->subscribe();
-            m_active = true;
         };
 
         ~MessageEvent() {
-            this->destroy();
-        }
-
-        status create(Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) {
-            if (!m_active) {
-                const size_t subject_length = strlen(subject);
-                std::copy(subject, &subject[subject_length], m_subject);
-
-                this->subscribe();
-                m_callback = callback;
-                m_active = true;
-            } else {
-                return CANNOT_CREATE;
-            }
-            return OK;
-        }
-
-        status destroy() {
-            if (m_active) {
-                m_active = false;
-                if (m_isRegistered.load()) {
-                    this->unsubscribe();
+            if (m_isRegistered.load()) {
+                this->unsubscribe();
 //                    m_queue->unregisterEvent(*this);
-                }
-            } else {
-                return CANNOT_DESTROY;
             }
-            return OK;
         }
+
+//        status create(Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) {
+//            if (!m_active) {
+//                const size_t subject_length = strlen(subject);
+//                std::copy(subject, &subject[subject_length], m_subject);
+//
+//                this->subscribe();
+//                m_callback = callback;
+//                m_active = true;
+//            } else {
+//                return CANNOT_CREATE;
+//            }
+//            return OK;
+//        }
+//
+//        status destroy() {
+//            if (m_active) {
+//                m_active = false;
+//                if (m_isRegistered.load()) {
+//                    this->unsubscribe();
+////                    m_queue->unregisterEvent(*this);
+//                }
+//            } else {
+//                return CANNOT_DESTROY;
+//            }
+//            return OK;
+//        }
 
         const bool isEqual(const Event &other) const noexcept override {
             try {
@@ -95,9 +97,12 @@ namespace DCF {
         }
 
         const bool __notify(const std::shared_ptr<Message> message) noexcept {
-            std::function<void ()> dispatcher = std::bind(&MessageEvent::dispatch, this, this, message);
-            return m_queue->__enqueue(dispatcher);
-        };
+            return m_queue->__enqueue(std::make_pair(this, std::bind(&MessageEvent::dispatch, this, this, message)));
+        }
+
+        void __destroy() override {
+//            m_queue->unregisterEvent(this);
+        }
     };
 }
 

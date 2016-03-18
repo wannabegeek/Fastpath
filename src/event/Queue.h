@@ -6,6 +6,7 @@
 #define TFDCF_QUEUE_H
 
 #include <utils/optimize.h>
+#include <unordered_set>
 #include "messages/StorageTypes.h"
 #include "Session.h"
 #include "event/EventManager.h"
@@ -14,10 +15,12 @@ namespace DCF {
     class Event;
 
     class Queue {
+    private:
+        std::unordered_set<std::unique_ptr<Event>> m_registeredEvents;
     protected:
         // The default implementation returns the global event manager
-        virtual EventManager &eventManager() {
-            return Session::instance().m_eventManager;
+        virtual inline EventManager *eventManager() {
+            return Session::instance().m_eventManager.get();
         }
 
         virtual inline const bool isInitialised() const {
@@ -25,40 +28,29 @@ namespace DCF {
         }
 
     public:
-        using queue_value_type = std::function<void ()>;
+        using queue_value_type = std::pair<Event *, std::function<void ()>>;
 
-        virtual ~Queue() {}
+        virtual ~Queue();
 
         virtual const status dispatch() = 0;
         virtual const status dispatch(const std::chrono::milliseconds &timeout) = 0;
         virtual const status try_dispatch() = 0;
         virtual const size_t eventsInQueue() const noexcept = 0;
-        virtual const bool __enqueue(queue_value_type &event) noexcept = 0;
+        virtual const bool __enqueue(queue_value_type &&event) noexcept = 0;
+
+        const size_t event_count() const {
+            return m_registeredEvents.size();
+        }
 
         virtual inline void __notifyEventManager() noexcept {
-            this->eventManager().notify();
+            this->eventManager()->notify();
         }
 
-        template <typename T> status registerEvent(T &evt) {
-            if (tf::unlikely(!evt.m_active)) {
-                return ALREADY_ACTIVE;
-            } else {
-                evt.setQueue(this);
-                this->eventManager().registerHandler(evt);
-                return OK;
-            }
-        }
+        IOEvent *registerEvent(const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback);
+        TimerEvent *registerEvent(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback);
 
-        template <typename T> status unregisterEvent(T &evt) {
-            if (tf::unlikely(evt.m_active)) {
-                return NOT_ACTIVE;
-            } else {
-                // TODO - remove any pending items from the queue
-                evt.setQueue(nullptr);
-                this->eventManager().unregisterHandler(evt);
-                return OK;
-            }
-        }
+        status unregisterEvent(IOEvent *event);
+        status unregisterEvent(TimerEvent *event);
     };
 }
 

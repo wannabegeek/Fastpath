@@ -13,8 +13,8 @@ namespace DCF {
     private:
         InlineEventManager m_eventManager;
 
-        virtual EventManager &eventManager() override {
-            return m_eventManager;
+        virtual inline EventManager *eventManager() override {
+            return &m_eventManager;
         }
 
         virtual inline const bool isInitialised() const override {
@@ -48,8 +48,8 @@ namespace DCF {
         virtual inline void __notifyEventManager() noexcept override {
         }
 
-        const bool __enqueue(queue_value_type &dispatcher) noexcept override {
-            dispatcher();
+        const bool __enqueue(queue_value_type &&dispatcher) noexcept override {
+            dispatcher.second();
             return true;
         }
     };

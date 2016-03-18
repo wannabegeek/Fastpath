@@ -18,7 +18,7 @@ namespace DCF {
     private:
         bool m_started;
         std::atomic_bool m_shutdown = ATOMIC_VAR_INIT(false);
-        GlobalEventManager m_eventManager;
+        std::unique_ptr<GlobalEventManager> m_eventManager;
 
         std::thread m_eventLoop;
 
@@ -29,6 +29,7 @@ namespace DCF {
                 return OK;
             }
 
+            m_eventManager = std::make_unique<GlobalEventManager>();
             std::mutex mutex;
             std::condition_variable condition;
 
@@ -39,10 +40,11 @@ namespace DCF {
                     condition.notify_all();
                 }
                 while (!m_shutdown.load()) {
-                    m_eventManager.waitForEvent();
+                    m_eventManager->waitForEvent();
                 }
 
                 m_shutdown.store(false);
+                m_eventManager.reset(nullptr);
                 DEBUG_LOG("Event loop exit");
             });
 
@@ -58,7 +60,7 @@ namespace DCF {
             }
 
             m_shutdown.store(true);
-            m_eventManager.notify();
+            m_eventManager->notify();
             if (m_eventLoop.joinable()) {
                 m_eventLoop.join();
             }

@@ -54,14 +54,12 @@ TEST(EventManager, SimpleRead) {
 
     DCF::InlineQueue queue;
 
-    DCF::IOEvent handler(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
-
-    EXPECT_EQ(DCF::OK, queue.registerEvent(handler));
 
     std::thread signal([&]() {
         DEBUG_LOG("sleeping");
@@ -82,11 +80,9 @@ TEST(EventManager, SimpleTimer) {
     bool callbackFired = false;
     DCF::InlineQueue queue;
 
-    DCF::TimerEvent handler(std::chrono::seconds(1), [&](const DCF::TimerEvent *event) {
+    queue.registerEvent(std::chrono::seconds(1), [&](const DCF::TimerEvent *event) {
         callbackFired = true;
     });
-
-    queue.registerEvent(handler);
 
     queue.dispatch(std::chrono::seconds(3));
     EXPECT_TRUE(callbackFired);
@@ -96,15 +92,14 @@ TEST(EventManager, ResetTimer) {
     bool callbackFired = false;
     DCF::InlineQueue queue;
 
-    DCF::TimerEvent handler(std::chrono::seconds(1), [&](const DCF::TimerEvent *event) {
+    DCF::TimerEvent *timer = queue.registerEvent(std::chrono::seconds(1), [&](const DCF::TimerEvent *event) {
         callbackFired = true;
     });
-    queue.registerEvent(handler);
 
     const auto startTime = std::chrono::steady_clock::now();
     queue.dispatch(std::chrono::milliseconds(500)); //0.5 seconds
     EXPECT_FALSE(callbackFired);
-    handler.reset();
+    timer->reset();
     queue.dispatch(std::chrono::seconds(2));
     const auto endTime = std::chrono::steady_clock::now();
 
@@ -122,21 +117,18 @@ TEST(EventManager, ComplexRead) {
     ASSERT_NE(-1, ::pipe(fd));
     DCF::InlineQueue queue;
 
-    DCF::IOEvent handler1(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callback1Fired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
 
-    DCF::IOEvent handler2(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callback2Fired = true;
         // We can't have both handlers reading the data
     });
-
-    queue.registerEvent(handler1);
-    queue.registerEvent(handler2);
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -158,19 +150,16 @@ TEST(EventManager, SimpleTimeoutWithActiveFD) {
     ASSERT_NE(-1, pipe(fd));
     DCF::InlineQueue queue;
 
-    DCF::TimerEvent timeoutHandler(std::chrono::milliseconds(10), [&](const DCF::TimerEvent *event) {
+    queue.registerEvent(std::chrono::milliseconds(10), [&](const DCF::TimerEvent *event) {
        callback1Fired = true;
     });
 
-    DCF::IOEvent pipeHandler(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callback2Fired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
-
-    queue.registerEvent(timeoutHandler);
-    queue.registerEvent(pipeHandler);
 
     queue.dispatch(std::chrono::seconds(5));
 

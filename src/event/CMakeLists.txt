@@ -23,6 +23,6 @@ set(SOURCE_FILES
         GlobalEventManager.h
         InlineEventManager.cpp
         InlineEventManager.h
-        )
+        Event.cpp Queue.cpp)
 
 add_library(event OBJECT ${SOURCE_FILES})

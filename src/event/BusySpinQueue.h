@@ -15,10 +15,10 @@ namespace DCF {
         using QueueType = tf::ringbuffer<queue_value_type, 4096>;
 
         QueueType m_queue;
-        std::unique_ptr<TimerEvent> m_timeout;
+        TimerEvent *m_timeout;
 
     public:
-        BusySpinQueue() {
+        BusySpinQueue() : m_timeout(nullptr) {
         }
 
         virtual ~BusySpinQueue() { }
@@ -28,7 +28,7 @@ namespace DCF {
                 status result = NO_EVENTS;
                 queue_value_type dispatcher;
                 while (m_queue.pop(dispatcher)) {
-                    dispatcher();
+                    dispatcher.second();
                     result = OK;
                 }
                 return result;
@@ -52,11 +52,10 @@ namespace DCF {
                 if (m_timeout) {
                     m_timeout->setTimeout(timeout);
                 } else {
-                    m_timeout = std::make_unique<TimerEvent>(timeout, [this](TimerEvent *event) {
+                    m_timeout = this->registerEvent(timeout, [this](TimerEvent *event) {
                         // noop - this will cause us to drop out of the dispatch loop
-                        this->unregisterEvent(*event);
+                        this->unregisterEvent(event);
                     });
-                    this->registerEvent(*(m_timeout.get()));
                 }
                 status = this->dispatch();
             }
@@ -68,7 +67,7 @@ namespace DCF {
             return m_queue.size();
         }
 
-        const bool __enqueue(queue_value_type &event) noexcept override {
+        const bool __enqueue(queue_value_type &&event) noexcept override {
             return m_queue.push(event);
         }
     };

@@ -54,9 +54,9 @@ TEST(TCPTransport, TryConnectSuccess) {
         bool finished = false;
 
         DCF::InlineQueue queue;
-        DCF::IOEvent clientHandler;
+        DCF::IOEvent *clientHandler = nullptr;
 
-        auto client = [&](const DCF::IOEvent *event, int eventType) {
+        auto client = [&](DCF::IOEvent *event, int eventType) {
             DEBUG_LOG("In client callback");
             EXPECT_EQ(DCF::EventType::READ, eventType);
             char buffer[MTU];
@@ -85,23 +85,21 @@ TEST(TCPTransport, TryConnectSuccess) {
             EXPECT_TRUE(connection->send("goodbye", 8));
             finished = true;
             DEBUG_LOG("Callback completed");
-            const_cast<DCF::IOEvent *>(event)->destroy();
+            queue.unregisterEvent(event);
         };
 
-        DCF::IOEvent handler(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+        queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
                 DEBUG_LOG("out of accept");
 
-                EXPECT_EQ(DCF::OK, clientHandler.create(connection->getSocket(), DCF::EventType::READ, client));
-                queue.registerEvent(clientHandler);
+                clientHandler = queue.registerEvent(connection->getSocket(), DCF::EventType::READ, client);
                 DEBUG_LOG("registered new client on socket: " << connection->getSocket());
             }
         });
 
-        queue.registerEvent(handler);
         DEBUG_LOG("Ready to dispatch");
         while(!finished) {
             queue.dispatch(std::chrono::seconds(3));
@@ -147,12 +145,12 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
         bool finished = false;
 
         DCF::InlineQueue queue;
-        DCF::IOEvent clientHandler;
+        DCF::IOEvent *clientHandler = nullptr;
 
         bool consumedMessage = false;
         DCF::MessageBuffer msgBuffer(1025);
 
-        auto client = [&](const DCF::IOEvent *event, int eventType) {
+        auto client = [&](DCF::IOEvent *event, int eventType) {
             DEBUG_LOG("In client callback");
             EXPECT_EQ(DCF::EventType::READ, eventType);
             int counter = 0;
@@ -170,7 +168,7 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
                         EXPECT_EQ(sendMsg, msg);
                         consumedMessage = true;
                         finished = true;
-                        const_cast<DCF::IOEvent *>(event)->destroy();
+                        queue.unregisterEvent(event);
                         break;
                     }
                 } else if (result == DCF::Socket::NoData) {
@@ -185,20 +183,18 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
             }
         };
 
-        DCF::IOEvent handler(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+        queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
                 DEBUG_LOG("out of accept");
 
-                EXPECT_EQ(DCF::OK, clientHandler.create(connection->getSocket(), DCF::EventType::READ, client));
-                queue.registerEvent(clientHandler);
+                clientHandler = queue.registerEvent(connection->getSocket(), DCF::EventType::READ, client);
                 DEBUG_LOG("registered new client on socket: " << connection->getSocket());
             }
         });
 
-        queue.registerEvent(handler);
         DEBUG_LOG("Ready to dispatch");
         while(!finished) {
             queue.dispatch(std::chrono::seconds(3));

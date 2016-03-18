@@ -39,54 +39,30 @@ namespace DCF {
 	private:
 		int m_fd;
 		EventType m_eventTypes;
-		bool m_pendingRemoval = false;
 
 		std::function<void(IOEvent *, const EventType)> m_callback;
 
         void dispatch(IOEvent *event, const EventType &eventType) {
             this->__popDispatch();
-            if (m_active) {
+            if (tf::unlikely(m_pendingRemoval)) {
+                if (!this->__awaitingDispatch()) {
+                    // we're done, this event handler can now be removed
+                }
+            } else {
                 m_callback(event, eventType);
             }
         }
 
 	public:
-        IOEvent() : m_fd(-1), m_callback(nullptr) {}
 
-		IOEvent(const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback)
-				: m_fd(fd), m_eventTypes(eventType), m_callback(callback) {
-            m_active = true;
+		IOEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback)
+				: Event(queue), m_fd(fd), m_eventTypes(eventType), m_callback(callback) {
 		};
 
-		IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes), m_pendingRemoval(other.m_pendingRemoval), m_callback(std::move(other.m_callback)) {
+		IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes), m_callback(std::move(other.m_callback)) {
 		}
 
 		~IOEvent() {
-            this->destroy();
-        }
-
-        status create(const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback) {
-            if (!m_active) {
-                m_fd = fd;
-                m_eventTypes = eventType;
-                m_callback = callback;
-                m_active = true;
-            } else {
-                return CANNOT_CREATE;
-            }
-            return OK;
-        }
-
-        status destroy() {
-            if (m_active) {
-                m_active = false;
-                if (m_isRegistered.load()) {
-                    m_queue->unregisterEvent(*this);
-                }
-            } else {
-                return CANNOT_DESTROY;
-            }
-            return OK;
         }
 
         inline const int fileDescriptor() const noexcept {
@@ -108,10 +84,14 @@ namespace DCF {
 
         const bool __notify(const EventType &eventType) noexcept override {
             assert(m_queue != nullptr);
-            std::function<void ()> dispatcher = std::bind(&IOEvent::dispatch, this, this, eventType);
-            return m_queue->__enqueue(dispatcher);
-        };
-    };
+            this->__pushDispatch();
+            return m_queue->__enqueue(std::make_pair(this, std::bind(&IOEvent::dispatch, this, this, eventType)));
+        }
+
+		void __destroy() override {
+			m_queue->unregisterEvent(this);
+		}
+	};
 }
 
 #endif

@@ -55,10 +55,10 @@ namespace DCF {
 
         virtual ~EventManager();
 
-		virtual void registerHandler(TimerEvent &eventRegistration) = 0;
-		virtual void registerHandler(IOEvent &eventRegistration) = 0;
-		virtual void unregisterHandler(TimerEvent &handler) = 0;
-		virtual void unregisterHandler(IOEvent &handler) = 0;
+		virtual void registerHandler(TimerEvent *eventRegistration) = 0;
+		virtual void registerHandler(IOEvent *eventRegistration) = 0;
+		virtual void unregisterHandler(TimerEvent *handler) = 0;
+		virtual void unregisterHandler(IOEvent *handler) = 0;
 
 		virtual void notify(bool wait = false) = 0;
 

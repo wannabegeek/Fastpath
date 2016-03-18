@@ -61,60 +61,32 @@ namespace  DCF {
 
         void dispatch(TimerEvent *event) {
             this->__popDispatch();
-            if (m_active) {
+            if (tf::unlikely(m_pendingRemoval)) {
+                if (!this->__awaitingDispatch()) {
+                    // we're done, this event handler can now be removed
+                    DEBUG_LOG("Queue is fully drained now");
+                } else {
+                    DEBUG_LOG("items still pending dispatch");
+                }
+            } else {
                 m_callback(event);
             }
 		}
 
     public:
-        TimerEvent() : m_callback(nullptr) {
-        }
-
-		TimerEvent(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback)
-				: m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
-			m_active = true;
+		TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback)
+				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
 		}
 
 		TimerEvent(TimerEvent &&other) : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)) {
 		}
 
-//		TimerEvent(Queue *queue, const uint64_t &timeout, const std::function<void(const TimerEvent *)> &callback)
-//				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
-//			m_queue->registerEvent(*this);
-//		}
-
 		~TimerEvent() {
-			this->destroy();
-        }
-
-        status create(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback) {
-            if (!m_active) {
-                m_timeoutState = TIMEOUTSTATE_START;
-                m_timeout = timeout;
-                m_timeLeft = timeout;
-                m_callback = callback;
-                m_active = true;
-                return OK;
-            }
-
-            return CANNOT_CREATE;
-        }
-
-        status destroy() {
-			if (m_active) {
-				m_active = false;
-				if (m_isRegistered.load()) {
-                    m_queue->unregisterEvent(*this);
-				}
-			} else {
-				return CANNOT_DESTROY;
-			}
-			return OK;
         }
 
         void reset() {
             m_timeLeft = m_timeout;
-            if (m_isRegistered.load()) {
+            if (m_isRegistered.load(std::memory_order_acquire)) {
                 m_queue->__notifyEventManager();
             }
 		}
@@ -135,9 +107,13 @@ namespace  DCF {
 
         const bool __notify(const EventType &eventType) noexcept override {
             assert(m_queue != nullptr);
-            std::function<void ()> dispatcher = std::bind(&TimerEvent::dispatch, this, this);
-            return m_queue->__enqueue(dispatcher);
+            this->__pushDispatch();
+            return m_queue->__enqueue(std::make_pair(this, std::bind(&TimerEvent::dispatch, this, this)));
         };
+
+        void __destroy() override {
+            m_queue->unregisterEvent(this);
+        }
     };
 }
 

@@ -60,69 +60,66 @@ namespace DCF {
         }
     }
 
-    void GlobalEventManager::registerHandler(TimerEvent &event) {
-        m_pendingTimerRegistrations.try_enqueue(&event);
+    void GlobalEventManager::registerHandler(TimerEvent *event) {
+        m_pendingTimerRegistrations.try_enqueue(event);
         m_lock.lock();
-        m_timerHandlers.push_back(&event);
+        m_timerHandlers.push_back(event);
         m_lock.unlock();
         this->notify(true);
     }
 
-    void GlobalEventManager::registerHandler(IOEvent &event) {
-        if (event.fileDescriptor() <= 0) {
-            ERROR_LOG("Failed to register invalid file descriptor: " << event.fileDescriptor());
+    void GlobalEventManager::registerHandler(IOEvent *event) {
+        if (event->fileDescriptor() <= 0) {
+            ERROR_LOG("Failed to register invalid file descriptor: " << event->fileDescriptor());
             throw EventException("Invalid file descriptor");
         }
         m_lock.lock();
-        auto it = m_ioHandlerLookup.find(event.fileDescriptor());
+        auto it = m_ioHandlerLookup.find(event->fileDescriptor());
         if (it != m_ioHandlerLookup.end()) {
-            it->second.push_back(&event);
+            it->second.push_back(event);
         } else {
             IOEventTable::mapped_type events;
-            events.push_back(&event);
-            m_ioHandlerLookup.emplace(event.fileDescriptor(), std::move(events));
+            events.push_back(event);
+            m_ioHandlerLookup.emplace(event->fileDescriptor(), std::move(events));
         }
         m_lock.unlock();
 
         if (decltype(m_eventLoop)::can_add_events_async) {
-            m_eventLoop.add({event.fileDescriptor(), event.eventTypes()});
+            m_eventLoop.add({event->fileDescriptor(), event->eventTypes()});
         } else {
             this->notify(true);
         }
 
-        event.__setIsRegistered(true);
+        event->__setIsRegistered(true);
     }
 
-    void GlobalEventManager::unregisterHandler(TimerEvent &event) {
+    void GlobalEventManager::unregisterHandler(TimerEvent *event) {
         // read lock
         m_lock.lock();
-        auto it = std::find(m_timerHandlers.begin(), m_timerHandlers.end(), &event);
+        auto it = std::find(m_timerHandlers.begin(), m_timerHandlers.end(), event);
         if (it != m_timerHandlers.end()) {
             // upgrade read lock to write lock
             m_timerHandlers.erase(it);
-            if ((*it)->__awaitingDispatch()) {
-                assert(false); // We are removing an event which is awaiting dispatch
-            }
-            event.__setIsRegistered(true);
+            event->__setIsRegistered(false);
             // unlock write lock
         }
         m_lock.unlock();
     }
 
-    void GlobalEventManager::unregisterHandler(IOEvent &event) {
+    void GlobalEventManager::unregisterHandler(IOEvent *event) {
         // read lock
         m_lock.lock();
-        auto it = m_ioHandlerLookup.find(event.fileDescriptor());
+        auto it = m_ioHandlerLookup.find(event->fileDescriptor());
         if (it != m_ioHandlerLookup.end()) {
 
             auto registered_events = it->second;
-            auto t = std::find(registered_events.begin(), registered_events.end(), &event);
+            auto t = std::find(registered_events.begin(), registered_events.end(), event);
             if (t != registered_events.end()) {
                 // We can only remove the TD from listening if no one else is registed
                 // for callbacks on it
                 if (registered_events.size() == 1) {
                     if (decltype(m_eventLoop)::can_add_events_async) {
-                        m_eventLoop.remove({event.fileDescriptor(), event.eventTypes()});
+                        m_eventLoop.remove({event->fileDescriptor(), event->eventTypes()});
                     }
                     // upgrade read lock to write lock
                     m_ioHandlerLookup.erase(it);
@@ -131,11 +128,11 @@ namespace DCF {
                     registered_events.erase(t);
                 }
 
-                if (event.__awaitingDispatch()) {
+                if (event->__awaitingDispatch()) {
                     //assert(false); // We are removing an event which is awaiting dispatch
                 }
                 if (decltype(m_eventLoop)::can_add_events_async) {
-                    event.__setIsRegistered(false);
+                    event->__setIsRegistered(false);
                 } else {
                     this->notify(true);
                 }

@@ -36,10 +36,10 @@ namespace DCF {
 
         ~InlineEventManager();
 
-        void registerHandler(TimerEvent &eventRegistration) override;
-        void registerHandler(IOEvent &eventRegistration) override;
-        void unregisterHandler(TimerEvent &handler) override;
-        void unregisterHandler(IOEvent &handler) override;
+        void registerHandler(TimerEvent *eventRegistration) override;
+        void registerHandler(IOEvent *eventRegistration) override;
+        void unregisterHandler(TimerEvent *handler) override;
+        void unregisterHandler(IOEvent *handler) override;
 
         void notify(bool wait = false) override {}
     };

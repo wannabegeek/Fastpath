@@ -114,7 +114,6 @@ namespace DCF {
 	void EventManager::serviceEvent(const EventPollElement &event) {
         foreach_event_matching(event, [&](auto handler) {
             if (!handler->__awaitingDispatch()) {
-                handler->__pushDispatch();
                 handler->__notify(static_cast<EventType>(handler->eventTypes() & event.filter));
             }
         });
@@ -133,10 +132,8 @@ namespace DCF {
 
                 if (handler->m_timeLeft <= std::chrono::microseconds(0)) {
                     handler->m_timeLeft = handler->m_timeout;
-                    if (!handler->__awaitingDispatch()) {
-						handler->__pushDispatch();
-                        handler->__notify(EventType::NONE);    //Execute the handler
-                    }
+					// TimerEvents can build up, so we don't check for awaitingDispatch here
+					handler->__notify(EventType::NONE);    //Execute the handler
                 }
             }
         });
