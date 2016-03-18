@@ -23,7 +23,7 @@ namespace fp {
         std::vector<subscription<>> m_subscriptions;
         DCF::Queue *m_queue;
         std::unique_ptr<DCF::Socket> m_socket;
-        DCF::IOEvent m_socketEvent;
+        DCF::IOEvent *m_socketEvent;
 
         DCF::MessageBuffer m_buffer;
         const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> m_messageHandler;

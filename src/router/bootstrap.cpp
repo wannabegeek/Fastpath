@@ -17,15 +17,13 @@ namespace fp {
     void bootstrap::run() {
         // Start server socket listening
         if (m_server.connect(DCF::SocketOptionsDisableNagle | DCF::SocketOptionsDisableSigPipe | DCF::SocketOptionsNonBlocking)) {
-            DCF::IOEvent connectionAttempt(m_server.getSocket(), DCF::EventType::READ, [&](DCF::IOEvent *event, const DCF::EventType eventType) {
+            DCF::IOEvent *connectionAttempt = m_dispatchQueue.registerEvent(m_server.getSocket(), DCF::EventType::READ, [&](DCF::IOEvent *event, const DCF::EventType eventType) {
                 INFO_LOG("Someone has tried to connect");
                 m_connections.emplace_back(std::make_unique<peer_connection>(&m_dispatchQueue,
                                                                              m_server.acceptPendingConnection(),
                                                                              std::bind(&bootstrap::message_handler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
                                                                              std::bind(&bootstrap::disconnection_handler, this, std::placeholders::_1)));
             });
-
-            m_dispatchQueue.registerEvent(connectionAttempt);
 
             // todo:
             // Start heartbeat thread
@@ -34,6 +32,8 @@ namespace fp {
             while (!m_shutdown) {
                 m_dispatchQueue.dispatch();
             }
+
+            m_dispatchQueue.unregisterEvent(connectionAttempt);
         }
         DEBUG_LOG("Shutting down");
     }
