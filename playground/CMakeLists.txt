@@ -1,6 +1,7 @@
 INCLUDE(CheckIncludeFiles)
 
 find_package(Threads)
+set(CMAKE_VERBOSE_MAKEFILE on)
 
 find_library(LIBRT_LIBRARIES rt)
 if (LIBRT_LIBRARIES)
@@ -27,8 +28,8 @@ add_executable(SharedMemorySender SharedMemorySender.cpp)
 add_executable(PerformanceTest PerformanceTest.cpp performance.h)
 add_executable(SubjectTest SubjectTest.cpp)
 
-target_link_libraries(SharedMemoryReceiver TFDCF ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(SharedMemorySender TFDCF ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(SharedMemoryReceiver TFDCF ${CMAKE_THREAD_LIBS_INIT} rt)
+target_link_libraries(SharedMemorySender TFDCF ${CMAKE_THREAD_LIBS_INIT} rt)
 target_link_libraries(PerformanceTest TFDCF ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(SubjectTest ${CMAKE_THREAD_LIBS_INIT})
 
