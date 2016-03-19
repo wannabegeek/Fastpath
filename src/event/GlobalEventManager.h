@@ -8,6 +8,7 @@
 #include <utils/concurrentqueue.h>
 #include <utils/tfspinlock.h>
 #include <unordered_map>
+#include <utils/rwlock.h>
 #include "EventManager.h"
 
 namespace DCF {
@@ -26,7 +27,7 @@ namespace DCF {
         std::vector<TimerEvent *> m_timerHandlers;
         IOEventTable m_ioHandlerLookup;
 
-        tf::spinlock m_lock;
+        mutable tf::rwlock m_lock;
 
         void serviceEvent(const EventPollElement &event) override;
 

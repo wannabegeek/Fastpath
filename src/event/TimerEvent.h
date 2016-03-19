@@ -79,9 +79,7 @@ namespace  DCF {
 
         void reset() {
             m_timeLeft = m_timeout;
-            if (m_isRegistered.load(std::memory_order_acquire)) {
-                m_queue->__notifyEventManager();
-            }
+            m_queue->__notifyEventManager();
 		}
 
 		void setTimeout(const std::chrono::microseconds &timeout) {

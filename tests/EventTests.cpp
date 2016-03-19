@@ -46,7 +46,7 @@ TEST(EventManager, Notifier) {
 
 TEST(EventManager, SimpleRead) {
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     bool callbackFired = false;
     int fd[2] = {0, 0};

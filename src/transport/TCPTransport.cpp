@@ -48,7 +48,7 @@ namespace DCF {
         BackoffStrategy strategy;
         while (!m_peer->isConnected() && m_shouldDisconnect == false) {
             if (!m_peer->connect()) {
-                INFO_LOG("Failed to connect trying again");
+                DEBUG_LOG("Failed to connect trying again");
                 strategy.backoff();
             }
         }

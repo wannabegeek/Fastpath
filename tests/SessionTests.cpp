@@ -13,7 +13,7 @@
 
 TEST(Session, Shutdown) {
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     EXPECT_EQ(DCF::OK, DCF::Session::initialise());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -56,7 +56,7 @@ TEST(Session, SimpleTimeout) {
 
 TEST(Session, SimpleReadInline) {
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
@@ -100,7 +100,7 @@ TEST(Session, SimpleReadBusySpin) {
 
     DCF::BusySpinQueue queue;
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
     DCF::IOEvent *handler = queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("In callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
@@ -108,9 +108,6 @@ TEST(Session, SimpleReadBusySpin) {
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
-
-    // we need to make sure wwe have registered with the event loop
-    while(!handler->isRegistered());
 
     EXPECT_EQ(1, queue.event_count());
 
@@ -140,7 +137,7 @@ TEST(Session, SimpleReadBlocking) {
 
     DCF::BlockingQueue queue;
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
     queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("In callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
@@ -197,7 +194,6 @@ TEST(Session, ReadTimerInline) {
         if (timerCounter == 0) {
             EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
         }
-        EXPECT_TRUE(handler->isRegistered());
         timerCounter++;
     });
 
@@ -311,7 +307,7 @@ TEST(Session, ReadTimerBlocking) {
 
 TEST(Session, TimerBacklog) {
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     EXPECT_EQ(DCF::OK, DCF::Session::initialise());
 
@@ -342,7 +338,7 @@ TEST(Session, TimerBacklog) {
 
 TEST(Session, TimerUnregisterWithBacklog) {
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     EXPECT_EQ(DCF::OK, DCF::Session::initialise());
 
@@ -350,7 +346,6 @@ TEST(Session, TimerUnregisterWithBacklog) {
 
     std::atomic<int> counter = ATOMIC_VAR_INIT(0);
     auto event = queue.registerEvent(std::chrono::milliseconds(10), [&](DCF::TimerEvent *e) {
-        DEBUG_LOG("Awaiting: " << std::boolalpha << e->__awaitingDispatch() << " Registered: " << std::boolalpha << e->isRegistered() << " Unregistering with " << queue.eventsInQueue() << " events left in queue");
         queue.unregisterEvent(e);
         counter++;
         EXPECT_EQ(1, counter);

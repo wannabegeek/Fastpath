@@ -1,7 +1,7 @@
 INCLUDE(CheckIncludeFiles)
 
 find_package(Threads)
-set(CMAKE_VERBOSE_MAKEFILE on)
+#set(CMAKE_VERBOSE_MAKEFILE on)
 
 find_library(LIBRT_LIBRARIES rt)
 if (LIBRT_LIBRARIES)

@@ -31,8 +31,6 @@ namespace DCF {
             m_timerHandlers.push_back(event);
             m_pendingTimerHandlers.push_back(event);
         }
-        // we can do this for the InlineEventManager since we must be out of the event loop to get here!
-        event->__setIsRegistered(true);
     }
 
     void InlineEventManager::registerHandler(IOEvent *event) {
@@ -51,7 +49,6 @@ namespace DCF {
         }
 
         m_eventLoop.add({event->fileDescriptor(), event->eventTypes()});
-        event->__setIsRegistered(true);
     }
 
     void InlineEventManager::unregisterHandler(TimerEvent *event) {
@@ -67,8 +64,6 @@ namespace DCF {
                 m_timerHandlers.erase(it);
             }
         }
-
-        event->__setIsRegistered(false);
     }
 
     void InlineEventManager::unregisterHandler(IOEvent *event) {
@@ -93,7 +88,6 @@ namespace DCF {
                 if (event->__awaitingDispatch()) {
                     assert(false); // We are removing an event which is awaiting dispatch
                 }
-                event->__setIsRegistered(false);
             }
         }
     }

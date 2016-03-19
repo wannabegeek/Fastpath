@@ -19,7 +19,6 @@ namespace DCF {
 
         Queue *m_queue;
 
-        std::atomic<bool> m_isRegistered = ATOMIC_VAR_INIT(false);
         bool m_pendingRemoval = false;
         std::atomic<uint16_t> m_awaitingDispatch = ATOMIC_VAR_INIT(0);
 
@@ -37,7 +36,7 @@ namespace DCF {
         Event(Queue *queue) : m_queue(queue) {
         }
 
-        Event(Event &&other) : m_queue(other.m_queue), m_isRegistered(static_cast<bool>(other.m_isRegistered)), m_pendingRemoval(other.m_pendingRemoval) {
+        Event(Event &&other) : m_queue(other.m_queue), m_pendingRemoval(other.m_pendingRemoval) {
         }
 
         Event(const Event &other) = delete;
@@ -47,14 +46,6 @@ namespace DCF {
 
         virtual const bool __notify(const EventType &eventType) noexcept = 0;
         virtual void __destroy() = 0;
-
-        const bool isRegistered() const noexcept {
-            return m_isRegistered;
-        }
-
-        void __setIsRegistered(const bool flag) {
-            m_isRegistered = flag;
-        }
 
         void __setPendingRemoval(const bool flag) {
             m_pendingRemoval = flag;
@@ -70,7 +61,6 @@ namespace DCF {
 
         bool operator==(const Event &other) {
             return m_queue == other.m_queue
-                    && m_isRegistered == other.m_isRegistered
                     && this->isEqual(other);
         }
     };

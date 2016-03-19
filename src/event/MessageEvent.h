@@ -48,10 +48,8 @@ namespace DCF {
         };
 
         ~MessageEvent() {
-            if (m_isRegistered.load()) {
                 this->unsubscribe();
 //                    m_queue->unregisterEvent(*this);
-            }
         }
 
 //        status create(Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) {

@@ -52,7 +52,7 @@ TEST(Socket, SimpleReadWrite) {
 TEST(Socket, NonBlockingReadWrite) {
     bool callbackFired = false;
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     DCF::Session::initialise();
 
@@ -124,8 +124,6 @@ TEST(Socket, NonBlockingReadWrite) {
             }
         }
     });
-
-    EXPECT_TRUE(handler->isRegistered());
 
     DEBUG_LOG("Client sending data");
     EXPECT_TRUE(client.send("hello", 6));

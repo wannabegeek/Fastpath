@@ -10,6 +10,6 @@ set(SOURCE_FILES
         tfpool.h
         tfringbuffer.h
         tfspinlock.h
-        )
+        rwlock.h)
 
 add_library(utils OBJECT ${SOURCE_FILES})

@@ -27,7 +27,6 @@ namespace DCF {
             if (event->__pendingRemoval() && !event->__awaitingDispatch()) {
                 auto it = m_registeredEvents.find(make_find_set_unique(event));
                 assert(it != m_registeredEvents.end());
-                INFO_LOG("Removing event from queue " << event);
                 m_registeredEvents.erase(it);
             }
         }

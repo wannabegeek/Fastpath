@@ -20,9 +20,9 @@ TEST(Field, CreateString) {
     DCF::DataField e4;
     e4.set("0", b4);
     ASSERT_EQ(e4.type(), DCF::StorageType::string);
-    const byte *result4 = nullptr;
+    const char *result4 = nullptr;
     ASSERT_EQ(5u, e4.get(&result4));
-    ASSERT_STREQ(b4, reinterpret_cast<const char *>(result4));
+    ASSERT_STREQ(b4, result4);
 }
 
 TEST(Field, CreateInt32) {

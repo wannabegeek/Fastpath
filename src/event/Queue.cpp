@@ -41,31 +41,25 @@ namespace DCF {
     }
 
     status Queue::unregisterEvent(IOEvent *event) {
-        if (tf::unlikely(!event->isRegistered())) {
-            return NOT_ACTIVE;
-        } else {
-            // This will block any further callback to client code, which may still exist in the queue
-            event->__setPendingRemoval(true);
-            EventManager *em = this->eventManager();
-            if (em != nullptr) {
-                em->unregisterHandler(event);
-            }
+        // This will block any further callback to client code, which may still exist in the queue
+        event->__setPendingRemoval(true);
+        EventManager *em = this->eventManager();
+        if (em != nullptr) {
+            em->unregisterHandler(event);
+            return OK;
         }
-        return OK;
+        return EVM_NOTRUNNING;
     }
 
     status Queue::unregisterEvent(TimerEvent *event) {
-        if (tf::unlikely(!event->isRegistered())) {
-            return NOT_ACTIVE;
-        } else {
-            // This will block any further callback to client code, which may still exist in the queue
-            event->__setPendingRemoval(true);
-            EventManager *em = this->eventManager();
-            if (em != nullptr) {
-                em->unregisterHandler(event);
-            }
+        // This will block any further callback to client code, which may still exist in the queue
+        event->__setPendingRemoval(true);
+        EventManager *em = this->eventManager();
+        if (em != nullptr) {
+            em->unregisterHandler(event);
+            return OK;
         }
-        return OK;
+        return EVM_NOTRUNNING;
     }
 
 }
