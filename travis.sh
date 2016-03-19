@@ -25,3 +25,4 @@ cd build/$BUILD_TYPE
 cmake -DCMAKE_CXX_FLAGS=$CXX_FLAGS -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../../
 make
 make tests
+./tests
