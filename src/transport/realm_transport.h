@@ -6,19 +6,25 @@
 #define TFDCF_RELMTRANSPORT_H
 
 #include <vector>
-#include <event/MessageEvent.h>
+#include "event/MessageListener.h"
 #include <transport/TCPTransport.h>
 
 namespace fp {
-    class realm_transport : public DCF::TCPTransport {
+    class Transport;
+
+    std::unique_ptr<DCF::Transport> make_relm_connection(const char *connection_url, const char *description = "") throw(fp::exception);
+
+    class realm_transport {
     private:
         struct subject {
             static const char *daemon_connected;
             static const char *daemon_disconnected;
         };
 
-        std::vector<DCF::MessageEvent *> m_subscribers;
+        std::vector<DCF::MessageListener *> m_subscribers;
         const DCF::Queue *m_associatedQueue;
+
+        std::unique_ptr<DCF::Transport> m_transport;
 
         void broadcastConnectionStateChange(bool connected);
     public:

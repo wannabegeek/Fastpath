@@ -99,7 +99,7 @@ TEST(Socket, NonBlockingReadWrite) {
     EXPECT_NE(-1, client.getSocket());
     DEBUG_LOG("Client connected");
 
-    DCF::IOEvent *handler = queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, DCF::EventType eventType) {
+    /*DCF::IOEvent *handler = */queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         DEBUG_LOG("Client received data");
         callbackFired = true;
@@ -180,7 +180,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
 
         DCF::IOEvent *clientHandler = nullptr;
 
-        DCF::IOEvent *handler = queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+        /*DCF::IOEvent *handler = */queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
@@ -208,7 +208,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     ASSERT_TRUE(client.connect(DCF::SocketOptionsDisableSigPipe));
     EXPECT_NE(-1, client.getSocket());
 
-    DCF::IOEvent *handler = queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+    /*DCF::IOEvent *handler = */queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
 

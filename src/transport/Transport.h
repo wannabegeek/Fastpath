@@ -8,11 +8,20 @@
 #include <messages/StorageTypes.h>
 #include <chrono>
 #include <string>
+#include <functional>
 #include <status.h>
 
 namespace DCF {
     class Transport {
+    public:
+        typedef enum {
+            CONNECTED,
+            DISCONNECTED
+        } notification_type;
+    private:
         const std::string m_description;
+    protected:
+        std::function<void(notification_type type, const char *reason)> m_notificationHandler;
     public:
         Transport(const char *description) : m_description(description) {};
         virtual ~Transport() {}
@@ -26,6 +35,10 @@ namespace DCF {
 
         const char *description() const noexcept {
             return m_description.c_str();
+        }
+
+        void setNotificationHandler(std::function<void(notification_type type, const char *reason)> handler) {
+            m_notificationHandler = handler;
         }
     };
 }

@@ -38,6 +38,15 @@ namespace DCF {
         if (!m_peer->connect()) {
             m_connectionAttemptInProgress = std::async(std::launch::async, &TCPTransport::__connect, this);
         }
+        m_peer->setConnectionStateHandler([&](bool connected) {
+            DEBUG_LOG("Transport connected: " << std::boolalpha << connected);
+            if (m_notificationHandler) {
+                m_notificationHandler(connected ? CONNECTED : DISCONNECTED, "");
+            }
+            if (!connected && !m_shouldDisconnect) {
+                this->__connect();
+            }
+        });
     }
 
     TCPTransport::~TCPTransport() {

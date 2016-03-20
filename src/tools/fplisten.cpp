@@ -8,7 +8,7 @@
 #include <event/Session.h>
 #include <transport/TCPTransport.h>
 #include <messages/Message.h>
-#include <event/MessageEvent.h>
+#include "MessageListener.h"
 #include <event/BlockingQueue.h>
 
 int main( int argc, char *argv[] )  {
@@ -57,7 +57,7 @@ int main( int argc, char *argv[] )  {
         DCF::BlockingQueue queue;
         DCF::TCPTransport transport(url.c_str(), "");
 
-        DCF::MessageEvent msgEvent(&queue, &transport, subject.c_str(), [&](const DCF::MessageEvent *event, const DCF::Message *msg){
+        DCF::MessageListener msgEvent(&queue, &transport, subject.c_str(), [&](const DCF::MessageListener *event, const DCF::Message *msg){
             INFO_LOG(msg);
         });
 

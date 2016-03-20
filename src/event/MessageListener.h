@@ -11,13 +11,13 @@
 #include "Event.h"
 
 namespace DCF {
-    class MessageEvent : public Event {
+    class MessageListener : public Event {
 
         char m_subject[std::numeric_limits<uint16_t>::max()];
         Transport *m_transport;
-        std::function<void(const MessageEvent *, const Message *)> m_callback;
+        std::function<void(const MessageListener *, const Message *)> m_callback;
 
-        void dispatch(MessageEvent *event, const std::shared_ptr<Message> msg) {
+        void dispatch(MessageListener *event, const std::shared_ptr<Message> msg) {
             this->__popDispatch();
             if (!m_pendingRemoval) {
                 m_callback(event, msg.get());
@@ -41,18 +41,18 @@ namespace DCF {
         }
 
     public:
-        MessageEvent(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) : Event(queue), m_transport(transport), m_callback(callback) {
+        MessageListener(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageListener *, const Message *)> &callback) : Event(queue), m_transport(transport), m_callback(callback) {
             const size_t subject_length = strlen(subject);
             std::copy(subject, &subject[subject_length], m_subject);
             this->subscribe();
         };
 
-        ~MessageEvent() {
+        ~MessageListener() {
                 this->unsubscribe();
 //                    m_queue->unregisterEvent(*this);
         }
 
-//        status create(Transport *transport, const char *subject, const std::function<void(const MessageEvent *, const Message *)> &callback) {
+//        status create(Transport *transport, const char *subject, const std::function<void(const MessageListener *, const Message *)> &callback) {
 //            if (!m_active) {
 //                const size_t subject_length = strlen(subject);
 //                std::copy(subject, &subject[subject_length], m_subject);
@@ -81,7 +81,7 @@ namespace DCF {
 
         const bool isEqual(const Event &other) const noexcept override {
             try {
-                const MessageEvent &f = dynamic_cast<const MessageEvent &>(other);
+                const MessageListener &f = dynamic_cast<const MessageListener &>(other);
                 return strcmp(m_subject, f.m_subject) == 0;
             } catch (const std::bad_cast &e) {
                 return false;
@@ -95,7 +95,7 @@ namespace DCF {
         }
 
         const bool __notify(const std::shared_ptr<Message> message) noexcept {
-            return m_queue->__enqueue(std::make_pair(this, std::bind(&MessageEvent::dispatch, this, this, message)));
+            return m_queue->__enqueue(std::make_pair(this, std::bind(&MessageListener::dispatch, this, this, message)));
         }
 
         void __destroy() override {

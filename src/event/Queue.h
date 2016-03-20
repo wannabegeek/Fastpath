@@ -13,6 +13,8 @@
 
 namespace DCF {
     class Event;
+    class Message;
+    class Subscriber;
 
     template <typename T> struct unique_ptr_deleter {
         bool m_owner;
@@ -77,6 +79,9 @@ namespace DCF {
 
         status unregisterEvent(IOEvent *event);
         status unregisterEvent(TimerEvent *event);
+
+        status addSubscriber(const Subscriber &subscriber, const std::function<void(Subscriber *, Message *)> &callback);
+        status removeSubscriber(const Subscriber &subscriber);
     };
 }
 

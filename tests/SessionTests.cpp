@@ -101,7 +101,7 @@ TEST(Session, SimpleReadBusySpin) {
     DCF::BusySpinQueue queue;
 
     LOG_LEVEL(tf::logger::info);
-    DCF::IOEvent *handler = queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    /*DCF::IOEvent *handler = */queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("In callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
@@ -345,7 +345,7 @@ TEST(Session, TimerUnregisterWithBacklog) {
     DCF::BlockingQueue queue;
 
     std::atomic<int> counter = ATOMIC_VAR_INIT(0);
-    auto event = queue.registerEvent(std::chrono::milliseconds(10), [&](DCF::TimerEvent *e) {
+    /*auto event = */queue.registerEvent(std::chrono::milliseconds(10), [&](DCF::TimerEvent *e) {
         queue.unregisterEvent(e);
         counter++;
         EXPECT_EQ(1, counter);

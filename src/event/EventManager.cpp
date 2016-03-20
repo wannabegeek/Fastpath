@@ -57,7 +57,9 @@ namespace DCF {
 	}
 
 	template<> void EventManager::waitForEvent<std::chrono::microseconds>(const std::chrono::microseconds &timeout) {
-        this->processPendingRegistrations();
+		if (!decltype(m_eventLoop)::can_add_events_async) {
+			this->processPendingRegistrations();
+		}
 
 		int result = 0;
 		if (tf::unlikely(timeout.count() == 0 && !haveHandlers())) {

@@ -62,4 +62,13 @@ namespace DCF {
         return EVM_NOTRUNNING;
     }
 
+    status Queue::addSubscriber(const Subscriber &subscriber, const std::function<void(Subscriber *, Message *)> &callback) {
+        // Check the transport isn't registered with an inline event manager (unless this is an inline queue)
+        // Check if the transport is registered with this->eventManager(), if not register it
+    }
+
+    status Queue::removeSubscriber(const Subscriber &subscriber) {
+        // we should probably leave the transport still connected.
+    }
+
 }

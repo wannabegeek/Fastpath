@@ -31,7 +31,6 @@ namespace DCF {
 
         void serviceEvent(const EventPollElement &event) override;
 
-        void processPendingRegistrations() override;
         void foreach_timer(std::function<void(TimerEvent *)> callback) const override;
         void foreach_event_matching(const EventPollElement &event, std::function<void(IOEvent *)> callback) const override;
 

@@ -38,26 +38,6 @@ namespace DCF {
         }
     }
 
-    void GlobalEventManager::processPendingRegistrations() {
-        size_t count = 0;
-        if (!decltype(m_eventLoop)::can_add_events_async) {
-            IOEvent *io_events[256];
-            while ((count = m_pendingIORegistrations.try_dequeue_bulk(io_events, 256)) != 0) {
-                for (size_t i = 0; i < count; ++i) {
-                    IOEvent *event = io_events[i];
-                    m_eventLoop.add({event->fileDescriptor(), event->eventTypes()});
-                }
-            }
-        }
-
-        TimerEvent *timer_events[256];
-        while ((count = m_pendingTimerRegistrations.try_dequeue_bulk(timer_events, 256)) != 0) {
-            for (size_t i = 0; i < count; ++i) {
-                TimerEvent *event = timer_events[i];
-            }
-        }
-    }
-
     void GlobalEventManager::registerHandler(TimerEvent *event) {
         m_pendingTimerRegistrations.try_enqueue(event);
         m_lock.lock();

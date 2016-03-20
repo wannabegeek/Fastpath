@@ -2,20 +2,42 @@
 // Created by Tom Fewster on 16/03/2016.
 //
 
+#include <mach/mach_host.h>
 #include "realm_transport.h"
 #include "TCPTransport.h"
 
 namespace fp {
 
-    realm_transport::realm_transport(const char *url, const char *description) : DCF::TCPTransport(url, description) {
-        m_peer->setConnectionStateHandler([&](bool connected) {
-            INFO_LOG("Transport connected: " << std::boolalpha << connected);
-            this->broadcastConnectionStateChange(connected);
+    std::unique_ptr<DCF::Transport> make_relm_connection(const char *connection_url, const char *description) throw(fp::exception) {
+        DCF::url url(connection_url);
 
-            if (!m_shouldDisconnect) {
-                this->__connect();
-            }
-        });
+        if (url.protocol() == "tcp") {
+            return std::make_unique<DCF::TCPTransport>(url, description);
+        } else if (url.protocol() == "ipc") {
+
+        } else if (url.protocol() == "shm") {
+
+        } else {
+            throw fp::exception("Unsupported protocol");
+        }
+
+        return nullptr;
+    }
+
+
+    realm_transport::realm_transport(const char *url, const char *description) {
+        DCF::url u(url);
+
+        if (u.protocol() == "tcp") {
+            m_transport = std::make_unique<DCF::TCPTransport>(u, description);
+        } else if (u.protocol() == "ipc") {
+
+        } else if (u.protocol() == "shm") {
+
+        } else {
+            throw fp::exception("Unsupported protocol");
+        }
+
 
         // add transport to the global event manager
     }
@@ -38,12 +60,12 @@ namespace fp {
     void realm_transport::broadcastConnectionStateChange(bool connected) {
         auto msg = std::make_shared<DCF::Message>();
         msg->setSubject(connected ? subject::daemon_connected : subject::daemon_disconnected);
-        std::for_each(m_subscribers.begin(), m_subscribers.end(), [&](DCF::MessageEvent *msgEvent) {
+        std::for_each(m_subscribers.begin(), m_subscribers.end(), [&](DCF::MessageListener *msgEvent) {
             // TODO: check if the handler is interested in this message
             msgEvent->__notify(msg);
         });
     }
 
     const char *realm_transport::subject::daemon_connected = "_FP.INFO.DAEMON.CONNECTED";
-    const char *realm_transport::subject::daemon_disconnected = "_FP.INFO.DAEMON.DISCONNECTED";
+    const char *realm_transport::subject::daemon_disconnected = "_FP.ERROR.DAEMON.DISCONNECTED";
 }
