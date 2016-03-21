@@ -5,6 +5,9 @@
 #include <Exception.h>
 #include "IOEvent.h"
 #include "TimerEvent.h"
+#include "transport/Transport.h"
+#include "MessageListener.h"
+#include "event/Subscriber.h"
 
 namespace DCF {
 
@@ -63,12 +66,42 @@ namespace DCF {
     }
 
     status Queue::addSubscriber(const Subscriber &subscriber, const std::function<void(Subscriber *, Message *)> &callback) {
-        // Check the transport isn't registered with an inline event manager (unless this is an inline queue)
-        // Check if the transport is registered with this->eventManager(), if not register it
+        Transport *transport = subscriber.transport();
+        if (transport->m_eventManager == nullptr || transport->m_eventManager == this->eventManager()) {
+            if (transport->m_eventManager == nullptr) {
+                transport->m_eventManager = this->eventManager();
+                // registered with this->eventManager() & create message listener
+                auto result = m_registeredTransports.emplace(transport, std::make_unique<MessageListener>());
+                if (result.second == true) {
+                    auto &messageListener = result.first;
+                    messageListener->second->addObserver(subscriber);
+                } else {
+                    return CANNOT_CREATE;
+                }
+            } else {
+                // add the subject to the MessageListener
+                auto &messageListener = m_registeredTransports[transport];
+                messageListener->addObserver(subscriber);
+            }
+        } else {
+            // we must be associated with an inline queue - this is illegal
+            ERROR_LOG("Transport cannot be associated with a global queue and an inline dispatch queue");
+            return INVALID_TRANSPORT_STATE;
+        }
+
+        return OK;
     }
 
     status Queue::removeSubscriber(const Subscriber &subscriber) {
         // we should probably leave the transport still connected.
+        auto it = m_registeredTransports.find(subscriber.transport());
+        if (it != m_registeredTransports.end()) {
+            (it->second)->removeObserver(subscriber);
+
+            return OK;
+        }
+
+        return CANNOT_DESTROY;
     }
 
 }

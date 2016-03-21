@@ -12,7 +12,10 @@
 #include <status.h>
 
 namespace DCF {
+    class EventManager;
+
     class Transport {
+        friend class Queue;
     public:
         typedef enum {
             CONNECTED,
@@ -20,6 +23,7 @@ namespace DCF {
         } notification_type;
     private:
         const std::string m_description;
+        EventManager *m_eventManager = nullptr;
     protected:
         std::function<void(notification_type type, const char *reason)> m_notificationHandler;
     public:

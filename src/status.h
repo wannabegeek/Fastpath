@@ -53,6 +53,7 @@ namespace DCF {
         INVALID_NAME,
         INVALID_QUEUE,
         INVALID_TRANSPORT,
+        INVALID_TRANSPORT_STATE,
 
         NOT_FOUND,
         CONVERSION_FAILED,

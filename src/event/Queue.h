@@ -10,11 +10,13 @@
 #include "messages/StorageTypes.h"
 #include "Session.h"
 #include "event/EventManager.h"
+#include "event/MessageListener.h"
 
 namespace DCF {
     class Event;
     class Message;
     class Subscriber;
+    class Transport;
 
     template <typename T> struct unique_ptr_deleter {
         bool m_owner;
@@ -45,6 +47,7 @@ namespace DCF {
     class Queue {
     protected:
         std::unordered_set<set_unique_ptr<Event>> m_registeredEvents;
+        std::unordered_map<Transport *, std::unique_ptr<MessageListener>> m_registeredTransports;
 
         // The default implementation returns the global event manager
         virtual inline EventManager *eventManager() {

@@ -8,6 +8,7 @@
 #include <functional>
 #include <utility>
 #include <vector>
+#include <shared_mutex>
 #include <utils/logger.h>
 
 namespace DCF {
@@ -143,8 +144,7 @@ namespace DCF {
 
     const bool GlobalEventManager::haveHandlers() const {
         // read lock
-        m_lock.lock_shared();
+        std::shared_lock<tf::rwlock> lock(m_lock);
         return !(m_timerHandlers.empty() && m_ioHandlerLookup.empty());
-        m_lock.unlock_shared();
     }
 }
