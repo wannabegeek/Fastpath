@@ -15,15 +15,17 @@ namespace DCF {
     class EventManager;
 
     class Transport {
-        friend class Queue;
+        friend class MessageListener;
     public:
         typedef enum {
             CONNECTED,
-            DISCONNECTED
+            DISCONNECTED,
+            CORRUPT_MESSAGE,
+            SLOW_CONSUMER
         } notification_type;
     private:
         const std::string m_description;
-        EventManager *m_eventManager = nullptr;
+        const EventManager *m_eventManager = nullptr;
     protected:
         std::function<void(notification_type type, const char *reason)> m_notificationHandler;
     public:

@@ -7,6 +7,7 @@
 
 #include <utils/optimize.h>
 #include <unordered_set>
+#include <memory>
 #include "messages/StorageTypes.h"
 #include "Session.h"
 #include "event/EventManager.h"
@@ -16,7 +17,6 @@ namespace DCF {
     class Event;
     class Message;
     class Subscriber;
-    class Transport;
 
     template <typename T> struct unique_ptr_deleter {
         bool m_owner;
@@ -47,7 +47,6 @@ namespace DCF {
     class Queue {
     protected:
         std::unordered_set<set_unique_ptr<Event>> m_registeredEvents;
-        std::unordered_map<Transport *, std::unique_ptr<MessageListener>> m_registeredTransports;
 
         // The default implementation returns the global event manager
         virtual inline EventManager *eventManager() {
@@ -83,7 +82,7 @@ namespace DCF {
         status unregisterEvent(IOEvent *event);
         status unregisterEvent(TimerEvent *event);
 
-        status addSubscriber(const Subscriber &subscriber, const std::function<void(Subscriber *, Message *)> &callback);
+        status addSubscriber(const Subscriber &subscriber);
         status removeSubscriber(const Subscriber &subscriber);
     };
 }

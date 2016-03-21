@@ -7,7 +7,7 @@
 namespace DCF {
 
     Message::Message() : m_flags(-1), m_hasAddressing(true) {
-        m_subject = new char[std::numeric_limits<uint16_t>::max()];
+        m_subject = new char[max_subject_length];
         m_subject[0] = '\0';
     }
 
@@ -24,13 +24,13 @@ namespace DCF {
 
     const bool Message::operator==(const Message &other) const {
         return m_flags == other.m_flags
-               && strncmp(m_subject, other.m_subject, std::numeric_limits<uint16_t>::max()) == 0
+               && strncmp(m_subject, other.m_subject, max_subject_length) == 0
                && BaseMessage::operator==(other);
     }
 
 
     const bool Message::setSubject(const char *subject) {
-        if (strlen(subject) < std::numeric_limits<uint16_t>::max()) {
+        if (strlen(subject) < max_subject_length) {
             strcpy(&m_subject[0], subject);
             return true;
         }

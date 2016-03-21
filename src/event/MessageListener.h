@@ -5,57 +5,38 @@
 #ifndef TFDCF_LISTENER_H
 #define TFDCF_LISTENER_H
 
+#include <unordered_set>
 #include <messages/StorageTypes.h>
 #include <transport/Transport.h>
 #include <messages/Message.h>
+#include <tuple>
 #include "Subscriber.h"
 
 namespace DCF {
+    class Queue;
+
     class MessageListener {
 
-        char m_subject[std::numeric_limits<uint16_t>::max()];
+        typedef std::vector<const Subscriber *> ObserversType;
+        std::unordered_map<Transport *, ObserversType> m_observers;
+
         Transport *m_transport;
-        std::function<void(const MessageListener *, const Message *)> m_callback;
 
-        void dispatch(MessageListener *event, const std::shared_ptr<Message> msg) {
-//            this->__popDispatch();
-//            if (!m_pendingRemoval) {
-//                m_callback(event, msg.get());
-//            }
-        }
+        void subscribe(const char *subject) noexcept;
+        void unsubscribe(const char *subject) noexcept;
 
-        inline void subscribe() noexcept {
-            Message msg;
-            msg.setSubject("_FP.REGISTER.OBSERVER");
-            msg.addDataField("subject", m_subject);
-            msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
-            m_transport->sendMessage(msg);
-        }
-
-        inline void unsubscribe() noexcept {
-            Message msg;
-            msg.setSubject("_FP.UNREGISTER.OBSERVER");
-            msg.addDataField("subject", m_subject);
-            msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
-            m_transport->sendMessage(msg);
-        }
-
+        status registerTransport(Transport *transport, const EventManager *eventManager);
     public:
-        MessageListener() {}
-//        MessageListener(Queue *queue, Transport *transport, const char *subject, const std::function<void(const MessageListener *, const Message *)> &callback) : Event(queue), m_transport(transport), m_callback(callback) {
-//            const size_t subject_length = strlen(subject);
-//            std::copy(subject, &subject[subject_length], m_subject);
-//            this->subscribe();
-//        };
-
-        ~MessageListener() {
-//                this->unsubscribe();
-//                    m_queue->unregisterEvent(*this);
+        static MessageListener& instance(){
+            static MessageListener instance;
+            return instance;
         }
 
+        ~MessageListener();
 
-        void addObserver(const Subscriber &subscriber) {}
-        void removeObserver(const Subscriber &subscriber) {}
+        status addObserver(Queue *queue, const Subscriber &subscriber, const EventManager *eventManager);
+        status removeObserver(Queue *queue, const Subscriber &subscriber);
+
 
 //        status create(Transport *transport, const char *subject, const std::function<void(const MessageListener *, const Message *)> &callback) {
 //            if (!m_active) {

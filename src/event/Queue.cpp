@@ -65,43 +65,11 @@ namespace DCF {
         return EVM_NOTRUNNING;
     }
 
-    status Queue::addSubscriber(const Subscriber &subscriber, const std::function<void(Subscriber *, Message *)> &callback) {
-        Transport *transport = subscriber.transport();
-        if (transport->m_eventManager == nullptr || transport->m_eventManager == this->eventManager()) {
-            if (transport->m_eventManager == nullptr) {
-                transport->m_eventManager = this->eventManager();
-                // registered with this->eventManager() & create message listener
-                auto result = m_registeredTransports.emplace(transport, std::make_unique<MessageListener>());
-                if (result.second == true) {
-                    auto &messageListener = result.first;
-                    messageListener->second->addObserver(subscriber);
-                } else {
-                    return CANNOT_CREATE;
-                }
-            } else {
-                // add the subject to the MessageListener
-                auto &messageListener = m_registeredTransports[transport];
-                messageListener->addObserver(subscriber);
-            }
-        } else {
-            // we must be associated with an inline queue - this is illegal
-            ERROR_LOG("Transport cannot be associated with a global queue and an inline dispatch queue");
-            return INVALID_TRANSPORT_STATE;
-        }
-
-        return OK;
+    status Queue::addSubscriber(const Subscriber &subscriber) {
+        return MessageListener::instance().addObserver(this, subscriber, this->eventManager());
     }
 
     status Queue::removeSubscriber(const Subscriber &subscriber) {
-        // we should probably leave the transport still connected.
-        auto it = m_registeredTransports.find(subscriber.transport());
-        if (it != m_registeredTransports.end()) {
-            (it->second)->removeObserver(subscriber);
-
-            return OK;
-        }
-
-        return CANNOT_DESTROY;
+        return MessageListener::instance().removeObserver(this, subscriber);
     }
-
 }

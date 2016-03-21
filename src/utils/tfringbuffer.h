@@ -10,12 +10,14 @@
 #include <array>
 #include "optimize.h"
 
+#define CACHELINE_SIZE 64
+
 namespace tf {
     template<typename T, size_t SIZE = 1024>
     class ringbuffer {
         std::array<T, SIZE> m_buffer;
-        std::atomic<size_t> m_head;
-        std::atomic<size_t> m_tail;
+        alignas(CACHELINE_SIZE) std::atomic<size_t> m_head;
+        alignas(CACHELINE_SIZE) std::atomic<size_t> m_tail;
 
         size_t next(size_t current) {
             return (current + 1) % SIZE;

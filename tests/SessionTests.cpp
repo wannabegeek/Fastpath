@@ -91,7 +91,7 @@ TEST(Session, SimpleReadInline) {
 }
 
 TEST(Session, SimpleReadBusySpin) {
-
+    LOG_LEVEL(tf::logger::debug);
     EXPECT_EQ(DCF::OK, DCF::Session::initialise());
 
     bool callbackFired = false;
@@ -100,8 +100,7 @@ TEST(Session, SimpleReadBusySpin) {
 
     DCF::BusySpinQueue queue;
 
-    LOG_LEVEL(tf::logger::info);
-    /*DCF::IOEvent *handler = */queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("In callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;

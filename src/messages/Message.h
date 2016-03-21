@@ -9,6 +9,8 @@
 
 namespace DCF {
     class Message final : public BaseMessage {
+    public:
+        static constexpr size_t max_subject_length = std::numeric_limits<uint16_t>::max();
     private:
         static constexpr const uint8_t addressing_flag = 1;
 

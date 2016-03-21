@@ -2,7 +2,6 @@
 // Created by Tom Fewster on 16/03/2016.
 //
 
-#include <mach/mach_host.h>
 #include "realm_transport.h"
 #include "TCPTransport.h"
 

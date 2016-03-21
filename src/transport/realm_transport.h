@@ -8,6 +8,7 @@
 #include <vector>
 #include "event/MessageListener.h"
 #include <transport/TCPTransport.h>
+#include <event/Queue.h>
 
 namespace fp {
     class Transport;
