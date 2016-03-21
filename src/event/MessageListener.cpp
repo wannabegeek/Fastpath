@@ -4,50 +4,68 @@
 
 #include "MessageListener.h"
 #include "utils/logger.h"
+#include "IOEvent.h"
+#include "transport/TCPTransport.h"
 
 namespace DCF {
-    void MessageListener::subscribe(const char *subject) noexcept {
+
+    TransportContainer::TransportContainer(Transport *t, std::unique_ptr<IOEvent> &&e) : transport(t), event(std::move(e)) {}
+
+
+    void MessageListener::subscribe(Transport *transport, const char *subject) noexcept {
         Message msg;
         msg.setSubject("_FP.REGISTER.OBSERVER");
         msg.addDataField("subject", subject);
         msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
-        m_transport->sendMessage(msg);
+        transport->sendMessage(msg);
     }
 
-    void MessageListener::unsubscribe(const char *subject) noexcept {
+    void MessageListener::unsubscribe(Transport *transport, const char *subject) noexcept {
         Message msg;
         msg.setSubject("_FP.UNREGISTER.OBSERVER");
         msg.addDataField("subject", subject);
         msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
-        m_transport->sendMessage(msg);
+        transport->sendMessage(msg);
     }
 
     MessageListener::~MessageListener() {}
 
-    status MessageListener::registerTransport(Transport *transport, const EventManager *eventManager) {
-
+    std::unique_ptr<TransportContainer> MessageListener::registerTransport(Transport *transport, EventManager *eventManager) {
         if (transport->m_eventManager == nullptr) {
-            transport->m_eventManager = eventManager;
             // lock
-
+            if (transport->m_eventManager == nullptr) {
+                transport->m_eventManager = eventManager;
+                std::unique_ptr<TransportContainer> container = std::make_unique<TransportContainer>(transport, transport->createReceiverEvent());
+                // ^^^^^^^ we need to add MessageListener::handleMessage to be acke to receive message callbacks
+                if (container->event) {
+                    eventManager->registerHandler(container->event.get());
+                }
+                return container;
+            }
             // unlock
         } else if (transport->m_eventManager != eventManager) {
             ERROR_LOG("Transport cannot be associated with a global queue and an inline dispatch queue");
-            return INVALID_TRANSPORT_STATE;
         }
 
-        return OK;
+        return nullptr;
     }
 
-//    void MessageListener::dispatcher(Queue *queue, Subscriber *subscriber, Message *msg) {
-//        //queue->__enqueue(std::make_pair(this, std::bind(&Subscriber::dispatch, subscriber, subscriber)));
-//    }
 
-    status MessageListener::addObserver(Queue *queue, const Subscriber &subscriber, const EventManager *eventManager) {
+    void MessageListener::handleMessage(const Transport *transport, Message *message) {
+        auto it = m_observers.find(transport);
+        if (it != m_observers.end()) {
+            ObserversType &subscribers = it->second;
+            std::for_each(subscribers.begin(), subscribers.end(), [&](auto &subscriber) {
+                // is this subscriber interested?
+                // dispatch to handler if it is...
+            });
+        }
+    }
 
-        auto status = this->registerTransport(subscriber.transport(), eventManager);
+    status MessageListener::addObserver(Queue *queue, const Subscriber &subscriber, EventManager *eventManager) {
 
-        if (status == OK) {
+        auto container = this->registerTransport(subscriber.transport(), eventManager);
+        if (container) {
             auto it = m_observers.find(subscriber.transport());
             if (it == m_observers.end()) {
                 m_observers.emplace(subscriber.transport(), ObserversType(1, &subscriber));
@@ -55,7 +73,12 @@ namespace DCF {
                 ObserversType &subscribers = it->second;
                 subscribers.push_back(&subscriber);
             }
+            this->subscribe(subscriber.transport(), subscriber.subject());
+        } else {
+            return INVALID_TRANSPORT_STATE;
         }
+
+        return OK;
 
 //
 //        auto callback = std::bind(&MessageListener::dispatcher, this, queue, subscriber, std::placeholder::_1);
@@ -64,19 +87,21 @@ namespace DCF {
 //        this->subscribe(subscriber.subject());
 //
 //        return result.second ? OK : CANNOT_CREATE;
-        return status;
+//        return status;
     }
 
     status MessageListener::removeObserver(Queue *queue, const Subscriber &subscriber) {
         auto it = m_observers.find(subscriber.transport());
         if (it != m_observers.end()) {
-            ObserversType &subscribers = it->second;
-            auto it2 = std::find(subscribers.begin(), subscribers.end(), .......);
-            if (it2 != subscribers.end()) {
-                this->unsubscribe(subscriber.subject());
-                subscribers.erase(it2);
-                return OK;
-            }
+//            ObserversType &subscribers = it->second;
+//            auto it2 = std::find(subscribers.begin(), subscribers.end(), .......);
+//            if (it2 != subscribers.end()) {
+//                this->unsubscribe(subscriber.subject());
+//                subscribers.erase(it2);
+//                return OK;
+//            }
+//            this->unsubscribe(subscriber.transport(), subscriber.subject());
+
         }
 
         return CANNOT_DESTROY;

@@ -8,7 +8,6 @@
 #include <event/Session.h>
 #include <transport/TCPTransport.h>
 #include <messages/Message.h>
-#include "MessageListener.h"
 #include <event/BlockingQueue.h>
 
 int main( int argc, char *argv[] )  {
@@ -57,9 +56,9 @@ int main( int argc, char *argv[] )  {
         DCF::BlockingQueue queue;
         DCF::TCPTransport transport(url.c_str(), "");
 
-        DCF::MessageListener msgEvent(&queue, &transport, subject.c_str(), [&](const DCF::MessageListener *event, const DCF::Message *msg){
+        queue.addSubscriber(DCF::Subscriber(&transport, "TOM_TEST", [&](const DCF::Subscriber *event, const DCF::Message *msg) {
             INFO_LOG(msg);
-        });
+        }));
 
         while (true) {
             queue.dispatch();

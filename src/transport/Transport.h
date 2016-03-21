@@ -13,6 +13,7 @@
 
 namespace DCF {
     class EventManager;
+    class IOEvent;
 
     class Transport {
         friend class MessageListener;
@@ -28,6 +29,9 @@ namespace DCF {
         const EventManager *m_eventManager = nullptr;
     protected:
         std::function<void(notification_type type, const char *reason)> m_notificationHandler;
+
+        virtual std::unique_ptr<IOEvent> createReceiverEvent() const = 0;
+
     public:
         Transport(const char *description) : m_description(description) {};
         virtual ~Transport() {}

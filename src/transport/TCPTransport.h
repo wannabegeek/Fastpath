@@ -13,7 +13,11 @@
 
 namespace DCF {
 
+    class Event;
+
     class TCPTransport : public Transport {
+    private:
+        virtual std::unique_ptr<IOEvent> createReceiverEvent() const override;
     protected:
         std::unique_ptr<SocketClient> m_peer;
         const url m_url;

@@ -9,6 +9,7 @@
 #include "TCPTransport.h"
 #include "SocketClient.h"
 #include "messages/Message.h"
+#include "event/IOEvent.h"
 
 namespace DCF {
 
@@ -101,5 +102,11 @@ namespace DCF {
 
     const bool TCPTransport::valid() const noexcept {
         return m_peer->isConnected();
+    }
+
+    std::unique_ptr<IOEvent> TCPTransport::createReceiverEvent() const {
+        return std::make_unique<IOEvent>(nullptr, m_peer->getSocket(), EventType::READ, [&](IOEvent *event, const EventType type) {
+            DEBUG_LOG("Received some data");
+        });
     }
 }

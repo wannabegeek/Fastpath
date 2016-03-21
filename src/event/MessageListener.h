@@ -14,18 +14,30 @@
 
 namespace DCF {
     class Queue;
+    class TCPTransport;
+    class IOEvent;
+
+    struct TransportContainer {
+        Transport *transport;
+        std::unique_ptr<IOEvent> event;
+
+        TransportContainer(Transport *t, std::unique_ptr<IOEvent> &&e);
+    };
 
     class MessageListener {
 
         typedef std::vector<const Subscriber *> ObserversType;
-        std::unordered_map<Transport *, ObserversType> m_observers;
+        std::unordered_map<const Transport *, ObserversType> m_observers;
 
         Transport *m_transport;
 
-        void subscribe(const char *subject) noexcept;
-        void unsubscribe(const char *subject) noexcept;
+        void subscribe(Transport *transport, const char *subject) noexcept;
+        void unsubscribe(Transport *transport, const char *subject) noexcept;
 
-        status registerTransport(Transport *transport, const EventManager *eventManager);
+        void handleMessage(const Transport *transport, Message *message);
+
+        std::unique_ptr<TransportContainer> registerTransport(Transport *transport, EventManager *eventManager);
+        std::unique_ptr<TransportContainer> registerTransport(TCPTransport *transport, EventManager *eventManager);
     public:
         static MessageListener& instance(){
             static MessageListener instance;
@@ -34,7 +46,7 @@ namespace DCF {
 
         ~MessageListener();
 
-        status addObserver(Queue *queue, const Subscriber &subscriber, const EventManager *eventManager);
+        status addObserver(Queue *queue, const Subscriber &subscriber, EventManager *eventManager);
         status removeObserver(Queue *queue, const Subscriber &subscriber);
 
 

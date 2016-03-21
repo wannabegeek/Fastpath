@@ -26,7 +26,7 @@ namespace DCF {
             std::copy_n(subject, len + 1, m_subject.get());
         }
 
-        ~Subscriber();
+        ~Subscriber() {};
 
         Transport *transport() const noexcept { return m_transport; }
         const char *subject() const noexcept { return m_subject.get(); }
