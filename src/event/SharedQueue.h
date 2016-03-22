@@ -9,6 +9,9 @@
 #include "Queue.h"
 
 namespace DCF {
+    /**
+     * Abstract base class for BusySpinQueue and BlockingQueue.
+     */
     template <typename T> class SharedQueue : public Queue {
     protected:
         using QueueType = T;
@@ -32,13 +35,23 @@ namespace DCF {
         }
 
     public:
+        /**
+         * Get the number of events waiting to be consumed off the queue.
+         * @return Number of pending events
+         */
         const size_t eventsInQueue() const noexcept override {
             return m_queue.size();
         }
 
+        /// @cond DEV
+        /**
+         * Enqueue callback to the queue, ready to be dispatched by client thread.
+         * This should be called by the Session thread
+         */
         const bool __enqueue(queue_value_type &&event) noexcept override {
             return m_queue.push(event);
         }
+        /// @endcond
     };
 }
 

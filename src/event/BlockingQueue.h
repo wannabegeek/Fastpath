@@ -11,8 +11,17 @@
 #include "SharedQueue.h"
 
 namespace DCF {
+    /**
+     * Queue for dispatching events to the registered callbacks.
+     * This queue will wait for an event to be placed on the queue,
+     * it will then dispatch the event to the relevant callback.
+     */
     class BlockingQueue : public SharedQueue<tf::blocking_ringbuffer<Queue::queue_value_type, 4096>> {
     public:
+        /**
+         * Attempt to dispatch any pending events and return immediately.
+         * @return OK, or and error if one occurred
+         */
         inline const status try_dispatch() override {
             if (tf::likely(this->isInitialised())) {
                 status result = NO_EVENTS;
@@ -27,6 +36,10 @@ namespace DCF {
             }
         }
 
+        /**
+         * Dispatch an event. Will block until one or more events have been dispatched
+         * @return OK, or and error if one occurred
+         */
         inline const status dispatch() override {
             status status = OK;
             queue_value_type dispatcher;
@@ -35,6 +48,15 @@ namespace DCF {
             return status;
         }
 
+        /**
+         * Dispatch an event, but only wait until timeout is reached.
+         * If possible avoid using this call, since it can have a performance impact,
+         * to implement the timeout it internally create a timer event to drop out of
+         * the `dispatch()` call. For optimal performance, it is best to add a timer event
+         * to the queue.
+         * @param timeout The maximum time in which to wait for an event.
+         * @return OK, or and error if one occurred
+         */
         const status dispatch(const std::chrono::milliseconds &timeout) override {
             status status = OK;
             if ((status = this->try_dispatch()) == NO_EVENTS) {
