@@ -56,7 +56,7 @@ int main( int argc, char *argv[] )  {
         DCF::BlockingQueue queue;
         DCF::TCPTransport transport(url.c_str(), "");
 
-        queue.addSubscriber(DCF::Subscriber(&transport, "TOM_TEST", [&](const DCF::Subscriber *event, const DCF::Message *msg) {
+        queue.addSubscriber(DCF::Subscriber(&transport, subject.c_str(), [&](const DCF::Subscriber *event, const DCF::Message *msg) {
             INFO_LOG(msg);
         }));
 

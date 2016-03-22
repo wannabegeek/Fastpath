@@ -17,7 +17,7 @@ namespace fp {
     private:
         using hasher = H;
 
-        constexpr typename hasher::result_type admin_identifier() { return hasher()("_FP."); }
+        constexpr typename hasher::result_type admin_identifier() { return hasher()("_FP"); }
 
         std::vector<typename hasher::result_type> m_components;
         typename hasher::result_type m_subject_hash;
@@ -48,6 +48,10 @@ namespace fp {
 
         const bool is_admin() const noexcept {
             return m_is_admin;
+        }
+
+        const bool operator==(const subject<> &other) const {
+            return m_subject_hash == other.m_subject_hash;
         }
 
         template <typename T> friend class subscription;

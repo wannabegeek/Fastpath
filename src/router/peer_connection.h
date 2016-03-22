@@ -20,6 +20,10 @@ namespace DCF {
 namespace fp {
     class peer_connection {
     private:
+        // TODO: these need to be calculated up-front
+        static subject<> RegisterObserver() { return subject<>("_FP.REGISTER.OBSERVER"); }
+        static subject<> UnregisterObserver() { return subject<>("_FP.UNREGISTER.OBSERVER"); }
+
         std::vector<subscription<>> m_subscriptions;
         DCF::Queue *m_queue;
         std::unique_ptr<DCF::Socket> m_socket;
@@ -30,6 +34,8 @@ namespace fp {
         const std::function<void(peer_connection *)> m_disconnectionHandler;
 
         void data_handler(DCF::IOEvent *event, const DCF::EventType eventType);
+
+        void handle_admin_message(const subject<> subject, DCF::Message &message);
     public:
         peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
         peer_connection(peer_connection &&other);

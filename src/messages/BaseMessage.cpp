@@ -138,8 +138,8 @@ namespace DCF {
                     if (!field->decode(buffer)) {
                         return false;
                     }
-                    m_payload.emplace_back(field);
                     m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));
+                    m_payload.emplace_back(field);
 
                     success = true;
                 }

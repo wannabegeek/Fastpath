@@ -57,6 +57,7 @@ namespace fp {
             return c.get() == connection;
         });
         if (it != m_connections.end()) {
+            DEBUG_LOG("Client has disconnected");
             m_connections.erase(it);
         } else {
             ERROR_LOG("Received disconnect notification for unknown connection");

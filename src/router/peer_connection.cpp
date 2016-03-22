@@ -28,6 +28,7 @@ namespace fp {
 
     peer_connection::~peer_connection() {
         DEBUG_LOG("Peer connection destroyed");
+        m_queue->unregisterEvent(m_socketEvent);
     }
 
     void peer_connection::add_subscription(const char *subject) {
@@ -51,6 +52,28 @@ namespace fp {
         return (it != m_subscriptions.end());
     }
 
+    void peer_connection::handle_admin_message(const subject<> subject, DCF::Message &message) {
+        DEBUG_LOG("Received admin msg: " << message);
+
+        if (subject == RegisterObserver()) {
+            const char *data = nullptr;
+            size_t len = 0;
+            if (!message.getDataField("subject", &data, len) && len > 0) {
+                ERROR_LOG("Received invalid message - subscription without a subject to subscribe to");
+                return;
+            }
+            this->add_subscription(data);
+        } else if (subject == RegisterObserver()) {
+            const char *data = nullptr;
+            size_t len = 0;
+            if (!message.getDataField("subject", &data, len) && len > 0) {
+                ERROR_LOG("Received invalid message - subscription without a subject to subscribe to");
+                return;
+            }
+            this->remove_subscription(data);
+        }
+    }
+
     void peer_connection::data_handler(DCF::IOEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("Received data from client");
 
@@ -69,13 +92,15 @@ namespace fp {
 
                 try {
                     if (DCF::Message::addressing_details(storage, &subject_ptr, subject_length, flags, msg_length)) {
-                        INFO_LOG("Received message [" << subject_ptr << "] of length " << msg_length);
+                        DEBUG_LOG("Received message [" << subject_ptr << "] of length " << msg_length);
                         const byte *data = nullptr;
                         m_buffer.bytes(&data);
                         subject<> subject(subject_ptr);
                         DCF::ByteStorage msgData(data, msg_length, true);
                         if (tf::unlikely(subject.is_admin())) {
-                            DEBUG_LOG("Received admin message");
+                            DCF::Message message;
+                            message.decode(msgData);
+                            this->handle_admin_message(subject, message);
                         } else {
                             // other wise pass it to our handler
                             m_messageHandler(this, subject, msgData);
