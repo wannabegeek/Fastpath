@@ -24,42 +24,26 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef SIGIO_H
-#define SIGIO_H
-
+#ifndef IOEVENT_H
+#define IOEVENT_H
 
 #include "Event.h"
 #include "EventType.h"
 
 namespace DCF {
 
-	class IOEvent final : public Event {
+	class IOEvent : public Event {
         friend class EventManager;
 
 	private:
 		int m_fd;
 		EventType m_eventTypes;
 
-		std::function<void(IOEvent *, const EventType)> m_callback;
-
-        void dispatch(IOEvent *event, const EventType &eventType) {
-            this->__popDispatch();
-            if (tf::likely(!m_pendingRemoval)) {
-                m_callback(event, eventType);
-            }
-        }
-
 	public:
 
-		IOEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback)
-				: Event(queue), m_fd(fd), m_eventTypes(eventType), m_callback(callback) {
-		};
-
-		IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes), m_callback(std::move(other.m_callback)) {
-		}
-
-		~IOEvent() {
-        }
+		IOEvent(Queue *queue, const int fd, const EventType eventType);
+		IOEvent(IOEvent &&other);
+		virtual ~IOEvent() {}
 
         inline const int fileDescriptor() const noexcept {
             return m_fd;
@@ -69,24 +53,8 @@ namespace DCF {
 			return m_eventTypes;
 		}
 
-		const bool isEqual(const Event &other) const noexcept override {
-			try {
-				const IOEvent &f = dynamic_cast<const IOEvent &>(other);
-				return m_fd == f.m_fd && m_eventTypes == f.m_eventTypes;
-			} catch (const std::bad_cast &e) {
-				return false;
-			}
-		}
+		virtual const bool isEqual(const Event &other) const noexcept override;
 
-        const bool __notify(const EventType &eventType) noexcept override {
-            assert(m_queue != nullptr);
-            this->__pushDispatch();
-            return m_queue->__enqueue(std::make_pair(this, std::bind(&IOEvent::dispatch, this, this, eventType)));
-        }
-
-		void __destroy() override {
-			m_queue->unregisterEvent(this);
-		}
 	};
 }
 

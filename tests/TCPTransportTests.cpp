@@ -54,9 +54,9 @@ TEST(TCPTransport, TryConnectSuccess) {
         bool finished = false;
 
         DCF::InlineQueue queue;
-        DCF::IOEvent *clientHandler = nullptr;
+        DCF::DataEvent *clientHandler = nullptr;
 
-        auto client = [&](DCF::IOEvent *event, int eventType) {
+        auto client = [&](DCF::DataEvent *event, int eventType) {
             DEBUG_LOG("In client callback");
             EXPECT_EQ(DCF::EventType::READ, eventType);
             char buffer[MTU];
@@ -88,7 +88,7 @@ TEST(TCPTransport, TryConnectSuccess) {
             queue.unregisterEvent(event);
         };
 
-        queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+        queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
@@ -145,12 +145,12 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
         bool finished = false;
 
         DCF::InlineQueue queue;
-        DCF::IOEvent *clientHandler = nullptr;
+        DCF::DataEvent *clientHandler = nullptr;
 
         bool consumedMessage = false;
         DCF::MessageBuffer msgBuffer(1025);
 
-        auto client = [&](DCF::IOEvent *event, int eventType) {
+        auto client = [&](DCF::DataEvent *event, int eventType) {
             DEBUG_LOG("In client callback");
             EXPECT_EQ(DCF::EventType::READ, eventType);
             int counter = 0;
@@ -183,7 +183,7 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
             }
         };
 
-        queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+        queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();

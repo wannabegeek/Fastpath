@@ -64,7 +64,7 @@ TEST(Session, SimpleReadInline) {
 
     DCF::InlineQueue queue;
 
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("in callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
@@ -100,7 +100,7 @@ TEST(Session, SimpleReadBusySpin) {
 
     DCF::BusySpinQueue queue;
 
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("In callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
@@ -137,7 +137,7 @@ TEST(Session, SimpleReadBlocking) {
     DCF::BlockingQueue queue;
 
     LOG_LEVEL(tf::logger::info);
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("In callback");
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
@@ -177,8 +177,8 @@ TEST(Session, ReadTimerInline) {
     DCF::InlineQueue queue;
     bool shutdown = false;
 
-    DCF::IOEvent *handler = nullptr;
-    auto callback = [&](DCF::IOEvent *event, const DCF::EventType eventType) {
+    DCF::DataEvent *handler = nullptr;
+    auto callback = [&](DCF::DataEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
@@ -225,8 +225,8 @@ TEST(Session, ReadTimerBusySpin) {
 
     bool shutdown = false;
 
-    DCF::IOEvent *handler = nullptr;
-    auto callback = [&](DCF::IOEvent *event, const DCF::EventType eventType) {
+    DCF::DataEvent *handler = nullptr;
+    auto callback = [&](DCF::DataEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
@@ -270,8 +270,8 @@ TEST(Session, ReadTimerBlocking) {
     DCF::BlockingQueue queue;
     bool shutdown = false;
 
-    DCF::IOEvent *handler = nullptr;
-    auto callback = [&](DCF::IOEvent *event, const DCF::EventType eventType) {
+    DCF::DataEvent *handler = nullptr;
+    auto callback = [&](DCF::DataEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];

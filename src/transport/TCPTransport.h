@@ -14,10 +14,11 @@
 namespace DCF {
 
     class Event;
+    class TransportIOEvent;
 
     class TCPTransport : public Transport {
     private:
-        virtual std::unique_ptr<IOEvent> createReceiverEvent() const override;
+        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) override;
     protected:
         std::unique_ptr<SocketClient> m_peer;
         const url m_url;
@@ -26,6 +27,7 @@ namespace DCF {
         std::future<bool> m_connectionAttemptInProgress;
 
         MessageBuffer m_sendBuffer;
+        MessageBuffer m_readBuffer;
 
         bool __connect();
         bool __disconnect();

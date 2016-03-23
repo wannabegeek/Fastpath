@@ -32,7 +32,6 @@ class DCQueue;
 
 #include <chrono>
 #include "Event.h"
-#include "Session.h"
 #include "status.h"
 
 namespace  DCF {
@@ -59,52 +58,18 @@ namespace  DCF {
 
         std::function<void(TimerEvent *)> m_callback;
 
-        void dispatch(TimerEvent *event) {
-            this->__popDispatch();
-            if (tf::likely(!m_pendingRemoval)) {
-                m_callback(event);
-            }
-		}
+        void dispatch(TimerEvent *event);
 
     public:
-		TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback)
-				: Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
-		}
+		TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback);
+		TimerEvent(TimerEvent &&other);
 
-		TimerEvent(TimerEvent &&other) : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)) {
-		}
+        void reset();
+		void setTimeout(const std::chrono::microseconds &timeout);
 
-		~TimerEvent() {
-        }
-
-        void reset() {
-            m_timeLeft = m_timeout;
-            m_queue->__notifyEventManager();
-		}
-
-		void setTimeout(const std::chrono::microseconds &timeout) {
-			m_timeout = timeout;
-			this->reset();
-		}
-
-		const bool isEqual(const Event &other) const noexcept override {
-			try {
-				const TimerEvent &f = dynamic_cast<const TimerEvent &>(other);
-				return m_timeout == f.m_timeout;
-			} catch (const std::bad_cast &e) {
-				return false;
-			}
-		}
-
-        const bool __notify(const EventType &eventType) noexcept override {
-            assert(m_queue != nullptr);
-            this->__pushDispatch();
-            return m_queue->__enqueue(std::make_pair(this, std::bind(&TimerEvent::dispatch, this, this)));
-        };
-
-        void __destroy() override {
-            m_queue->unregisterEvent(this);
-        }
+		const bool isEqual(const Event &other) const noexcept override;
+        const bool __notify(const EventType &eventType) noexcept override;
+        void __destroy() override;
     };
 }
 

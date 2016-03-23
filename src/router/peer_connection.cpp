@@ -74,7 +74,7 @@ namespace fp {
         }
     }
 
-    void peer_connection::data_handler(DCF::IOEvent *event, const DCF::EventType eventType) {
+    void peer_connection::data_handler(DCF::DataEvent *event, const DCF::EventType eventType) {
         DEBUG_LOG("Received data from client");
 
         static const size_t MTU_SIZE = 1500;

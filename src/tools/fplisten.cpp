@@ -42,7 +42,6 @@ int main( int argc, char *argv[] )  {
     } else {
         LOG_LEVEL(tf::logger::warning);
     }
-    LOG_THREADS(true);
 
     try {
         DCF::Session::initialise();
@@ -57,7 +56,7 @@ int main( int argc, char *argv[] )  {
         DCF::TCPTransport transport(url.c_str(), "");
 
         queue.addSubscriber(DCF::Subscriber(&transport, subject.c_str(), [&](const DCF::Subscriber *event, const DCF::Message *msg) {
-            INFO_LOG(msg);
+            INFO_LOG(*msg);
         }));
 
         while (true) {

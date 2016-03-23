@@ -76,7 +76,7 @@ namespace DCF {
         }
 
         const bool __enqueue(queue_value_type &&dispatcher) noexcept override {
-            dispatcher.second();
+            dispatcher.function();
             return true;
         }
         /// @endcond

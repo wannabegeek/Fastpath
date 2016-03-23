@@ -1,5 +1,5 @@
 //
-// Created by Tom Fewster on 15/03/2016.
+// Created by Tom Fewster on 23/03/2016.
 //
 
 #include <iostream>
@@ -8,13 +8,13 @@
 #include <event/Session.h>
 #include <transport/TCPTransport.h>
 #include <messages/Message.h>
+#include <event/BlockingQueue.h>
 
 int main( int argc, char *argv[] )  {
     tf::options o;
     o.register_option(tf::option("help", "Displays help", false, false, "help", 'h'));
     o.register_option(tf::option("loglevel", "Logging level (DEBUG, INFO, WARNING, ERROR)", false, true, "loglevel", 'l'));
     o.register_option(tf::option("url", "URL to connect to", true, true, "url", 'u'));
-    o.register_option(tf::option("subject", "Subject to user", true, true, "subject", 's'));
 
     try {
         o.parse(argc, argv);
@@ -46,26 +46,26 @@ int main( int argc, char *argv[] )  {
         DCF::Session::initialise();
 
         const std::string url = o.getWithDefault("url", "");
-        std::string subject;
-        if (!o.get("subject", subject)) {
-            ERROR_LOG("You must specify a subject");
-        }
 
+        DCF::BlockingQueue queue;
         DCF::TCPTransport transport(url.c_str(), "");
 
-        if (transport.valid()) {
-            DCF::Message msg;
-            msg.setSubject(subject.c_str());
-            msg.addDataField("name", "tom");
-            if (transport.sendMessage(msg) == DCF::OK) {
+        DCF::Message sendMsg;
+        queue.addSubscriber(DCF::Subscriber(&transport, "TEST.PERF.SOURCE", [&](const DCF::Subscriber *event, const DCF::Message *msg) {
+            DEBUG_LOG("Received message");
+            sendMsg.clear();
+            sendMsg.setSubject("TEST.PERF.SINK");
+            if (transport.sendMessage(sendMsg) == DCF::OK) {
                 INFO_LOG("Message send successfully");
             } else {
                 ERROR_LOG("Failed to send message");
+                return 1;
             }
-        } else {
-            ERROR_LOG("Failed to send message - transport not connected");
+        }));
+
+        while (true) {
+            queue.dispatch();
         }
-        DCF::Session::destroy();
     } catch (const std::exception &stde) {
         ERROR_LOG("Internal error: " << stde.what());
         return 1;

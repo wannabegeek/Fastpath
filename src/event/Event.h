@@ -6,7 +6,6 @@
 #define TFDCF_EVENT_H
 
 #include <functional>
-#include "Queue.h"
 #include "EventType.h"
 #include "Session.h"
 #include <atomic>

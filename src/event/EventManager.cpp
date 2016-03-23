@@ -114,7 +114,7 @@ namespace DCF {
 	}
 
 	void EventManager::serviceEvent(const EventPollElement &event) {
-        foreach_event_matching(event, [&](auto handler) {
+        foreach_event_matching(event, [&](IOEvent *handler) {
             if (!handler->__awaitingDispatch()) {
                 handler->__notify(static_cast<EventType>(handler->eventTypes() & event.filter));
             }
@@ -124,7 +124,7 @@ namespace DCF {
 	void EventManager::serviceTimers() {
 		std::chrono::steady_clock::time_point nowTime = std::chrono::steady_clock::now();
 
-        foreach_timer([&](auto handler) {
+        foreach_timer([&](TimerEvent *handler) {
             if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_PROGRESS) {
                 // calculate the elapsed time
                 std::chrono::microseconds elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(

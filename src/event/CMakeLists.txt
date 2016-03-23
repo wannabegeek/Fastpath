@@ -29,6 +29,6 @@ set(SOURCE_FILES
         Subscriber.cpp
         Subscriber.h
         MessageListener.cpp
-        )
+        DataEvent.h DataEvent.cpp)
 
 add_library(event OBJECT ${SOURCE_FILES})

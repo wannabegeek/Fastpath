@@ -6,6 +6,7 @@
 #define TFDCF_TRANSPORT_H
 
 #include <messages/StorageTypes.h>
+#include <transport/TransportIOEvent.h>
 #include <chrono>
 #include <string>
 #include <functional>
@@ -13,7 +14,7 @@
 
 namespace DCF {
     class EventManager;
-    class IOEvent;
+    class TransportIOEvent;
 
     class Transport {
         friend class MessageListener;
@@ -30,7 +31,7 @@ namespace DCF {
     protected:
         std::function<void(notification_type type, const char *reason)> m_notificationHandler;
 
-        virtual std::unique_ptr<IOEvent> createReceiverEvent() const = 0;
+        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) = 0;
 
     public:
         Transport(const char *description) : m_description(description) {};

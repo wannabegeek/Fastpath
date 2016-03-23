@@ -50,7 +50,7 @@ namespace fp {
             return m_is_admin;
         }
 
-        const bool operator==(const subject<> &other) const {
+        const bool operator==(const subject<H> &other) const {
             return m_subject_hash == other.m_subject_hash;
         }
 

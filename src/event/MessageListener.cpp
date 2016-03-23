@@ -9,7 +9,7 @@
 
 namespace DCF {
 
-    TransportContainer::TransportContainer(Transport *t, std::unique_ptr<IOEvent> &&e) : transport(t), event(std::move(e)) {}
+    TransportContainer::TransportContainer(Transport *t, std::unique_ptr<TransportIOEvent> &&e) : transport(t), event(std::move(e)) {}
 
 
     void MessageListener::subscribe(Transport *transport, const char *subject) noexcept {
@@ -30,42 +30,45 @@ namespace DCF {
 
     MessageListener::~MessageListener() {}
 
-    std::unique_ptr<TransportContainer> MessageListener::registerTransport(Transport *transport, EventManager *eventManager) {
+    const bool MessageListener::registerTransport(Transport *transport, EventManager *eventManager) {
         if (transport->m_eventManager == nullptr) {
             // lock
             if (transport->m_eventManager == nullptr) {
                 transport->m_eventManager = eventManager;
-                std::unique_ptr<TransportContainer> container = std::make_unique<TransportContainer>(transport, transport->createReceiverEvent());
-                // ^^^^^^^ we need to add MessageListener::handleMessage to be acke to receive message callbacks
+                std::unique_ptr<TransportContainer> container = std::make_unique<TransportContainer>(transport, transport->createReceiverEvent(std::bind(&MessageListener::handleMessage, this, std::placeholders::_1, std::placeholders::_2)));
                 if (container->event) {
                     eventManager->registerHandler(container->event.get());
                 }
-                return container;
+                m_transportConnections.push_back(std::move(container));
             }
             // unlock
+            return true;
         } else if (transport->m_eventManager != eventManager) {
             ERROR_LOG("Transport cannot be associated with a global queue and an inline dispatch queue");
+        } else {
+            return true;
         }
 
-        return nullptr;
+        return false;
     }
 
 
     void MessageListener::handleMessage(const Transport *transport, Message *message) {
         auto it = m_observers.find(transport);
         if (it != m_observers.end()) {
+            fp::subject<> subject(message->subject());
             ObserversType &subscribers = it->second;
             std::for_each(subscribers.begin(), subscribers.end(), [&](auto &subscriber) {
-                // is this subscriber interested?
-                // dispatch to handler if it is...
+                if (subscriber->is_interested(subject)) {
+                    subscriber->__dispatch(message);
+                }
             });
         }
     }
 
     status MessageListener::addObserver(Queue *queue, const Subscriber &subscriber, EventManager *eventManager) {
 
-        auto container = this->registerTransport(subscriber.transport(), eventManager);
-        if (container) {
+        if (this->registerTransport(subscriber.transport(), eventManager)) {
             auto it = m_observers.find(subscriber.transport());
             if (it == m_observers.end()) {
                 m_observers.emplace(subscriber.transport(), ObserversType(1, &subscriber));

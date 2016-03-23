@@ -27,13 +27,13 @@ namespace fp {
         std::vector<subscription<>> m_subscriptions;
         DCF::Queue *m_queue;
         std::unique_ptr<DCF::Socket> m_socket;
-        DCF::IOEvent *m_socketEvent;
+        DCF::DataEvent *m_socketEvent;
 
         DCF::MessageBuffer m_buffer;
         const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> m_messageHandler;
         const std::function<void(peer_connection *)> m_disconnectionHandler;
 
-        void data_handler(DCF::IOEvent *event, const DCF::EventType eventType);
+        void data_handler(DCF::DataEvent *event, const DCF::EventType eventType);
 
         void handle_admin_message(const subject<> subject, DCF::Message &message);
     public:

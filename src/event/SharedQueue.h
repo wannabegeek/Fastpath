@@ -25,8 +25,8 @@ namespace DCF {
         virtual ~SharedQueue() { }
 
         virtual inline void dispatch_event(queue_value_type &dispatcher) {
-            Event *event = dispatcher.first;
-            dispatcher.second();
+            Event *event = dispatcher.event;
+            dispatcher.function();
             if (event->__pendingRemoval() && !event->__awaitingDispatch()) {
                 auto it = m_registeredEvents.find(make_find_set_unique(event));
                 assert(it != m_registeredEvents.end());
@@ -49,7 +49,7 @@ namespace DCF {
          * This should be called by the Session thread
          */
         const bool __enqueue(queue_value_type &&event) noexcept override {
-            return m_queue.push(event);
+            return m_queue.push(std::forward<queue_value_type>(event));
         }
         /// @endcond
     };

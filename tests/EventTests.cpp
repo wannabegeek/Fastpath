@@ -54,7 +54,7 @@ TEST(EventManager, SimpleRead) {
 
     DCF::InlineQueue queue;
 
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
@@ -117,14 +117,14 @@ TEST(EventManager, ComplexRead) {
     ASSERT_NE(-1, ::pipe(fd));
     DCF::InlineQueue queue;
 
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callback1Fired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
 
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callback2Fired = true;
         // We can't have both handlers reading the data
@@ -154,7 +154,7 @@ TEST(EventManager, SimpleTimeoutWithActiveFD) {
        callback1Fired = true;
     });
 
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::IOEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callback2Fired = true;
         char buffer[1];

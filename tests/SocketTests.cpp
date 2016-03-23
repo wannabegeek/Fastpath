@@ -99,7 +99,7 @@ TEST(Socket, NonBlockingReadWrite) {
     EXPECT_NE(-1, client.getSocket());
     DEBUG_LOG("Client connected");
 
-    /*DCF::IOEvent *handler = */queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, DCF::EventType eventType) {
+    /*DCF::IOEvent *handler = */queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         DEBUG_LOG("Client received data");
         callbackFired = true;
@@ -151,7 +151,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
 
         DCF::BusySpinQueue queue;
 
-        auto client = [&](const DCF::IOEvent *event, int eventType) {
+        auto client = [&](const DCF::DataEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             char buffer[16];
             int counter = 0;
@@ -178,9 +178,9 @@ TEST(Socket, NonBlockingServerReadWrite) {
             finished = true;
         };
 
-        DCF::IOEvent *clientHandler = nullptr;
+        DCF::DataEvent *clientHandler = nullptr;
 
-        /*DCF::IOEvent *handler = */queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+        /*DCF::DataEvent *handler = */queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
@@ -208,7 +208,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     ASSERT_TRUE(client.connect(DCF::SocketOptionsDisableSigPipe));
     EXPECT_NE(-1, client.getSocket());
 
-    /*DCF::IOEvent *handler = */queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+    /*DCF::DataEvent *handler = */queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, int eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
 

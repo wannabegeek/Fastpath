@@ -1,5 +1,5 @@
 //
-// Created by Tom Fewster on 15/03/2016.
+// Created by Tom Fewster on 23/03/2016.
 //
 
 #include <iostream>
@@ -8,13 +8,13 @@
 #include <event/Session.h>
 #include <transport/TCPTransport.h>
 #include <messages/Message.h>
+#include <event/BlockingQueue.h>
 
 int main( int argc, char *argv[] )  {
     tf::options o;
     o.register_option(tf::option("help", "Displays help", false, false, "help", 'h'));
     o.register_option(tf::option("loglevel", "Logging level (DEBUG, INFO, WARNING, ERROR)", false, true, "loglevel", 'l'));
     o.register_option(tf::option("url", "URL to connect to", true, true, "url", 'u'));
-    o.register_option(tf::option("subject", "Subject to user", true, true, "subject", 's'));
 
     try {
         o.parse(argc, argv);
@@ -45,26 +45,32 @@ int main( int argc, char *argv[] )  {
     try {
         DCF::Session::initialise();
 
-        const std::string url = o.getWithDefault("url", "");
-        std::string subject;
-        if (!o.get("subject", subject)) {
-            ERROR_LOG("You must specify a subject");
-        }
 
+        const std::string url = o.getWithDefault("url", "");
+
+        DCF::BlockingQueue queue;
         DCF::TCPTransport transport(url.c_str(), "");
 
-        if (transport.valid()) {
-            DCF::Message msg;
-            msg.setSubject(subject.c_str());
-            msg.addDataField("name", "tom");
-            if (transport.sendMessage(msg) == DCF::OK) {
-                INFO_LOG("Message send successfully");
-            } else {
-                ERROR_LOG("Failed to send message");
-            }
+        DCF::Message sendMsg;
+        sendMsg.setSubject("TEST.PERF.SOURCE");
+        sendMsg.addDataField("name", "tom");
+
+        queue.addSubscriber(DCF::Subscriber(&transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) {
+            transport.sendMessage(sendMsg);
+        }));
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if (transport.sendMessage(sendMsg) == DCF::OK) {
+            INFO_LOG("Message send successfully");
         } else {
-            ERROR_LOG("Failed to send message - transport not connected");
+            ERROR_LOG("Failed to send message");
+            return 1;
         }
+
+        while (true) {
+            queue.dispatch();
+        }
+
         DCF::Session::destroy();
     } catch (const std::exception &stde) {
         ERROR_LOG("Internal error: " << stde.what());

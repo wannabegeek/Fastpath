@@ -15,6 +15,7 @@
 
 namespace DCF {
     class Event;
+    class DataEvent;
     class Message;
     class Subscriber;
 
@@ -44,6 +45,22 @@ namespace DCF {
 ////        return std::make_unique<T, unique_ptr_deleter<T>()>(std::forward<Args>(args)...));
 //    }
 
+    // try to align this to a cache line to prevent false sharing
+    struct alignas(64) QueueElement {
+        using FnType = std::function<void ()>;
+        Event *event;
+        FnType function;
+        QueueElement() {}
+        QueueElement(Event *e, FnType &&fn) : event(e), function(std::move(fn)) {}
+        QueueElement(QueueElement &&other) : event(other.event), function(std::move(other.function)) {}
+
+        const QueueElement &operator=(const QueueElement &other) {
+            event = other.event;
+            function = other.function;
+            return *this;
+        }
+    };
+
     class Queue {
     protected:
         std::unordered_set<set_unique_ptr<Event>> m_registeredEvents;
@@ -58,7 +75,7 @@ namespace DCF {
         }
 
     public:
-        using queue_value_type = std::pair<Event *, std::function<void ()>>;
+        using queue_value_type = QueueElement;
 
         virtual ~Queue();
 
@@ -76,10 +93,10 @@ namespace DCF {
             this->eventManager()->notify();
         }
 
-        IOEvent *registerEvent(const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback);
+        DataEvent *registerEvent(const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback);
         TimerEvent *registerEvent(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback);
 
-        status unregisterEvent(IOEvent *event);
+        status unregisterEvent(DataEvent *event);
         status unregisterEvent(TimerEvent *event);
 
         status addSubscriber(const Subscriber &subscriber);

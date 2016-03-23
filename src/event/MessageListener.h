@@ -15,29 +15,27 @@
 namespace DCF {
     class Queue;
     class TCPTransport;
-    class IOEvent;
+    class TransportIOEvent;
 
     struct TransportContainer {
         Transport *transport;
-        std::unique_ptr<IOEvent> event;
+        std::unique_ptr<TransportIOEvent> event;
 
-        TransportContainer(Transport *t, std::unique_ptr<IOEvent> &&e);
+        TransportContainer(Transport *t, std::unique_ptr<TransportIOEvent> &&e);
     };
 
     class MessageListener {
 
         typedef std::vector<const Subscriber *> ObserversType;
         std::unordered_map<const Transport *, ObserversType> m_observers;
-
-        Transport *m_transport;
+        std::vector<std::unique_ptr<TransportContainer>> m_transportConnections;
 
         void subscribe(Transport *transport, const char *subject) noexcept;
         void unsubscribe(Transport *transport, const char *subject) noexcept;
 
         void handleMessage(const Transport *transport, Message *message);
 
-        std::unique_ptr<TransportContainer> registerTransport(Transport *transport, EventManager *eventManager);
-        std::unique_ptr<TransportContainer> registerTransport(TCPTransport *transport, EventManager *eventManager);
+        const bool registerTransport(Transport *transport, EventManager *eventManager);
     public:
         static MessageListener& instance(){
             static MessageListener instance;

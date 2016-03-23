@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <messages/Message.h>
+#include <router/subscription.h>
 
 namespace DCF {
     class Transport;
@@ -16,10 +17,11 @@ namespace DCF {
     private:
         Transport *m_transport;
         std::unique_ptr<char[]> m_subject;
-        std::function<void(Subscriber *, Message *)> m_callback;
+        const std::function<void(const Subscriber *, Message *)> m_callback;
+        fp::subscription<> m_subscription;
 
     public:
-        Subscriber(Transport *transport, const char *subject, const std::function<void(Subscriber *, Message *)> &callback) : m_transport(transport), m_callback(callback) {
+        Subscriber(Transport *transport, const char *subject, const std::function<void(const Subscriber *, Message *)> &callback) : m_transport(transport), m_callback(callback), m_subscription(subject) {
             // TODO: we need to copy the string here
             const size_t len = strlen(subject);
             m_subject = std::unique_ptr<char[]>(new char[len + 1]);
@@ -30,6 +32,10 @@ namespace DCF {
 
         Transport *transport() const noexcept { return m_transport; }
         const char *subject() const noexcept { return m_subject.get(); }
+
+        bool is_interested(const fp::subject<> subject) const;
+
+        void __dispatch(Message *message) const;
     };
 }
 

@@ -2,10 +2,10 @@
 // Created by Tom Fewster on 17/03/2016.
 //
 
+#include "Queue.h"
 #include <Exception.h>
-#include "IOEvent.h"
+#include "DataEvent.h"
 #include "TimerEvent.h"
-#include "transport/Transport.h"
 #include "MessageListener.h"
 #include "event/Subscriber.h"
 
@@ -18,10 +18,10 @@ namespace DCF {
         });
     }
 
-    IOEvent *Queue::registerEvent(const int fd, const EventType eventType, const std::function<void(IOEvent *, const EventType)> &callback) {
-        auto result = m_registeredEvents.insert(make_set_unique<Event>(new IOEvent(this, fd, eventType, callback)));
+    DataEvent *Queue::registerEvent(const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback) {
+        auto result = m_registeredEvents.insert(make_set_unique<Event>(new DataEvent(this, fd, eventType, callback)));
         assert(result.second == true);
-        IOEvent *event = reinterpret_cast<IOEvent *>(result.first->get());
+        DataEvent *event = reinterpret_cast<DataEvent *>(result.first->get());
         EventManager *em = this->eventManager();
         if (em != nullptr) {
             em->registerHandler(event);
@@ -43,7 +43,7 @@ namespace DCF {
         return event;
     }
 
-    status Queue::unregisterEvent(IOEvent *event) {
+    status Queue::unregisterEvent(DataEvent *event) {
         // This will block any further callback to client code, which may still exist in the queue
         event->__setPendingRemoval(true);
         EventManager *em = this->eventManager();

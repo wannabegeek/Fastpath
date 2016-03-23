@@ -9,7 +9,7 @@
 #include "TCPTransport.h"
 #include "SocketClient.h"
 #include "messages/Message.h"
-#include "event/IOEvent.h"
+#include "transport/TransportIOEvent.h"
 
 namespace DCF {
 
@@ -32,7 +32,7 @@ namespace DCF {
     TCPTransport::TCPTransport(const char *url_ptr, const char *description) : TCPTransport(url(url_ptr), description) {
     }
 
-    TCPTransport::TCPTransport(const url &url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024) {
+    TCPTransport::TCPTransport(const url &url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024), m_readBuffer(1500) {
         INFO_LOG("Connecting to: " << m_url);
         m_peer = std::make_unique<SocketClient>(m_url.host(), m_url.port());
 
@@ -104,9 +104,27 @@ namespace DCF {
         return m_peer->isConnected();
     }
 
-    std::unique_ptr<IOEvent> TCPTransport::createReceiverEvent() const {
-        return std::make_unique<IOEvent>(nullptr, m_peer->getSocket(), EventType::READ, [&](IOEvent *event, const EventType type) {
-            DEBUG_LOG("Received some data");
+    std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) {
+        return std::make_unique<TransportIOEvent>(m_peer->getSocket(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
+            static const size_t MTU_SIZE = 1500;
+
+            ssize_t size = 0;
+            while (true) {
+                DCF::Socket::ReadResult result = m_peer->read(reinterpret_cast<const char *>(m_readBuffer.allocate(MTU_SIZE)), MTU_SIZE, size);
+                m_readBuffer.erase_back(MTU_SIZE - size);
+                if (result == DCF::Socket::MoreData) {
+                    const DCF::ByteStorage &storage = m_readBuffer.byteStorage();
+                    DCF::Message message;
+                    if (message.decode(storage)) {
+                        messageCallback(this, &message);
+                    }
+                } else if (result == DCF::Socket::NoData) {
+                    break;
+                } else if (result == DCF::Socket::Closed) {
+                    DEBUG_LOG("Client Socket closed");
+                    break;
+                }
+            }
         });
     }
 }

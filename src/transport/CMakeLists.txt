@@ -10,6 +10,6 @@ set(SOURCE_FILES
         Transport.h
         URL.cpp
         URL.h
-        realm_transport.cpp realm_transport.h)
+        realm_transport.cpp realm_transport.h TransportIOEvent.cpp TransportIOEvent.h)
 
 add_library(transport OBJECT ${SOURCE_FILES})
