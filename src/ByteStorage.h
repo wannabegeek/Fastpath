@@ -24,6 +24,7 @@ namespace DCF {
         bool m_no_copy;
 
         mutable byte *m_read_ptr;
+        mutable byte *m_mark_ptr;
 
         void allocateStorage(const size_t length);
 
@@ -48,12 +49,15 @@ namespace DCF {
         }
 
         // for reading as a stream
+        void mark() const noexcept;
         void resetRead() const noexcept;
         void advanceRead(const size_t distance) const;
         const size_t remainingReadLength() const;
         const size_t bytesRead() const;
         const byte *readBytes() const;
         const byte *operator*() const;
+
+        const ByteStorage segment(const size_t length) const;
 
         const bool operator==(const ByteStorage &other) const;
 

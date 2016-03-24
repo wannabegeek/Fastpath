@@ -30,14 +30,14 @@ namespace fp {
         DCF::DataEvent *m_socketEvent;
 
         DCF::MessageBuffer m_buffer;
-        const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> m_messageHandler;
+        const std::function<void(peer_connection *, const subject<> &, const DCF::ByteStorage &)> m_messageHandler;
         const std::function<void(peer_connection *)> m_disconnectionHandler;
 
         void data_handler(DCF::DataEvent *event, const DCF::EventType eventType);
 
         void handle_admin_message(const subject<> subject, DCF::Message &message);
     public:
-        peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
+        peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
         peer_connection(peer_connection &&other);
         ~peer_connection();
 

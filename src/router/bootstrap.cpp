@@ -38,7 +38,7 @@ namespace fp {
         DEBUG_LOG("Shutting down");
     }
 
-    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, DCF::ByteStorage &msgData) {
+    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const DCF::ByteStorage &msgData) {
         DEBUG_LOG("Processing message");
         // send the message out to all local client who are interested
         std::for_each(m_connections.begin(), m_connections.end(), [&](auto &connection) {

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <ostream>
 #include <iomanip>
+#include <cassert>
 #include "ByteStorage.h"
 #include "types.h"
 
@@ -73,12 +74,16 @@ namespace DCF {
         return false;
     }
 
+    void ByteStorage::mark() const noexcept {
+        m_mark_ptr = m_read_ptr;
+    }
+
     void ByteStorage::resetRead() const noexcept {
-        m_read_ptr = m_storage.first;
+        m_read_ptr = m_mark_ptr;
     }
 
     void ByteStorage::advanceRead(const size_t distance) const {
-        m_read_ptr += distance;
+        std::advance(m_read_ptr, distance);
     }
 
     const size_t ByteStorage::remainingReadLength() const {
@@ -96,6 +101,13 @@ namespace DCF {
 
     const byte *ByteStorage::operator*() const {
         return this->readBytes();
+    }
+
+    const ByteStorage ByteStorage::segment(const size_t length) const {
+        assert(length <= remainingReadLength());
+        const byte *ptr = m_read_ptr;
+        advanceRead(length);
+        return ByteStorage(ptr, length, true);
     }
 
     std::ostream &operator<<(std::ostream &out, const ByteStorage &msg) {

@@ -73,12 +73,15 @@ namespace DCF {
         return total_len;
     }
 
-    const bool Message::addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length) {
+    const bool Message::addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length, bool advance_reader) {
+        buffer.mark();
+        bool result = false;
+
         if (buffer.remainingReadLength() >= sizeof(MsgAddressing::addressing_start)) {
             MsgAddressing::addressing_start chk = readScalar<MsgAddressing::addressing_start>(buffer.readBytes());
             buffer.advanceRead(sizeof(MsgAddressing::addressing_start));
             if (chk != addressing_flag) {
-                throw fp::exception("Received corrupt message");
+                throw fp::exception("Received corrupt message - incorrect addressing marker");
             }
         }
 
@@ -98,11 +101,14 @@ namespace DCF {
                 *subject = reinterpret_cast<const char *>(buffer.readBytes());
                 buffer.advanceRead(subject_length);
                 length = msg_length + MsgAddressing::msg_length_offset();
-                return true;
+                result = true;
             }
         }
-        buffer.resetRead();
-        return false;
+
+        if (!advance_reader || result == false) {
+            buffer.resetRead();
+        }
+        return result;
     }
 
     const bool Message::decode(const ByteStorage &buffer) {

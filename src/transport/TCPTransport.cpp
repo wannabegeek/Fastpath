@@ -86,7 +86,10 @@ namespace DCF {
             msg.encode(m_sendBuffer);
             const byte *data = nullptr;
             size_t len = m_sendBuffer.bytes(&data);
-            return m_peer->send(reinterpret_cast<const char *>(data), len) ? OK : CANNOT_SEND;
+            if (m_peer->send(reinterpret_cast<const char *>(data), len)) {
+                m_sendBuffer.erase_front(len);
+                return OK;
+            }
         }
         return CANNOT_SEND;
     }

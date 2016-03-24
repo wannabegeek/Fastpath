@@ -52,11 +52,16 @@ int main( int argc, char *argv[] )  {
 
         DCF::Message sendMsg;
         queue.addSubscriber(DCF::Subscriber(&transport, "TEST.PERF.SOURCE", [&](const DCF::Subscriber *event, const DCF::Message *msg) {
-            DEBUG_LOG("Received message");
+            DEBUG_LOG("Received message: " << *msg);
+            int id = 0;
+            if (msg->getScalarField("id", id)) {
+                DEBUG_LOG("Processing message: " << id);
+            }
             sendMsg.clear();
             sendMsg.setSubject("TEST.PERF.SINK");
+            sendMsg.addScalarField("id", id);
             if (transport.sendMessage(sendMsg) == DCF::OK) {
-                INFO_LOG("Message send successfully");
+                DEBUG_LOG("Message send successfully: " << sendMsg);
             } else {
                 ERROR_LOG("Failed to send message");
                 return 1;
