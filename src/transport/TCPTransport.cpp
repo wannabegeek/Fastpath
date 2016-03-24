@@ -118,9 +118,10 @@ namespace DCF {
                 if (result == DCF::Socket::MoreData) {
                     const DCF::ByteStorage &storage = m_readBuffer.byteStorage();
                     DCF::Message message;
-                    if (message.decode(storage)) {
+                    while (message.decode(storage)) {
                         messageCallback(this, &message);
                     }
+                    m_readBuffer.erase_front(storage.bytesRead());
                 } else if (result == DCF::Socket::NoData) {
                     break;
                 } else if (result == DCF::Socket::Closed) {

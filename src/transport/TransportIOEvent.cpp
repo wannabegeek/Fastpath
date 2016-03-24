@@ -20,5 +20,4 @@ namespace DCF {
 
     void TransportIOEvent::__destroy() {
     }
-
 }

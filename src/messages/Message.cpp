@@ -112,6 +112,7 @@ namespace DCF {
     }
 
     const bool Message::decode(const ByteStorage &buffer) {
+        this->clear();
         size_t subject_length = 0;
         size_t msg_length = 0;
         const char *subject = nullptr;

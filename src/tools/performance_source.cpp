@@ -15,7 +15,8 @@ int main( int argc, char *argv[] )  {
     o.register_option(tf::option("help", "Displays help", false, false, "help", 'h'));
     o.register_option(tf::option("loglevel", "Logging level (DEBUG, INFO, WARNING, ERROR)", false, true, "loglevel", 'l'));
     o.register_option(tf::option("url", "URL to connect to", true, true, "url", 'u'));
-    o.register_option(tf::option("count", "Number of messages to send", true, true, "count", 'c'));
+    o.register_option(tf::option("rate", "Sending message rate", false, true, "rate", 'r'));
+    o.register_option(tf::option("count", "Number of messages to send", false, true, "count", 'c'));
 
     try {
         o.parse(argc, argv);
@@ -43,11 +44,13 @@ int main( int argc, char *argv[] )  {
         LOG_LEVEL(tf::logger::warning);
     }
 
-    size_t count = o.get("count", 1000l);
+    const size_t count = o.get("count", 1000ul);
+    const size_t rate = o.get("rate", 100ul);
 
     try {
-        std::vector<std::chrono::high_resolution_clock::time_point> m_sendingTimes(count);
-        std::vector<std::chrono::high_resolution_clock::time_point> m_receivingTimes(count);
+        using TimeType = std::chrono::high_resolution_clock::time_point;
+        using ResultsType = std::pair<TimeType, TimeType>;
+        std::vector<ResultsType> m_times(count);
 
         DCF::Session::initialise();
 
@@ -56,39 +59,42 @@ int main( int argc, char *argv[] )  {
         DCF::BlockingQueue queue;
         DCF::TCPTransport transport(url.c_str(), "");
 
-        int id = 0;
+        uint32_t id = 0;
         bool shutdown = false;
 
         DCF::Message sendMsg;
         sendMsg.setSubject("TEST.PERF.SOURCE");
         sendMsg.addScalarField("id", id);
 
-        queue.registerEvent(std::chrono::milliseconds(10), [&](DCF::TimerEvent *event) {
+        queue.registerEvent(std::chrono::seconds(1) / rate, [&](DCF::TimerEvent *event) {
             if (id < count) {
                 sendMsg.clear();
                 sendMsg.setSubject("TEST.PERF.SOURCE");
-                sendMsg.addScalarField("id", ++id);
+                sendMsg.addScalarField("id", id);
+                m_times[id].first = std::chrono::high_resolution_clock::now();
                 if (transport.sendMessage(sendMsg) == DCF::OK) {
-                    m_sendingTimes.push_back(std::chrono::high_resolution_clock::now());
                     DEBUG_LOG("Message send successfully: " << sendMsg);
                 } else {
                     ERROR_LOG("Failed to send message");
                     exit(1);
                 }
+                id++;
             }
         });
 
-        queue.addSubscriber(DCF::Subscriber(&transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) {
+        DCF::Subscriber subscriber(&transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) {
             DEBUG_LOG("Received message from sink");
-            m_receivingTimes.push_back(std::chrono::high_resolution_clock::now());
-            int recv_id = 0;
+            std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
+            uint32_t recv_id = 0;
             if (recvMsg->getScalarField("id", recv_id)) {
                 DEBUG_LOG("Processing message: " << recv_id);
+                m_times[recv_id].second = t;
             }
-            if (recv_id >= count) {
+            if (recv_id >= count - 1) {
                 shutdown = true;
             }
-        }));
+        });
+        queue.addSubscriber(subscriber);
 
         while (!shutdown) {
             queue.dispatch();
@@ -96,10 +102,44 @@ int main( int argc, char *argv[] )  {
 
         DCF::Session::destroy();
 
-        for (id = 0; id < count; id++) {
-            auto latency = std::chrono::duration_cast<std::chrono::microseconds>(m_receivingTimes[id] - m_sendingTimes[id]);
-            INFO_LOG("Duration " << latency.count() << " ms");
-        }
+        std::vector<std::chrono::microseconds> latencies;
+        latencies.reserve(count);
+        std::transform(m_times.begin(), m_times.end(), std::back_inserter(latencies), [&](auto &result) {
+            return std::chrono::duration_cast<std::chrono::microseconds>(result.second - result.first);
+        });
+
+        std::future<double> avg = std::async(std::launch::async, [&latencies]() {
+            uint64_t total = 0;
+            std::for_each(latencies.begin(), latencies.end(), [&total](auto &v) {
+                total += v.count();
+            });
+            return static_cast<double>(total) / latencies.size();
+        });
+
+        std::future<std::chrono::microseconds> min = std::async(std::launch::async, [&latencies]() {
+            return *std::min_element(latencies.begin(), latencies.end());
+        });
+
+        std::future<std::chrono::microseconds> max = std::async(std::launch::async, [&latencies]() {
+            return *std::max_element(latencies.begin(), latencies.end());
+        });
+
+        auto find_p = [&](size_t p) {
+            size_t index = latencies.size() - (p * 100 / latencies.size());
+            std::nth_element(latencies.begin(), latencies.begin() + index, latencies.end(), std::less<std::chrono::microseconds>());
+            return latencies[index];
+        };
+
+        std::future<std::chrono::microseconds> p99 = std::async(std::launch::async, std::bind(find_p, 95));
+        std::future<std::chrono::microseconds> p90 = std::async(std::launch::async, std::bind(find_p, 90));
+        std::future<std::chrono::microseconds> p50 = std::async(std::launch::async, std::bind(find_p, 50));
+
+        INFO_LOG("Avg round trip: " << avg.get() << " us");
+        INFO_LOG("Min round trip: " << min.get().count() << " us");
+        INFO_LOG("Max round trip: " << max.get().count() << " us");
+        INFO_LOG("P99 round trip: " << p99.get().count() << " us");
+        INFO_LOG("P90 round trip: " << p90.get().count() << " us");
+        INFO_LOG("P50 round trip: " << p50.get().count() << " us");
 
     } catch (const std::exception &stde) {
         ERROR_LOG("Internal error: " << stde.what());

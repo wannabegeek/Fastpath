@@ -118,8 +118,10 @@ namespace DCF {
         }
 
         inline void erase_back(const size_t length) {
-            assert(length <= visible_length());
-            m_storage.truncate(m_storage.length() - length);
+            if (length > 0) {
+                assert(length <= visible_length());
+                m_storage.truncate(m_storage.length() - length);
+            }
         }
 
         inline void erase_front(const size_t length) {

@@ -15,10 +15,6 @@ namespace DCF {
     public:
         TransportIOEvent(const int fd, const EventType &eventType, const std::function<void(TransportIOEvent *event, const EventType type)> &callback);
 
-        ~TransportIOEvent() {
-            INFO_LOG("BOOM BOOM BOOM");
-        }
-
         const bool isEqual(const Event &other) const noexcept override;
         const bool __notify(const EventType &eventType) noexcept override;
         void __destroy() override;

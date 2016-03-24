@@ -29,7 +29,7 @@
 namespace DCF {
     IOEvent::IOEvent(Queue *queue, const int fd, const EventType eventType)
             : Event(queue), m_fd(fd), m_eventTypes(eventType) {
-    };
+    }
 
     IOEvent::IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes) {
     }
