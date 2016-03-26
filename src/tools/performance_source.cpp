@@ -59,7 +59,7 @@ int main( int argc, char *argv[] )  {
         DCF::BlockingQueue queue;
         auto transport = fp::make_relm_connection(url.c_str(), "");
 
-        if (transport->valid()) {
+        if (!transport->valid()) {
             ERROR_LOG("Failed to create transport");
             return 1;
         }
