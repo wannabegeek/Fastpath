@@ -11,11 +11,11 @@
 #include "types.h"
 
 namespace DCF {
-    ByteStorage::ByteStorage(const size_t allocation) : m_storedLength(0), m_no_copy(false), m_read_ptr(m_storage.first) {
+    ByteStorage::ByteStorage(const size_t allocation) noexcept : m_storedLength(0), m_no_copy(false), m_read_ptr(m_storage.first), m_mark_ptr(m_read_ptr) {
         allocateStorage(allocation);
     }
 
-    ByteStorage::ByteStorage(const byte *bytes, size_t length, bool no_copy) : m_storedLength(0), m_no_copy(no_copy) {
+    ByteStorage::ByteStorage(const byte *bytes, size_t length, bool no_copy) noexcept : m_storedLength(0), m_no_copy(no_copy) {
         if (m_no_copy) {
             m_storage.first = const_cast<byte *>(bytes);
             m_storage.second = 0;
@@ -26,15 +26,18 @@ namespace DCF {
             m_storedLength = length;
         }
         m_read_ptr = m_storage.first;
+        m_mark_ptr = m_read_ptr;
     }
 
-    ByteStorage::ByteStorage(ByteStorage &&orig) : m_storage(orig.m_storage), m_storedLength(orig.m_storedLength), m_no_copy(orig.m_no_copy) {
+    ByteStorage::ByteStorage(ByteStorage &&orig) noexcept : m_storage(orig.m_storage), m_storedLength(orig.m_storedLength), m_no_copy(orig.m_no_copy) {
         orig.m_storage.first = nullptr;
         orig.m_storage.second = 0;
         orig.m_storedLength = 0;
         orig.m_no_copy = true;
         orig.m_read_ptr = orig.m_storage.first;
+        orig.m_mark_ptr = 0;
         m_read_ptr = m_storage.first;
+        m_mark_ptr = m_read_ptr;
     }
 
     ByteStorage::~ByteStorage() noexcept {
@@ -57,12 +60,12 @@ namespace DCF {
         m_storage.first = storage_traits::allocate(m_allocator, m_storage.second);
     }
 
-    const size_t ByteStorage::bytes(const byte **data) const {
+    const size_t ByteStorage::bytes(const byte **data) const noexcept {
         *data = m_storedLength > 0 ? m_storage.first : nullptr;
         return m_storedLength;
     }
 
-    const bool ByteStorage::operator==(const ByteStorage &other) const {
+    const bool ByteStorage::operator==(const ByteStorage &other) const noexcept {
         if (m_storedLength == other.m_storedLength) {
             for (size_t i = 0; i < m_storedLength; i++) {
                 if (m_storage.first[i] != other.m_storage.first[i]) {
@@ -82,30 +85,30 @@ namespace DCF {
         m_read_ptr = m_mark_ptr;
     }
 
-    void ByteStorage::advanceRead(const size_t distance) const {
+    void ByteStorage::advanceRead(const size_t distance) const noexcept {
         std::advance(m_read_ptr, distance);
     }
 
-    const size_t ByteStorage::remainingReadLength() const {
-        size_t v =  m_storedLength - (m_read_ptr - m_storage.first);
+    const size_t ByteStorage::remainingReadLength() const noexcept {
+        size_t v =  m_storedLength - this->bytesRead();
         return v;
     }
 
-    const size_t ByteStorage::bytesRead() const {
+    const size_t ByteStorage::bytesRead() const noexcept {
         return m_read_ptr - m_storage.first;
     }
 
-    const byte *ByteStorage::readBytes() const {
+    const byte *ByteStorage::readBytes() const noexcept {
         return m_read_ptr;
     }
 
-    const byte *ByteStorage::operator*() const {
+    const byte *ByteStorage::operator*() const noexcept {
         return this->readBytes();
     }
 
-    const ByteStorage ByteStorage::segment(const size_t length) const {
+    const ByteStorage ByteStorage::segment(const size_t length) const noexcept {
         assert(length <= remainingReadLength());
-        const byte *ptr = m_read_ptr;
+        auto ptr = m_read_ptr;
         advanceRead(length);
         return ByteStorage(ptr, length, true);
     }

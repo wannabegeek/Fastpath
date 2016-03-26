@@ -30,8 +30,6 @@ extern "C" {
 #include <chrono>
 
 namespace tf {
-    // Code in the mpmc_sema namespace below is an adaptation of Jeff Preshing's
-    // portable + lightweight semaphore implementations, originally from
     // https://github.com/preshing/cpp11-on-multicore/blob/master/common/sema.h
     // LICENSE:
     // Copyright (c) 2015 Jeff Preshing
@@ -125,6 +123,51 @@ namespace tf {
         }
     };
 #elif defined(__unix__)
+#ifdef HAVE_EVENTFD
+    class Semaphore {
+    private:
+        unsigned int m_fd;
+
+        Semaphore(const Semaphore& other) = delete;
+        Semaphore& operator=(const Semaphore& other) = delete;
+
+    public:
+        Semaphore(int initialCount = 0) {
+            assert(initialCount >= 0);
+            m_fd = eventfd(initialCount, 0);
+        }
+
+        ~Semaphore() {
+            close(m_fd);
+        }
+
+        void wait() {
+            // http://stackoverflow.com/questions/2013181/gdb-causes-sem-wait-to-fail-with-eintr-error
+            uint64_t value = 0;
+            read(m_fd, &value, sizeof(uint64_t));
+        }
+
+//        void wait(const std::chrono::steady_clock::duration &duration) {
+//            struct timespec timeout = {0, 0};
+//            timeout.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+//            timeout.tv_nsec = static_cast<decltype(timeout.tv_nsec)>(
+//                    std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() -
+//                    (timeout.tv_sec * 1000000000));
+//            sem_timedwait(&m_sema, &timeout);
+//        }
+
+        void signal() {
+            uint64_t value = 1;;
+            write(m_fd, &value, sizeof(uint64_t));
+        }
+
+        void signal(int count) {
+            while (count-- > 0) {
+                this->signal();
+            }
+        }
+    };
+#else
     //---------------------------------------------------------
     // Semaphore (POSIX, Linux)
     //---------------------------------------------------------
@@ -175,6 +218,7 @@ namespace tf {
             }
         }
     };
+#endif
 #else
 #error Unsupported platform! (No semaphore wrapper available)
 #endif

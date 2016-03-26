@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <cstring>
 #include "MutableByteStorage.h"
+#include <utils/logger.h>
 
 namespace DCF {
     struct MsgAddressing {
@@ -86,6 +87,7 @@ namespace DCF {
         virtual ~MessageBuffer() noexcept {}
 
         byte *mutableBytes() const noexcept {
+            assert(m_startIndex <= m_storage.length());
             return &m_storage.mutableBytes()[m_startIndex];
         }
 
@@ -101,14 +103,14 @@ namespace DCF {
 
         inline byte *allocate(const size_t length) {
             // expand the length of our buffer if required
-            const size_t previous_length = m_storage.length();
-            if (m_storage.length() + length > m_storage.capacity()) {
+            if (m_startIndex != 0 && m_storage.length() + length > m_storage.capacity()) {
                 byte *bytes = m_storage.mutableBytes();
                 memmove(bytes, &bytes[m_startIndex], m_storage.length() - m_startIndex);
-                m_startIndex = 0;
                 m_storage.truncate(m_storage.length() - m_startIndex);
+                m_startIndex = 0;
             }
 
+            const size_t previous_length = m_storage.length();
             m_storage.increaseLengthBy(length);
             return &m_storage.mutableBytes()[previous_length];
         }
@@ -126,13 +128,16 @@ namespace DCF {
 
         inline void erase_front(const size_t length) {
             assert(length <= visible_length());
+            assert(length + m_startIndex <= m_storage.length());
             if (length + m_startIndex >= m_storage.length()) {
+                m_startIndex = 0;
                 m_storage.clear();
             } else {
                 if (m_storage.length() == 0) {
                     m_startIndex = 0;
                 } else {
                     m_startIndex += length;
+                    assert(m_startIndex <= m_storage.length());
                 }
             }
         }
@@ -145,6 +150,7 @@ namespace DCF {
             const byte *bytes = nullptr;
             const size_t len = m_storage.bytes(&bytes);
             *data = &bytes[m_startIndex];
+            assert(m_startIndex <= m_storage.length());
             return len - m_startIndex;
         }
 
@@ -160,18 +166,18 @@ namespace DCF {
         const byte operator[](const size_t index) const {
             const byte *bytes = nullptr;
             m_storage.bytes(&bytes);
+            assert(m_startIndex <= m_storage.length());
             return (&bytes[m_startIndex])[index];
         }
 
         friend std::ostream &operator<<(std::ostream &out, const MessageBuffer &msg) {
             const byte *bytes = nullptr;
             const size_t length = msg.bytes(&bytes);
-            out << "[start_index: " << msg.m_startIndex << " length: " << length << "]: " << std::endl;
+            out << "[start_index: " << msg.m_startIndex << " length: " << length << " capacity: " << (msg.m_storage.capacity() - msg.m_startIndex) << "]: " << std::endl;
             const byte *output = nullptr;
 
             const size_t default_block = 8;
             size_t inc = 0;
-
             for (size_t i = 0; i < length; i += default_block) {
                 inc = std::min(default_block, length - i);
 

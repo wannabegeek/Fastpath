@@ -28,38 +28,38 @@ namespace DCF {
 
         void allocateStorage(const size_t length);
 
-        explicit ByteStorage(const size_t allocation = 256);
+        explicit ByteStorage(const size_t allocation = 256) noexcept;
 
     public:
-        explicit ByteStorage(const byte *bytes, size_t length, bool nocopy=false);
-        ByteStorage(ByteStorage &&orig);
+        explicit ByteStorage(const byte *bytes, size_t length, bool nocopy=false) noexcept;
+        ByteStorage(ByteStorage &&orig) noexcept;
 
         ByteStorage(const ByteStorage &) = delete;
         const ByteStorage &operator=(const ByteStorage &) = delete;
 
         virtual ~ByteStorage() noexcept;
 
-        const size_t bytes(const byte **data) const;
-        const size_t length() const { return m_storedLength; }
+        const size_t bytes(const byte **data) const noexcept;
+        const size_t length() const noexcept { return m_storedLength; }
 
-        const bool owns_copy() const { return !m_no_copy; }
+        const bool owns_copy() const noexcept { return !m_no_copy; }
 
-        const byte operator[](const size_t index) const {
+        const byte operator[](const size_t index) const noexcept {
             return m_storage.first[index];
         }
 
         // for reading as a stream
         void mark() const noexcept;
         void resetRead() const noexcept;
-        void advanceRead(const size_t distance) const;
-        const size_t remainingReadLength() const;
-        const size_t bytesRead() const;
-        const byte *readBytes() const;
-        const byte *operator*() const;
+        void advanceRead(const size_t distance) const noexcept;
+        const size_t remainingReadLength() const noexcept;
+        const size_t bytesRead() const noexcept;
+        const byte *readBytes() const noexcept;
+        const byte *operator*() const noexcept;
 
-        const ByteStorage segment(const size_t length) const;
+        const ByteStorage segment(const size_t length) const noexcept;
 
-        const bool operator==(const ByteStorage &other) const;
+        const bool operator==(const ByteStorage &other) const noexcept;
 
         friend std::ostream &operator<<(std::ostream &out, const ByteStorage &msg);
     };

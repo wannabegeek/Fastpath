@@ -41,6 +41,7 @@ namespace fp {
     public:
 
         subject(const char *subject) {
+            m_components.reserve(50);
             hash_elements(subject, m_components);
             m_subject_hash = hasher()(subject);
             m_is_admin = (m_components[0] == admin_identifier());

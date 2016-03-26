@@ -115,11 +115,18 @@ namespace DCF {
             while (true) {
                 DCF::Socket::ReadResult result = m_peer->read(reinterpret_cast<const char *>(m_readBuffer.allocate(MTU_SIZE)), MTU_SIZE, size);
                 m_readBuffer.erase_back(MTU_SIZE - size);
+
                 if (result == DCF::Socket::MoreData) {
                     const DCF::ByteStorage &storage = m_readBuffer.byteStorage();
                     DCF::Message message;
-                    while (message.decode(storage)) {
-                        messageCallback(this, &message);
+                    while (true) {
+                        storage.mark();
+                        if (message.decode(storage)) {
+                            messageCallback(this, &message);
+                        } else {
+                            storage.resetRead();
+                            break;
+                        }
                     }
                     m_readBuffer.erase_front(storage.bytesRead());
                 } else if (result == DCF::Socket::NoData) {

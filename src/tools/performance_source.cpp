@@ -83,12 +83,17 @@ int main( int argc, char *argv[] )  {
         });
 
         DCF::Subscriber subscriber(&transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) {
-            DEBUG_LOG("Received message from sink");
-            std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
+            DEBUG_LOG("Received message from sink: " << *recvMsg);
+//            std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
             uint32_t recv_id = 0;
             if (recvMsg->getScalarField("id", recv_id)) {
                 DEBUG_LOG("Processing message: " << recv_id);
-                m_times[recv_id].second = t;
+                uint64_t ts = 0;
+                if (recvMsg->getScalarField("timestamp", ts)) {
+                    std::chrono::microseconds dur(ts);
+                    std::chrono::time_point<std::chrono::high_resolution_clock> t(dur);
+                    m_times[recv_id].second = t;
+                }
             }
             if (recv_id >= count - 1) {
                 shutdown = true;

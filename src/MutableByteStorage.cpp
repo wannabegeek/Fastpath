@@ -7,17 +7,17 @@
 #include <algorithm>
 
 namespace DCF {
-    MutableByteStorage::MutableByteStorage(const size_t allocation) : ByteStorage(allocation) {
+    MutableByteStorage::MutableByteStorage(const size_t allocation) noexcept : ByteStorage(allocation) {
         // call super classes protected constructor
     }
 
-    MutableByteStorage::MutableByteStorage(const byte *bytes, size_t length) : ByteStorage(bytes, length, false) {
+    MutableByteStorage::MutableByteStorage(const byte *bytes, size_t length) noexcept : ByteStorage(bytes, length, false) {
     }
 
-    MutableByteStorage::MutableByteStorage(MutableByteStorage &&orig) : ByteStorage(std::move(orig)) {
+    MutableByteStorage::MutableByteStorage(MutableByteStorage &&orig) noexcept : ByteStorage(std::move(orig)) {
     }
 
-    void MutableByteStorage::setData(const byte *data, const size_t length) {
+    void MutableByteStorage::setData(const byte *data, const size_t length) noexcept {
         if (length > m_storage.second) {
             storage_traits::deallocate(m_allocator, m_storage.first, m_storage.second);
             allocateStorage(std::max(length, m_storage.second * 2));
@@ -53,7 +53,7 @@ namespace DCF {
         std::copy(data, &data[copy_length], &m_storage.first[current_length]);
     }
 
-    const size_t MutableByteStorage::capacity() const {
+    const size_t MutableByteStorage::capacity() const noexcept {
         return m_storage.second;
     }
 
@@ -61,7 +61,12 @@ namespace DCF {
         return m_storage.first;
     }
 
-    void MutableByteStorage::truncate(const size_t length) {
+    void MutableByteStorage::truncate(const size_t length) noexcept {
         m_storedLength = length;
+    }
+
+    void MutableByteStorage::clear() noexcept {
+        m_storedLength = 0;
+        m_read_ptr = m_mark_ptr = m_storage.first;
     }
 }

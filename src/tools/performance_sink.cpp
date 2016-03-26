@@ -52,6 +52,7 @@ int main( int argc, char *argv[] )  {
 
         DCF::Message sendMsg;
         DCF::Subscriber subscriber(&transport, "TEST.PERF.SOURCE", [&](const DCF::Subscriber *event, const DCF::Message *msg) {
+            auto recv_ts = std::chrono::high_resolution_clock::now();
             DEBUG_LOG("Received message: " << *msg);
             uint32_t id = 0;
             if (msg->getScalarField("id", id)) {
@@ -59,6 +60,8 @@ int main( int argc, char *argv[] )  {
                 sendMsg.clear();
                 sendMsg.setSubject("TEST.PERF.SINK");
                 sendMsg.addScalarField("id", id);
+                const uint64_t ts = std::chrono::duration_cast<std::chrono::microseconds>(recv_ts.time_since_epoch()).count();
+                sendMsg.addScalarField("timestamp", ts);
                 if (transport.sendMessage(sendMsg) == DCF::OK) {
                     DEBUG_LOG("Message send successfully: " << sendMsg);
                 } else {

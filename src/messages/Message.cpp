@@ -2,6 +2,7 @@
 // Created by Tom Fewster on 15/03/2016.
 //
 
+#include <utils/logger.h>
 #include "Message.h"
 
 namespace DCF {
@@ -73,22 +74,20 @@ namespace DCF {
         return total_len;
     }
 
-    const bool Message::addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length, bool advance_reader) {
-        buffer.mark();
+    const bool Message::addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length) {
+        length = subject_length = 0;
         bool result = false;
 
-        if (buffer.remainingReadLength() >= sizeof(MsgAddressing::addressing_start)) {
+        if (buffer.remainingReadLength() >= MsgAddressing::size()) {
             MsgAddressing::addressing_start chk = readScalar<MsgAddressing::addressing_start>(buffer.readBytes());
             buffer.advanceRead(sizeof(MsgAddressing::addressing_start));
             if (chk != addressing_flag) {
                 throw fp::exception("Received corrupt message - incorrect addressing marker");
             }
-        }
 
-        if (buffer.remainingReadLength() >= MsgAddressing::size()) {
             MsgAddressing::msg_length msg_length = readScalar<MsgAddressing::msg_length>(buffer.readBytes());
+            buffer.advanceRead(sizeof(MsgAddressing::msg_length));
             if (buffer.remainingReadLength() >= msg_length) {
-                buffer.advanceRead(sizeof(MsgAddressing::msg_length));
                 flags = readScalar<MsgAddressing::flags>(buffer.readBytes());
                 buffer.advanceRead(sizeof(MsgAddressing::flags));
 
@@ -102,12 +101,15 @@ namespace DCF {
                 buffer.advanceRead(subject_length);
                 length = msg_length + MsgAddressing::msg_length_offset();
                 result = true;
+            } else {
+                INFO_LOG("No enough data in buffer require: " << msg_length << " have: " <<
+                          buffer.remainingReadLength());
             }
+        } else {
+            INFO_LOG("No enough data in buffer require: " << MsgAddressing::size() << " have: " <<
+                      buffer.remainingReadLength());
         }
 
-        if (!advance_reader || result == false) {
-            buffer.resetRead();
-        }
         return result;
     }
 
