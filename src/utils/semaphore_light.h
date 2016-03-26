@@ -126,7 +126,7 @@ namespace tf {
 #ifdef HAVE_EVENTFD
     class Semaphore {
     private:
-        unsigned int m_fd;
+        int m_fd;
 
         Semaphore(const Semaphore& other) = delete;
         Semaphore& operator=(const Semaphore& other) = delete;
@@ -142,7 +142,6 @@ namespace tf {
         }
 
         void wait() {
-            // http://stackoverflow.com/questions/2013181/gdb-causes-sem-wait-to-fail-with-eintr-error
             uint64_t value = 0;
             read(m_fd, &value, sizeof(uint64_t));
         }
@@ -157,7 +156,7 @@ namespace tf {
 //        }
 
         void signal() {
-            uint64_t value = 1;;
+            uint64_t value = 1;
             write(m_fd, &value, sizeof(uint64_t));
         }
 

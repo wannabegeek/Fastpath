@@ -101,13 +101,7 @@ namespace DCF {
                 buffer.advanceRead(subject_length);
                 length = msg_length + MsgAddressing::msg_length_offset();
                 result = true;
-            } else {
-                INFO_LOG("No enough data in buffer require: " << msg_length << " have: " <<
-                          buffer.remainingReadLength());
             }
-        } else {
-            INFO_LOG("No enough data in buffer require: " << MsgAddressing::size() << " have: " <<
-                      buffer.remainingReadLength());
         }
 
         return result;
