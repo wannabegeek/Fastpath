@@ -8,7 +8,6 @@
 #include <stddef.h>
 #include <string>
 #include <type_traits>
-#include <boost/any.hpp>
 #include <iostream>
 #include "StorageTypes.h"
 #include "FieldTraits.h"

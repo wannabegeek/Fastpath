@@ -7,10 +7,15 @@
 
 #include <unistd.h>
 #include <atomic>
-#include <unistd.h>
-#include <fcntl.h>
-#include <mach/mach_types.h>
 #include <Exception.h>
+#include "../config.h"
+
+#ifdef HAVE_EVENTFD
+#include <sys/eventfd.h>
+#else
+#include <fcntl.h>
+#endif
+
 #include "PollManager.h"
 
 namespace DCF {
