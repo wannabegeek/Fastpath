@@ -6,7 +6,7 @@
 #include <utils/logger.h>
 #include <utils/tfoptions.h>
 #include <event/Session.h>
-#include <transport/TCPTransport.h>
+#include <transport/realm_transport.h>
 #include <messages/Message.h>
 #include <event/BlockingQueue.h>
 
@@ -57,7 +57,12 @@ int main( int argc, char *argv[] )  {
         const std::string url = o.getWithDefault("url", "");
 
         DCF::BlockingQueue queue;
-        DCF::TCPTransport transport(url.c_str(), "");
+        auto transport = fp::make_relm_connection(url.c_str(), "");
+
+        if (transport->valid()) {
+            ERROR_LOG("Failed to create transport");
+            return 1;
+        }
 
         uint32_t id = 0;
         bool shutdown = false;
@@ -75,7 +80,7 @@ int main( int argc, char *argv[] )  {
                 sendMsg.setSubject("TEST.PERF.SOURCE");
                 sendMsg.addScalarField("id", id);
                 m_times[id].first = std::chrono::high_resolution_clock::now();
-                if (transport.sendMessage(sendMsg) == DCF::OK) {
+                if (transport->sendMessage(sendMsg) == DCF::OK) {
                     DEBUG_LOG("Message send successfully: " << sendMsg);
                 } else {
                     ERROR_LOG("Failed to send message");
@@ -85,7 +90,7 @@ int main( int argc, char *argv[] )  {
             }
         });
 
-        DCF::Subscriber subscriber(&transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) {
+        DCF::Subscriber subscriber(transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) {
             DEBUG_LOG("Received message from sink: " << *recvMsg);
 //            std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
             uint32_t recv_id = 0;

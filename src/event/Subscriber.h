@@ -21,6 +21,8 @@ namespace DCF {
         fp::subscription<> m_subscription;
 
     public:
+        Subscriber(std::unique_ptr<Transport> &transport, const char *subject, const std::function<void(const Subscriber *, Message *)> &callback) : Subscriber(transport.get(), subject, callback) { }
+
         Subscriber(Transport *transport, const char *subject, const std::function<void(const Subscriber *, Message *)> &callback) : m_transport(transport), m_callback(callback), m_subscription(subject) {
             // TODO: we need to copy the string here
             const size_t len = strlen(subject);

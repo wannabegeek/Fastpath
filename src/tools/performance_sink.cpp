@@ -6,7 +6,7 @@
 #include <utils/logger.h>
 #include <utils/tfoptions.h>
 #include <event/Session.h>
-#include <transport/TCPTransport.h>
+#include <transport/realm_transport.h>
 #include <messages/Message.h>
 #include <event/BlockingQueue.h>
 
@@ -48,10 +48,16 @@ int main( int argc, char *argv[] )  {
         const std::string url = o.getWithDefault("url", "");
 
         DCF::BlockingQueue queue;
-        DCF::TCPTransport transport(url.c_str(), "");
+
+        auto transport = fp::make_relm_connection(url.c_str(), "");
+
+        if (transport->valid()) {
+            ERROR_LOG("Failed to create transport");
+            return 1;
+        }
 
         DCF::Message sendMsg;
-        DCF::Subscriber subscriber(&transport, "TEST.PERF.SOURCE", [&](const DCF::Subscriber *event, const DCF::Message *msg) {
+        DCF::Subscriber subscriber(transport, "TEST.PERF.SOURCE", [&](const DCF::Subscriber *event, const DCF::Message *msg) {
             auto recv_ts = std::chrono::high_resolution_clock::now();
             DEBUG_LOG("Received message: " << *msg);
             uint32_t id = 0;
@@ -62,11 +68,11 @@ int main( int argc, char *argv[] )  {
                 sendMsg.addScalarField("id", id);
                 const uint64_t ts = std::chrono::duration_cast<std::chrono::microseconds>(recv_ts.time_since_epoch()).count();
                 sendMsg.addScalarField("timestamp", ts);
-                if (transport.sendMessage(sendMsg) == DCF::OK) {
+                if (transport->sendMessage(sendMsg) == DCF::OK) {
                     DEBUG_LOG("Message send successfully: " << sendMsg);
                 } else {
                     ERROR_LOG("Failed to send message");
-                    return 1;
+                    exit(1);
                 }
             } else {
                 ERROR_LOG("Message did not contain 'id' tag");

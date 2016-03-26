@@ -6,7 +6,7 @@
 #include <utils/logger.h>
 #include <utils/tfoptions.h>
 #include <event/Session.h>
-#include <transport/TCPTransport.h>
+#include <transport/realm_transport.h>
 #include <messages/Message.h>
 #include <event/BlockingQueue.h>
 
@@ -53,9 +53,9 @@ int main( int argc, char *argv[] )  {
         }
 
         DCF::BlockingQueue queue;
-        DCF::TCPTransport transport(url.c_str(), "");
+        auto transport = fp::make_relm_connection(url.c_str(), "");
 
-        queue.addSubscriber(DCF::Subscriber(&transport, subject.c_str(), [&](const DCF::Subscriber *event, const DCF::Message *msg) {
+        queue.addSubscriber(DCF::Subscriber(transport, subject.c_str(), [&](const DCF::Subscriber *event, const DCF::Message *msg) {
             INFO_LOG(*msg);
         }));
 

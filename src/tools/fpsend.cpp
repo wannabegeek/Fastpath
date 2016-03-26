@@ -6,7 +6,7 @@
 #include <utils/logger.h>
 #include <utils/tfoptions.h>
 #include <event/Session.h>
-#include <transport/TCPTransport.h>
+#include <transport/realm_transport.h>
 #include <messages/Message.h>
 
 int main( int argc, char *argv[] )  {
@@ -51,13 +51,13 @@ int main( int argc, char *argv[] )  {
             ERROR_LOG("You must specify a subject");
         }
 
-        DCF::TCPTransport transport(url.c_str(), "");
+        auto transport = fp::make_relm_connection(url.c_str(), "");
 
-        if (transport.valid()) {
+        if (transport->valid()) {
             DCF::Message msg;
             msg.setSubject(subject.c_str());
             msg.addDataField("name", "tom");
-            if (transport.sendMessage(msg) == DCF::OK) {
+            if (transport->sendMessage(msg) == DCF::OK) {
                 INFO_LOG("Message send successfully");
             } else {
                 ERROR_LOG("Failed to send message");
