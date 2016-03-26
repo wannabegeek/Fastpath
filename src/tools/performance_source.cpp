@@ -139,7 +139,7 @@ int main( int argc, char *argv[] )  {
 
         auto find_p = [&](size_t p) {
             size_t index = latencies.size() - (p * 100 / latencies.size());
-            std::nth_element(latencies.begin(), latencies.begin() + index, latencies.end(), std::less<std::chrono::microseconds>());
+            std::nth_element(latencies.begin(), latencies.begin() + index, latencies.end(), std::greater<std::chrono::microseconds>());
             return latencies[index];
         };
 
