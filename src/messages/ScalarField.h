@@ -16,7 +16,7 @@
 
 namespace DCF {
 
-    class ScalarField : public Field {
+    class ScalarField final : public Field {
 
     private:
         byte m_raw[sizeof(float64_t)] = {0};

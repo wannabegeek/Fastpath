@@ -102,11 +102,9 @@ namespace DCF {
 
     const bool BaseMessage::decode(const ByteStorage &buffer) {
         bool success = false;
-        const size_t length = buffer.length();
+        assert(buffer.length() > 0);
 
-        assert(length > 0);
         if (buffer.remainingReadLength() > MsgHeader::size()) {
-
             MsgHeader::header_start chk = readScalar<MsgHeader::header_start>(buffer.readBytes());
             buffer.advanceRead(sizeof(MsgHeader::header_start));
             if (chk != body_flag) {

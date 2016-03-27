@@ -4,6 +4,7 @@
 
 #include "realm_transport.h"
 #include "TCPTransport.h"
+#include "SHMTransport.h"
 
 namespace fp {
 
@@ -12,10 +13,8 @@ namespace fp {
 
         if (url.protocol() == "tcp") {
             return std::make_unique<DCF::TCPTransport>(url, description);
-        } else if (url.protocol() == "ipc") {
-
         } else if (url.protocol() == "shm") {
-
+            return std::make_unique<DCF::SHMTransport>(url, description);
         } else {
             throw fp::exception("Unsupported protocol");
         }

@@ -9,7 +9,7 @@
 #include "BaseMessage.h"
 
 namespace DCF {
-    class MessageField: public Field {
+    class MessageField final : public Field {
     private:
         const BaseMessage *m_msg;
 

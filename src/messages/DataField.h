@@ -8,7 +8,7 @@
 #include "Field.h"
 
 namespace DCF {
-    class DataField : public Field {
+    class DataField final : public Field {
     private:
         MutableByteStorage m_storage;
         StorageType m_type;
