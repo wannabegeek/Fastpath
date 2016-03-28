@@ -46,16 +46,12 @@ namespace DCF {
 
     void EventManager::waitForEvent() {
 		int result = 0;
-//		if (tf::unlikely(!haveHandlers())) {
-//			ERROR_LOG("No events to handle - returning");
-//		} else {
-            m_in_event_wait.store(true); // not sure if this should be before the setTimeout() or below - lets be safe
-			result = m_eventLoop.run(std::bind(&EventManager::serviceIOEvent, this, std::placeholders::_1), std::bind(&EventManager::serviceTimerEvent, this, std::placeholders::_1));
-            m_in_event_wait.store(false);
-			if (tf::unlikely(result == -1)) {
-				ERROR_LOG("We have an error: [errno: " << strerror(errno) << "(" << errno << ")]");
-			}
-//		}
+        m_in_event_wait.store(true); // not sure if this should be before the setTimeout() or below - lets be safe
+        result = m_eventLoop.run(std::bind(&EventManager::serviceIOEvent, this, std::placeholders::_1), std::bind(&EventManager::serviceTimerEvent, this, std::placeholders::_1));
+        m_in_event_wait.store(false);
+        if (tf::unlikely(result == -1)) {
+            ERROR_LOG("We have an error: [errno: " << strerror(errno) << "(" << errno << ")]");
+        }
 	}
 
 	void EventManager::serviceIOEvent(const EventPollIOElement &event) {
