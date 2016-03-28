@@ -22,10 +22,10 @@ namespace DCF {
     class EventPoll {
     private:
         int m_epollfd = -1;
-        int m_epolltimerfd = -1;
         int m_events = 0;
-        int m_timer_events = 0;
         int err_count = 0;
+
+        constexpr uint64_t TimerIdentifier = 1 << 33;
 
         static constexpr const bool greater_than(const size_t x, const size_t y) { return x >= y; }
 
@@ -45,22 +45,6 @@ namespace DCF {
                 ERROR_LOG("Failed to create epoll fd: " << strerror(errno));
                 return;
             }
-
-            m_epolltimerfd = epoll_create1(0);
-            if (m_epolltimerfd == -1) {
-                ERROR_LOG("Failed to create epoll fd: " << strerror(errno));
-                return;
-            }
-
-            struct epoll_event ev;
-            memset(&ev, 0, sizeof(struct epoll_event));
-            ev.events = EPOLLIN;
-            ev.data.fd = m_epolltimerfd;
-            if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, event.fd, &ev) == -1) {
-                ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
-                return false;
-            }
-            ++m_events;
         }
 
         ~EventPoll() {
@@ -72,9 +56,9 @@ namespace DCF {
             ++m_events;
 
             ev.events = EPOLLIN;
-            ev.data.fd = event.identifier;
+            ev.data.u64 = event.identifier | TimerIdentifier;
 
-            if (epoll_ctl(m_epolltimerfd, EPOLL_CTL_ADD, event.fd, &ev) == -1) {
+            if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, event.fd, &ev) == -1) {
                 ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
                 return false;
             }
@@ -95,7 +79,7 @@ namespace DCF {
             ev.events = EPOLLIN;
             ev.data.fd = event.identifier;
 
-            if (epoll_ctl(m_epolltimerfd, EPOLL_CTL_DEL, event.fd, &ev) == -1) {
+            if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, event.fd, &ev) == -1) {
                 ERROR_LOG("Failed to remove event with epoll_ctl: " << strerror(errno));
                 return false;
             }
@@ -169,31 +153,18 @@ namespace DCF {
                     err_count = 0;
                     numEvents = 0;
                     for (int j = 0; j < result; ++j) {
-                        if (_events[i].ident == m_epolltimerfd) {
-                            struct epoll_event _timer_events[maxDispatchSize];
-                            result2 = epoll_wait(m_epolltimerfd, _timer_events, m_timer_events, nullptr);
-                            for (int i = 0; i < result2; ++i) {
-                                timer_events(std::move(EventPollTimerElement(_timer_events[j].data.fd)));
-                            }
+                        int filter = EventType::NONE;
+                        if ((_events[j].events & EPOLLIN) == EPOLLIN) {
+                            filter |= EventType::READ;
+                        }
+                        if ((_events[j].events & EPOLLOUT) == EPOLLOUT) {
+                            filter |= EventType::WRITE;
+                        }
 
-//                            if (filter != EventType::NONE) {
-//                            } else if ((_events[i].filter & EVFILT_TIMER) == EVFILT_TIMER) {
-//                                for (int64_t i = 0; i < _events[i].data; i++) {
-//                                    timer_events(std::move(EventPollTimerElement(static_cast<int>(_events[i].ident))));
-//                                }
-//                            }
-                        } else {
-                            int filter = EventType::NONE;
-                            if ((_events[j].events & EPOLLIN) == EPOLLIN) {
-                                filter |= EventType::READ;
-                            }
-                            if ((_events[j].events & EPOLLOUT) == EPOLLOUT) {
-                                filter |= EventType::WRITE;
-                            }
-
-                            if (filter != EventType::NONE) {
-                                io_events(std::move(EventPollIOElement(_events[j].data.fd, filter)));
-                            }
+                        if ((_events[j].data.u64 & TimerIdentifier) == TimerIdentifier) {
+                            timer_events(std::move(EventPollTimerElement(_events[j].data.u64 & ~TimerIdentifier)));
+                        } else if (filter != EventType::NONE) {
+                            io_events(std::move(EventPollIOElement(_events[j].data.fd, filter)));
                         }
                     }
                 }
