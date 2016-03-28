@@ -6,7 +6,6 @@
 #define TFDCF_EVENT_H
 
 #include <functional>
-#include "Queue.h"
 #include "EventType.h"
 #include "Session.h"
 #include <atomic>
@@ -19,26 +18,24 @@ namespace DCF {
 
         Queue *m_queue;
 
-        std::atomic<bool> m_isRegistered = ATOMIC_VAR_INIT(false);
-        std::atomic<bool> m_awaitingDispatch = ATOMIC_VAR_INIT(false);
-//        std::atomic<bool> m_inCallback = ATOMIC_VAR_INIT(false);
-
-        bool m_active;
+        bool m_pendingRemoval = false;
+        std::atomic<uint16_t> m_awaitingDispatch = ATOMIC_VAR_INIT(0);
 
         virtual const bool isEqual(const Event &other) const noexcept = 0;
 
-        void setQueue(Queue *queue) {
-            m_queue = queue;
+        inline void __pushDispatch() noexcept {
+            m_awaitingDispatch++;
+        }
+
+        inline void __popDispatch() noexcept {
+            m_awaitingDispatch--;
         }
 
     public:
-        Event() : m_active(false) {
+        Event(Queue *queue) : m_queue(queue) {
         }
 
-        Event(Queue *queue) : m_queue(queue), m_active(true) {
-        }
-
-        Event(Event &&other) : m_queue(other.m_queue), m_isRegistered(static_cast<bool>(other.m_isRegistered)) {
+        Event(Event &&other) : m_queue(other.m_queue), m_pendingRemoval(other.m_pendingRemoval) {
         }
 
         Event(const Event &other) = delete;
@@ -47,26 +44,22 @@ namespace DCF {
         virtual ~Event() {}
 
         virtual const bool __notify(const EventType &eventType) noexcept = 0;
+        virtual void __destroy() = 0;
 
-        const bool isRegistered() const noexcept {
-            return m_isRegistered;
+        void __setPendingRemoval(const bool flag) {
+            m_pendingRemoval = flag;
         }
 
-        void __setIsRegistered(const bool flag) {
-            m_isRegistered = flag;
+        inline const bool __pendingRemoval() const {
+            return m_pendingRemoval;
         }
 
         const bool __awaitingDispatch() const noexcept {
-            return m_awaitingDispatch;
-        }
-
-        void __setAwaitingDispatch(const bool value) noexcept {
-            m_awaitingDispatch = value;
+            return m_awaitingDispatch.load(std::memory_order_relaxed) != 0;
         }
 
         bool operator==(const Event &other) {
             return m_queue == other.m_queue
-                    && m_isRegistered == other.m_isRegistered
                     && this->isEqual(other);
         }
     };

@@ -10,12 +10,16 @@
 #include <array>
 #include "optimize.h"
 
+#ifndef CACHELINE_SIZE
+#   define CACHELINE_SIZE 64
+#endif
+
 namespace tf {
     template<typename T, size_t SIZE = 1024>
     class ringbuffer {
         std::array<T, SIZE> m_buffer;
-        std::atomic<size_t> m_head;
-        std::atomic<size_t> m_tail;
+        alignas(CACHELINE_SIZE) std::atomic<size_t> m_head;
+        alignas(CACHELINE_SIZE) std::atomic<size_t> m_tail;
 
         size_t next(size_t current) {
             return (current + 1) % SIZE;
@@ -53,16 +57,17 @@ namespace tf {
             return true;
         }
 
-        bool pop(T &&object) {
-            size_t tail = m_tail.load(std::memory_order_relaxed);
-            if (likely(tail == m_head.load(std::memory_order_acquire))) {
-                return false;
-            }
-
-            object = std::move(m_buffer[tail]);
-            m_tail.store(next(tail), std::memory_order_release);
-            return true;
-        }
+//        T pop(bool &result) {
+//            size_t tail = m_tail.load(std::memory_order_relaxed);
+//            if (likely(tail == m_head.load(std::memory_order_acquire))) {
+//                result = false;
+//            }
+//
+//            result = true;
+//            T v = std::move(m_buffer[tail]);
+//            m_tail.store(next(tail), std::memory_order_release);
+//            return v;
+//        }
 
         bool pop(T &object) {
             size_t tail = m_tail.load(std::memory_order_relaxed);

@@ -102,46 +102,44 @@ namespace DCF {
 
     const bool BaseMessage::decode(const ByteStorage &buffer) {
         bool success = false;
-        const size_t length = buffer.length();
+        assert(buffer.length() > 0);
 
-        if (length != 0) {
-            if (buffer.remainingReadLength() > MsgHeader::size()) {
+        if (buffer.remainingReadLength() > MsgHeader::size()) {
+            MsgHeader::header_start chk = readScalar<MsgHeader::header_start>(buffer.readBytes());
+            buffer.advanceRead(sizeof(MsgHeader::header_start));
+            if (chk != body_flag) {
+                throw fp::exception("Received corrupt message - incorrect body marker");
+            }
 
-                MsgHeader::header_start chk = readScalar<MsgHeader::header_start>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgHeader::header_start));
-                if (chk != body_flag) {
-                    throw fp::exception("Received corrupt message");
+            const MsgHeader::field_count field_count = readScalar<MsgHeader::field_count>(buffer.readBytes());
+            buffer.advanceRead(sizeof(MsgHeader::field_count));
+
+            for (size_t i = 0; i < field_count; i++) {
+                const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
+                std::shared_ptr<Field> field;
+                switch (type) {
+                    case StorageType::string:
+                    case StorageType::data:
+                        field = std::make_shared<DataField>();
+                        break;
+                    case StorageType::date_time:
+                        field = std::make_shared<DateTimeField>();
+                        break;
+                    case StorageType::message:
+                        field = std::make_shared<MessageField>();
+                        break;
+                    default:
+                        field = std::make_shared<ScalarField>();
+                        break;
                 }
 
-                const MsgHeader::field_count field_count = readScalar<MsgHeader::field_count>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgHeader::field_count));
-
-                for (size_t i = 0; i < field_count; i++) {
-                    const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
-                    std::shared_ptr<Field> field;
-                    switch (type) {
-                        case StorageType::string:
-                        case StorageType::data:
-                            field = std::make_shared<DataField>();
-                            break;
-                        case StorageType::date_time:
-                            field = std::make_shared<DateTimeField>();
-                            break;
-                        case StorageType::message:
-                            field = std::make_shared<MessageField>();
-                            break;
-                        default:
-                            field = std::make_shared<ScalarField>();
-                            break;
-                    }
-
-                    if (!field->decode(buffer)) {
-                        return false;
-                    }
-                    m_payload.emplace_back(field);
+                if (field->decode(buffer)) {
                     m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));
-
+                    m_payload.emplace_back(field);
                     success = true;
+                } else {
+                    success = false;
+                    break;
                 }
             }
         }

@@ -9,7 +9,7 @@
 #include "Field.h"
 
 namespace DCF {
-    class DateTimeField : public Field {
+    class DateTimeField final : public Field {
     private:
         MutableByteStorage m_storage;
         std::chrono::time_point<std::chrono::system_clock> m_time_point;

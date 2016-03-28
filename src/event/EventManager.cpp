@@ -57,7 +57,9 @@ namespace DCF {
 	}
 
 	template<> void EventManager::waitForEvent<std::chrono::microseconds>(const std::chrono::microseconds &timeout) {
-        this->processPendingRegistrations();
+		if (!decltype(m_eventLoop)::can_add_events_async) {
+			this->processPendingRegistrations();
+		}
 
 		int result = 0;
 		if (tf::unlikely(timeout.count() == 0 && !haveHandlers())) {
@@ -112,9 +114,8 @@ namespace DCF {
 	}
 
 	void EventManager::serviceEvent(const EventPollElement &event) {
-        foreach_event_matching(event, [&](auto handler) {
+        foreach_event_matching(event, [&](IOEvent *handler) {
             if (!handler->__awaitingDispatch()) {
-                handler->__setAwaitingDispatch(true);
                 handler->__notify(static_cast<EventType>(handler->eventTypes() & event.filter));
             }
         });
@@ -123,7 +124,7 @@ namespace DCF {
 	void EventManager::serviceTimers() {
 		std::chrono::steady_clock::time_point nowTime = std::chrono::steady_clock::now();
 
-        foreach_timer([&](auto handler) {
+        foreach_timer([&](TimerEvent *handler) {
             if (handler->m_timeoutState == TimerEvent::TIMEOUTSTATE_PROGRESS) {
                 // calculate the elapsed time
                 std::chrono::microseconds elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -133,10 +134,8 @@ namespace DCF {
 
                 if (handler->m_timeLeft <= std::chrono::microseconds(0)) {
                     handler->m_timeLeft = handler->m_timeout;
-                    if (!handler->__awaitingDispatch()) {
-                        handler->__setAwaitingDispatch(true);
-                        handler->__notify(EventType::NONE);    //Execute the handler
-                    }
+					// TimerEvents can build up, so we don't check for awaitingDispatch here
+					handler->__notify(EventType::NONE);    //Execute the handler
                 }
             }
         });

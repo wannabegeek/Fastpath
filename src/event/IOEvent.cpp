@@ -24,102 +24,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-//#include "SigIO.h"
-//#include "SigIOCallback.h"
-//#include "DCSession.h"
-//
-//SigIO::SigIO()
-//{
-//	m_isValid = DC_FALSE;
-//	m_closure = NULL;
-//}
-//
-//SigIO::~SigIO()
-//{
-//	if( m_isValid == DC_TRUE )
-//		destroy();
-//
-//}
-//
-//DCStatus SigIO::create( DCQueue *queue, SigIOCallback *callback, DCEVENTHANDLER fileDesc, int registerFor, void *closure )
-//{
-//	if( m_isValid == DC_TRUE )
-//		return DCStatus( DC_CANNOT_CREATE );
-//	if( queue == NULL )
-//		return DCStatus( DC_INVALID_QUEUE );
-//	if( callback == NULL )
-//		return DCStatus( DC_INVALID_CALLBACK );
-//
-//
-//	m_closure = closure;
-//	m_queue = queue;
-//	m_callback = callback;
-//	m_registerFor = registerFor;
-//
-//	openFd( fileDesc );
-//	if( ( m_registerFor & IO_READ ) == IO_READ )
-//	{
-//		registerRead();
-//	}
-//	if( ( m_registerFor & IO_WRITE ) == IO_WRITE )
-//	{
-//		registerWrite();
-//	}
-//	// need to trigger the other thread to say there is
-//	// more events to register
-//	DCSession::signalEvent();
-//
-//	m_isValid = DC_TRUE;
-//	return DCStatus( DC_OK );
-//}
-//
-//DCStatus SigIO::destroy()
-//{
-//	if( m_isValid == DC_FALSE || m_inCallback == DC_TRUE )
-//		return DCStatus( DC_CANNOT_DESTROY );
-//
-//	if( ( m_registerFor & IO_READ ) == IO_READ )
-//	{
-//		unregisterRead();
-//	}
-//	if( ( m_registerFor & IO_WRITE ) == IO_WRITE )
-//	{
-//		unregisterWrite();
-//	}
-//	// need to trigger the other thread to say there is
-//	// more events to register
-//	DCSession::signalEvent();
-//
-//	m_isValid = DC_FALSE;
-//	return DCStatus( DC_OK );
-//}
-//
-//void SigIO::readCallback()
-//{
-//	m_queue->add( this );
-//}
-//
-//void SigIO::writeCallback()
-//{
-//	m_queue->add( this );
-//}
-//
-//void SigIO::onEvent()
-//{
-//	m_inCallback = DC_TRUE;
-//	if( ( m_registerFor & IO_READ ) == IO_READ )
-//	{
-//		m_callback->readIOCallback( this );
-//	}
-//	if( ( m_registerFor & IO_WRITE ) == IO_WRITE )
-//	{
-//		m_callback->writeIOCallback( this );
-//	}
-//	m_inCallback = DC_FALSE;
-//}
-//
-//dc_bool SigIO::isValid() const
-//{
-//	return m_isValid;
-//}
+#include "IOEvent.h"
 
+namespace DCF {
+    IOEvent::IOEvent(Queue *queue, const int fd, const EventType eventType)
+            : Event(queue), m_fd(fd), m_eventTypes(eventType) {
+    }
+
+    IOEvent::IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes) {
+    }
+
+    const bool IOEvent::isEqual(const Event &other) const noexcept {
+        try {
+            const IOEvent &f = dynamic_cast<const IOEvent &>(other);
+            return m_fd == f.m_fd && m_eventTypes == f.m_eventTypes;
+        } catch (const std::bad_cast &e) {
+            return false;
+        }
+    }
+}

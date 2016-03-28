@@ -8,57 +8,78 @@
 #include "utils/tfringbuffer.h"
 #include "Queue.h"
 #include "TimerEvent.h"
+#include "SharedQueue.h"
 
 namespace DCF {
-    class BusySpinQueue : public Queue {
-    private:
-        using QueueType = tf::ringbuffer<queue_value_type, 4096>;
-
-        QueueType m_queue;
-        std::unique_ptr<TimerEvent> m_timeout;
-
+    /**
+     * Queue using busy spin wait for dispatching to registered callbacks.
+     * This queue will spin in a loop using up CPU cycles waiting
+     * for an event to be placed on the queue.
+     * This should only be used for very latency sensitive applications
+     * since it will consume 100% of a CPU while waiting for an event.
+     * Once an event has been placed on the queue, it will dispatch the
+     * event to the relevant callback.
+     */
+    class BusySpinQueue : public SharedQueue<tf::ringbuffer<Queue::queue_value_type, 4096>> {
     public:
-        BusySpinQueue() {
-        }
-
         virtual ~BusySpinQueue() { }
 
-        inline const bool try_dispatch() override {
-            bool result = false;
-            queue_value_type dispatcher;
-            while (m_queue.pop(dispatcher)) {
-                dispatcher();
-                result = true;
+        /**
+         * Attempt to dispatch any pending events and return immediately.
+         * @return OK, or and error if one occurred
+         */
+        inline const status try_dispatch() override {
+            if (tf::likely(this->isInitialised())) {
+                status result = NO_EVENTS;
+                queue_value_type dispatcher;
+                while (m_queue.pop(dispatcher)) {
+                    this->dispatch_event(dispatcher);
+                    result = OK;
+                }
+                return result;
+            } else {
+                return EVM_NOTRUNNING;
             }
-            return result;
         }
 
-        inline void dispatch() override {
-            while (!this->try_dispatch()) {
+        /**
+         * Dispatch an event. Will block until one or more events have been dispatched
+         * @return OK, or and error if one occurred
+         */
+        inline const status dispatch() override {
+            status status = OK;
+            while ((status = this->try_dispatch()) == NO_EVENTS) {
                 // no-op - we will spin trying to get from the queue
             }
+            return status;
         }
 
-        void dispatch(const std::chrono::milliseconds &timeout) override {
-            if (!this->try_dispatch()) {
+        /**
+         * Dispatch an event, but only wait until timeout is reached.
+         * If posible avoid using this call, since it can have a performance impact,
+         * to implement the timeout it internally create a timer event to drop out of
+         * the `dispatch()` call. For optimal performance, it is best to add a timer event
+         * to the queue.
+         * @param timeout The maximum time in which to wait for an event.
+         * @return OK, or and error if one occurred
+         */
+        inline const status dispatch(const std::chrono::milliseconds &timeout) override {
+            status status = OK;
+            if ((status = this->try_dispatch()) == NO_EVENTS) {
                 // Create a TimerEvent and add to the dispatch loop
-                if (m_timeout) {
+                if (m_timeout != nullptr) {
                     m_timeout->setTimeout(timeout);
                 } else {
-                    m_timeout = std::make_unique<TimerEvent>(static_cast<BusySpinQueue *>(this), timeout, [](const TimerEvent *) {
+                    m_timeout = this->registerEvent(timeout, [this](TimerEvent *event) {
                         // noop - this will cause us to drop out of the dispatch loop
+                        this->unregisterEvent(m_timeout);
+                        m_timeout = nullptr;
                     });
                 }
-                this->dispatch();
+                status = this->dispatch();
             }
-        }
 
-        const size_t eventsInQueue() const noexcept override {
-            return m_queue.size();
-        }
-
-        const bool __enqueue(queue_value_type &event) noexcept override {
-            return m_queue.push(event);
+            return status;
         }
     };
 }

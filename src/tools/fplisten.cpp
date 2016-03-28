@@ -6,9 +6,8 @@
 #include <utils/logger.h>
 #include <utils/tfoptions.h>
 #include <event/Session.h>
-#include <transport/TCPTransport.h>
+#include <transport/realm_transport.h>
 #include <messages/Message.h>
-#include <event/MessageEvent.h>
 #include <event/BlockingQueue.h>
 
 int main( int argc, char *argv[] )  {
@@ -43,7 +42,6 @@ int main( int argc, char *argv[] )  {
     } else {
         LOG_LEVEL(tf::logger::warning);
     }
-    LOG_THREADS(true);
 
     try {
         DCF::Session::initialise();
@@ -55,11 +53,11 @@ int main( int argc, char *argv[] )  {
         }
 
         DCF::BlockingQueue queue;
-        DCF::TCPTransport transport(url.c_str(), "");
+        auto transport = fp::make_relm_connection(url.c_str(), "");
 
-        DCF::MessageEvent msgEvent(&queue, &transport, subject.c_str(), [&](const DCF::MessageEvent *event, const DCF::Message *msg){
-            INFO_LOG(msg);
-        });
+        queue.addSubscriber(DCF::Subscriber(transport, subject.c_str(), [&](const DCF::Subscriber *event, const DCF::Message *msg) {
+            INFO_LOG(*msg);
+        }));
 
         while (true) {
             queue.dispatch();

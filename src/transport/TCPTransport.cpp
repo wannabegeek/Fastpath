@@ -9,6 +9,7 @@
 #include "TCPTransport.h"
 #include "SocketClient.h"
 #include "messages/Message.h"
+#include "transport/TransportIOEvent.h"
 
 namespace DCF {
 
@@ -31,13 +32,22 @@ namespace DCF {
     TCPTransport::TCPTransport(const char *url_ptr, const char *description) : TCPTransport(url(url_ptr), description) {
     }
 
-    TCPTransport::TCPTransport(const url &url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024) {
+    TCPTransport::TCPTransport(const url &url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024), m_readBuffer(1500) {
         INFO_LOG("Connecting to: " << m_url);
         m_peer = std::make_unique<SocketClient>(m_url.host(), m_url.port());
 
         if (!m_peer->connect()) {
             m_connectionAttemptInProgress = std::async(std::launch::async, &TCPTransport::__connect, this);
         }
+        m_peer->setConnectionStateHandler([&](bool connected) {
+            DEBUG_LOG("Transport connected: " << std::boolalpha << connected);
+            if (m_notificationHandler) {
+                m_notificationHandler(connected ? CONNECTED : DISCONNECTED, "");
+            }
+            if (!connected && !m_shouldDisconnect) {
+                this->__connect();
+            }
+        });
     }
 
     TCPTransport::~TCPTransport() {
@@ -48,7 +58,7 @@ namespace DCF {
         BackoffStrategy strategy;
         while (!m_peer->isConnected() && m_shouldDisconnect == false) {
             if (!m_peer->connect()) {
-                INFO_LOG("Failed to connect trying again");
+                DEBUG_LOG("Failed to connect trying again");
                 strategy.backoff();
             }
         }
@@ -76,7 +86,10 @@ namespace DCF {
             msg.encode(m_sendBuffer);
             const byte *data = nullptr;
             size_t len = m_sendBuffer.bytes(&data);
-            return m_peer->send(reinterpret_cast<const char *>(data), len) ? OK : CANNOT_SEND;
+            if (m_peer->send(reinterpret_cast<const char *>(data), len)) {
+                m_sendBuffer.erase_front(len);
+                return OK;
+            }
         }
         return CANNOT_SEND;
     }
@@ -92,5 +105,37 @@ namespace DCF {
 
     const bool TCPTransport::valid() const noexcept {
         return m_peer->isConnected();
+    }
+
+    std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) {
+        return std::make_unique<TransportIOEvent>(m_peer->getSocket(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
+            static const size_t MTU_SIZE = 1500;
+
+            ssize_t size = 0;
+            while (true) {
+                DCF::Socket::ReadResult result = m_peer->read(reinterpret_cast<const char *>(m_readBuffer.allocate(MTU_SIZE)), MTU_SIZE, size);
+                m_readBuffer.erase_back(MTU_SIZE - size);
+
+                if (result == DCF::Socket::MoreData) {
+                    const DCF::ByteStorage &storage = m_readBuffer.byteStorage();
+                    DCF::Message message;
+                    while (true) {
+                        storage.mark();
+                        if (message.decode(storage)) {
+                            messageCallback(this, &message);
+                        } else {
+                            storage.resetRead();
+                            break;
+                        }
+                    }
+                    m_readBuffer.erase_front(storage.bytesRead());
+                } else if (result == DCF::Socket::NoData) {
+                    break;
+                } else if (result == DCF::Socket::Closed) {
+                    DEBUG_LOG("Client Socket closed");
+                    break;
+                }
+            }
+        });
     }
 }

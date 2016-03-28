@@ -9,22 +9,26 @@
 #include "transport/Socket.h"
 
 namespace fp {
-    peer_connection::peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
+    peer_connection::peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
             : m_queue(queue), m_socket(std::move(socket)), m_buffer(4500), m_messageHandler(messageHandler), m_disconnectionHandler(disconnectionHandler) {
 
-        m_socketEvent.registerEvent(queue, m_socket->getSocket(), DCF::EventType::READ, std::bind(&peer_connection::data_handler, this, std::placeholders::_1, std::placeholders::_2));
+        m_socketEvent = queue->registerEvent(m_socket->getSocket(), DCF::EventType::READ,
+                             std::bind(&peer_connection::data_handler, this, std::placeholders::_1,
+                                       std::placeholders::_2));
     }
 
     peer_connection::peer_connection(peer_connection &&other)
             : m_subscriptions(std::move(other.m_subscriptions)),
               m_queue(other.m_queue),
               m_socket(std::move(other.m_socket)),
+              m_socketEvent(other.m_socketEvent),
               m_buffer(std::move(other.m_buffer)),
               m_disconnectionHandler(other.m_disconnectionHandler) {
     }
 
     peer_connection::~peer_connection() {
         DEBUG_LOG("Peer connection destroyed");
+        m_queue->unregisterEvent(m_socketEvent);
     }
 
     void peer_connection::add_subscription(const char *subject) {
@@ -48,15 +52,39 @@ namespace fp {
         return (it != m_subscriptions.end());
     }
 
-    void peer_connection::data_handler(DCF::IOEvent *event, const DCF::EventType eventType) {
-        DEBUG_LOG("Received data from client");
+    void peer_connection::handle_admin_message(const subject<> subject, DCF::Message &message) {
+        DEBUG_LOG("Received admin msg: " << message);
+
+        if (subject == RegisterObserver()) {
+            const char *data = nullptr;
+            size_t len = 0;
+            if (!message.getDataField("subject", &data, len) || len == 0) {
+                ERROR_LOG("Received invalid message - subscription without a subject to subscribe to");
+                return;
+            }
+            this->add_subscription(data);
+        } else if (subject == RegisterObserver()) {
+            const char *data = nullptr;
+            size_t len = 0;
+            if (!message.getDataField("subject", &data, len) && len > 0) {
+                ERROR_LOG("Received invalid message - subscription without a subject to subscribe to");
+                return;
+            }
+            this->remove_subscription(data);
+        }
+    }
+
+    void peer_connection::data_handler(DCF::DataEvent *event, const DCF::EventType eventType) {
 
         static const size_t MTU_SIZE = 1500;
 
         ssize_t size = 0;
         while (true) {
+            DEBUG_LOG(this << " ------------");
             DCF::Socket::ReadResult result = m_socket->read(reinterpret_cast<const char *>(m_buffer.allocate(MTU_SIZE)), MTU_SIZE, size);
+            DEBUG_LOG("Read " << size << " bytes [total buffer size: " << m_buffer.length() << "]");
             m_buffer.erase_back(MTU_SIZE - size);
+            DEBUG_LOG("Removed trailing " << MTU_SIZE - size << " bytes [total buffer size: " << m_buffer.length() << "]");
             if (result == DCF::Socket::MoreData) {
                 const DCF::ByteStorage &storage = m_buffer.byteStorage();
                 const char *subject_ptr = nullptr;
@@ -65,23 +93,39 @@ namespace fp {
                 size_t msg_length = 0;
 
                 try {
-                    if (DCF::Message::addressing_details(storage, &subject_ptr, subject_length, flags, msg_length)) {
-                        INFO_LOG("Received message [" << subject_ptr << "] of length " << msg_length);
-                        const byte *data = nullptr;
-                        m_buffer.bytes(&data);
-                        subject<> subject(subject_ptr);
-                        DCF::ByteStorage msgData(data, msg_length, true);
-                        if (tf::unlikely(subject.is_admin())) {
-                            DEBUG_LOG("Received admin message");
+//                    DEBUG_LOG("Received: " << storage);
+                    while (true) {
+                        storage.mark();
+                        if (DCF::Message::addressing_details(storage, &subject_ptr, subject_length, flags, msg_length)) {
+                            storage.resetRead();
+                            if (subject_ptr != nullptr && subject_length > 0) {
+                                DEBUG_LOG("Received message [" << subject_ptr << "] of length " << msg_length << ": read " << storage.bytesRead() << " of a total " << m_buffer.length());
+                                subject<> subject(subject_ptr);
+                                const DCF::ByteStorage &msgData = storage.segment(msg_length);
+                                if (tf::unlikely(subject.is_admin())) {
+                                    DCF::Message message;
+                                    if (message.decode(msgData)) {
+                                        this->handle_admin_message(subject, message);
+                                    } else {
+                                        ERROR_LOG("Failed to decode message: " << msgData);
+                                        break;
+                                    }
+                                } else {
+                                    // otherwise pass it to our handler
+                                    m_messageHandler(this, subject, msgData);
+                                }
+                                storage.mark();
+                            } else {
+                                throw fp::exception("Message has null or zero length subject");
+                            }
                         } else {
-                            // other wise pass it to our handler
-                            m_messageHandler(this, subject, msgData);
+                            storage.resetRead();
+                            break;
                         }
-                        m_buffer.erase_front(msg_length);
-                    } else {
-                        storage.resetRead();
-                        break;
                     }
+                    DEBUG_LOG("Removing " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
+                    m_buffer.erase_front(storage.bytesRead());
+                    DEBUG_LOG("Removed " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
                 } catch (fp::exception &e) {
                     ERROR_LOG(e);
                     m_socket->disconnect();

@@ -8,6 +8,7 @@
 #include <utils/concurrentqueue.h>
 #include <utils/tfspinlock.h>
 #include <unordered_map>
+#include <utils/rwlock.h>
 #include "EventManager.h"
 
 namespace DCF {
@@ -26,11 +27,10 @@ namespace DCF {
         std::vector<TimerEvent *> m_timerHandlers;
         IOEventTable m_ioHandlerLookup;
 
-        tf::spinlock m_lock;
+        mutable tf::rwlock m_lock;
 
         void serviceEvent(const EventPollElement &event) override;
 
-        void processPendingRegistrations() override;
         void foreach_timer(std::function<void(TimerEvent *)> callback) const override;
         void foreach_event_matching(const EventPollElement &event, std::function<void(IOEvent *)> callback) const override;
 
@@ -39,10 +39,10 @@ namespace DCF {
         GlobalEventManager();
         ~GlobalEventManager();
 
-        void registerHandler(TimerEvent &eventRegistration) override;
-        void registerHandler(IOEvent &eventRegistration) override;
-        void unregisterHandler(TimerEvent &handler) override;
-        void unregisterHandler(IOEvent &handler) override;
+        void registerHandler(TimerEvent *eventRegistration) override;
+        void registerHandler(IOEvent *eventRegistration) override;
+        void unregisterHandler(TimerEvent *handler) override;
+        void unregisterHandler(IOEvent *handler) override;
 
         void notify(bool wait = false) override;
     };

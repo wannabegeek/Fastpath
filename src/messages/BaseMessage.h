@@ -22,7 +22,7 @@
 #include "DataField.h"
 
 
-/**
+/*
  *
  * Header
  * | Msg Length | Flags | Reserverd | Subject Length | Subject |
@@ -43,6 +43,7 @@
 
 
 namespace DCF {
+    /// @cond DEV
     typedef enum {
         scalar_t,
         data_t,
@@ -70,6 +71,13 @@ namespace DCF {
         }
     };
 
+    /// @endcond
+
+    /**
+     * Base class containing the body implementation of a message.
+     *
+     * You shouldn't use this class directly you should use it derived class Message
+     */
     class BaseMessage : public Serializable, public tf::reusable {
     private:
         typedef std::vector<std::shared_ptr<Field>> PayloadContainer;
@@ -84,10 +92,22 @@ namespace DCF {
         static const DataStorageType getStorageType(const StorageType type);
 
     protected:
+        /// @cond DEV
+        /**
+         * Helper method for operator<<
+         */
         virtual std::ostream& output(std::ostream& out) const;
+        /// @endcond
 
     public:
+        /**
+         * Constructor
+         */
         BaseMessage() {}
+
+        /**
+         * Move constructor
+         */
         BaseMessage(BaseMessage &&msg) noexcept;
         virtual ~BaseMessage() {}
 
@@ -95,16 +115,36 @@ namespace DCF {
         BaseMessage& operator=(BaseMessage const&) = delete;
         const bool operator==(const BaseMessage &other) const;
 
+        /**
+         * Return the number of fields contained in the message.
+         *
+         * @return number of fields.
+         */
         const uint32_t size() const noexcept { return m_payload.size(); }
 
+        /**
+         * Return the storage type for a field
+         *
+         * @param field The field identifier name.
+         * @return The storage type.
+         */
         const StorageType storageType(const char *field) const {
             const std::shared_ptr<Field> element = m_payload[m_keys.at(field)];
             return element->type();
         }
 
+        /**
+         * Clears all the fields of the message, so it can be re-used.
+         */
         virtual void clear();
 
-        ////////////// ADD ///////////////
+        /**
+         * Adds a scalar field of a type `<T>` to the message.
+         *
+         * @param field The field identifier name.
+         * @param value Sets the field value as this scalar value.
+         * @return `true` if the field was successfully added, `false` otherwise
+         */
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> bool addScalarField(const char *field, const T &value) {
             std::shared_ptr<ScalarField> e = std::make_shared<ScalarField>();
             e->set(field, value);
@@ -115,15 +155,53 @@ namespace DCF {
             return result.second;
         }
 
+        /**
+         * Adds a data field of a string type to the message.
+         *
+         * @param field The field identifier name.
+         * @param value Sets the field value as this string.
+         * @return `true` if the field was successfully added, `false` otherwise
+         */
         bool addDataField(const char *field, const char *value);
+
+        /**
+         * Adds a data field containing opaque bytes type to the message.
+         *
+         * @param field The field identifier name.
+         * @param value Sets the field value as byte array.
+         * @param size The length of the data array to be added.
+         * @return `true` if the field was successfully added, `false` otherwise
+         */
         bool addDataField(const char *field, const byte *value, const size_t size);
 
+        /**
+         * Adds a field containing a sub-message to the message.
+         * It is the responsibility of the application to make sure the
+         * sub-message is valid until the message has been send successfully.
+         *
+         * @param field The field identifier name.
+         * @param msg Sets the field value to this message.
+         * @return `true` if the field was successfully added, `false` otherwise
+         */
         bool addMessageField(const char *field, const BaseMessage *msg);
 
+        /**
+         * Adds a date-time field to the message.
+         *
+         * @param field The field identifier name.
+         * @param time Sets the field value to this time.
+         * @return `true` if the field was successfully added, `false` otherwise
+         */
         bool addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time);
 
         ////////////// REMOVE ///////////////
 
+        /**
+         * Remove a field from the message.
+         *
+         * @param field The field identifier name.
+         * @return `true` if the field was successfully removed, `false` otherwise
+         */
         bool removeField(const char *field);
 
 
@@ -154,9 +232,14 @@ namespace DCF {
             return false;
         }
 
-        /////
-
+        /**
+         * Detach the message from the library.
+         * Passes the ownership of the message to the caller, it is now the responsibility
+         * of the caller to free up the resources.
+         */
         void detach() noexcept;
+
+        /// @cond DEV
 
         // from Serializable
         virtual const size_t encode(MessageBuffer &buffer) const noexcept override;
@@ -167,6 +250,12 @@ namespace DCF {
             this->clear();
         }
 
+        /// @endcond
+
+        /**
+         * Output operator for printing.
+         * Displays the message in a printable form.
+         */
         friend std::ostream &operator<<(std::ostream &out, const BaseMessage &msg) {
             return msg.output(out);
         }

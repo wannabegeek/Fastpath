@@ -2,12 +2,13 @@
 // Created by Tom Fewster on 15/03/2016.
 //
 
+#include <utils/logger.h>
 #include "Message.h"
 
 namespace DCF {
 
     Message::Message() : m_flags(-1), m_hasAddressing(true) {
-        m_subject = new char[std::numeric_limits<uint16_t>::max()];
+        m_subject = new char[max_subject_length];
         m_subject[0] = '\0';
     }
 
@@ -20,17 +21,17 @@ namespace DCF {
 
     Message::~Message() {
         delete [] m_subject;
-    };
+    }
 
     const bool Message::operator==(const Message &other) const {
         return m_flags == other.m_flags
-               && strncmp(m_subject, other.m_subject, std::numeric_limits<uint16_t>::max()) == 0
+               && strncmp(m_subject, other.m_subject, max_subject_length) == 0
                && BaseMessage::operator==(other);
     }
 
 
     const bool Message::setSubject(const char *subject) {
-        if (strlen(subject) < std::numeric_limits<uint16_t>::max()) {
+        if (strlen(subject) < max_subject_length) {
             strcpy(&m_subject[0], subject);
             return true;
         }
@@ -74,18 +75,19 @@ namespace DCF {
     }
 
     const bool Message::addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length) {
-        if (buffer.remainingReadLength() >= sizeof(MsgAddressing::addressing_start)) {
+        length = subject_length = 0;
+        bool result = false;
+
+        if (buffer.remainingReadLength() >= MsgAddressing::size()) {
             MsgAddressing::addressing_start chk = readScalar<MsgAddressing::addressing_start>(buffer.readBytes());
             buffer.advanceRead(sizeof(MsgAddressing::addressing_start));
             if (chk != addressing_flag) {
-                throw fp::exception("Received corrupt message");
+                throw fp::exception("Received corrupt message - incorrect addressing marker");
             }
-        }
 
-        if (buffer.remainingReadLength() >= MsgAddressing::size()) {
             MsgAddressing::msg_length msg_length = readScalar<MsgAddressing::msg_length>(buffer.readBytes());
+            buffer.advanceRead(sizeof(MsgAddressing::msg_length));
             if (buffer.remainingReadLength() >= msg_length) {
-                buffer.advanceRead(sizeof(MsgAddressing::msg_length));
                 flags = readScalar<MsgAddressing::flags>(buffer.readBytes());
                 buffer.advanceRead(sizeof(MsgAddressing::flags));
 
@@ -98,14 +100,15 @@ namespace DCF {
                 *subject = reinterpret_cast<const char *>(buffer.readBytes());
                 buffer.advanceRead(subject_length);
                 length = msg_length + MsgAddressing::msg_length_offset();
-                return true;
+                result = true;
             }
         }
-        buffer.resetRead();
-        return false;
+
+        return result;
     }
 
     const bool Message::decode(const ByteStorage &buffer) {
+        this->clear();
         size_t subject_length = 0;
         size_t msg_length = 0;
         const char *subject = nullptr;

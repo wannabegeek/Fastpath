@@ -52,7 +52,7 @@ namespace DCF {
             struct epoll_event ev;
             memset(&ev, 0, sizeof(struct epoll_event));
 
-            int filter = 0;
+            uint32_t filter = EPOLLET; // we will use edge triggering
             if ((event.filter & EventType::READ) == EventType::READ) {
                 filter |= EPOLLIN;
             }

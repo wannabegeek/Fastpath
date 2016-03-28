@@ -52,7 +52,7 @@ TEST(Socket, SimpleReadWrite) {
 TEST(Socket, NonBlockingReadWrite) {
     bool callbackFired = false;
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     DCF::Session::initialise();
 
@@ -99,7 +99,7 @@ TEST(Socket, NonBlockingReadWrite) {
     EXPECT_NE(-1, client.getSocket());
     DEBUG_LOG("Client connected");
 
-    DCF::IOEvent handler(&queue, client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, DCF::EventType eventType) {
+    /*DCF::IOEvent *handler = */queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, DCF::EventType eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         DEBUG_LOG("Client received data");
         callbackFired = true;
@@ -124,8 +124,6 @@ TEST(Socket, NonBlockingReadWrite) {
             }
         }
     });
-
-    EXPECT_TRUE(handler.isRegistered());
 
     DEBUG_LOG("Client sending data");
     EXPECT_TRUE(client.send("hello", 6));
@@ -153,7 +151,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
 
         DCF::BusySpinQueue queue;
 
-        auto client = [&](const DCF::IOEvent *event, int eventType) {
+        auto client = [&](const DCF::DataEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             char buffer[16];
             int counter = 0;
@@ -180,16 +178,17 @@ TEST(Socket, NonBlockingServerReadWrite) {
             finished = true;
         };
 
-        std::unique_ptr<DCF::IOEvent> clientHandler;
+        DCF::DataEvent *clientHandler = nullptr;
 
-        DCF::IOEvent handler(&queue, svr.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+        /*DCF::DataEvent *handler = */queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, int eventType) {
             EXPECT_EQ(DCF::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
                 DEBUG_LOG("out of accept");
 
-                clientHandler = std::make_unique<DCF::IOEvent>(&queue, connection->getSocket(), DCF::EventType::READ, client);
+                clientHandler = queue.registerEvent(connection->getSocket(), DCF::EventType::READ, client);
+
                 DEBUG_LOG("registered new client");
             }
         });
@@ -209,7 +208,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     ASSERT_TRUE(client.connect(DCF::SocketOptionsDisableSigPipe));
     EXPECT_NE(-1, client.getSocket());
 
-    DCF::IOEvent handler(&queue, client.getSocket(), DCF::EventType::READ, [&](const DCF::IOEvent *event, int eventType) {
+    /*DCF::DataEvent *handler = */queue.registerEvent(client.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, int eventType) {
         EXPECT_EQ(DCF::EventType::READ, eventType);
         callbackFired = true;
 

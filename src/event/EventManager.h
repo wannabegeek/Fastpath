@@ -42,7 +42,7 @@ namespace DCF {
 		virtual void serviceEvent(const EventPollElement &event);
 		virtual void serviceTimers();
 
-        virtual void processPendingRegistrations() = 0;
+        virtual void processPendingRegistrations() {};
         virtual void foreach_timer(std::function<void(TimerEvent *)> callback) const = 0;
         virtual void foreach_event_matching(const EventPollElement &event, std::function<void(IOEvent *)> callback) const = 0;
 
@@ -55,10 +55,10 @@ namespace DCF {
 
         virtual ~EventManager();
 
-		virtual void registerHandler(TimerEvent &eventRegistration) = 0;
-		virtual void registerHandler(IOEvent &eventRegistration) = 0;
-		virtual void unregisterHandler(TimerEvent &handler) = 0;
-		virtual void unregisterHandler(IOEvent &handler) = 0;
+		virtual void registerHandler(TimerEvent *eventRegistration) = 0;
+		virtual void registerHandler(IOEvent *eventRegistration) = 0;
+		virtual void unregisterHandler(TimerEvent *handler) = 0;
+		virtual void unregisterHandler(IOEvent *handler) = 0;
 
 		virtual void notify(bool wait = false) = 0;
 

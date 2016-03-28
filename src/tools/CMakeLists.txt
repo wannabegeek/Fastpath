@@ -26,3 +26,9 @@ target_link_libraries(fpsend TFDCF ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(fplisten fplisten.cpp)
 target_link_libraries(fplisten TFDCF ${CMAKE_THREAD_LIBS_INIT})
+
+add_executable(fpperf_source performance_source.cpp)
+target_link_libraries(fpperf_source TFDCF ${CMAKE_THREAD_LIBS_INIT})
+
+add_executable(fpperf_sink performance_sink.cpp)
+target_link_libraries(fpperf_sink TFDCF ${CMAKE_THREAD_LIBS_INIT})

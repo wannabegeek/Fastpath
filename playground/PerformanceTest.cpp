@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
             msg->addDataField("Name", "Tom");
             msg->addDataField("Name", "Zac");
 
-            const size_t encoded_len = msg->encode(buffer);
+            /* const size_t encoded_len = */msg->encode(buffer);
             //encoded_messages.emplace_back(std::move(msg));
         }
     }) / static_cast<float>(iterations) << "us" << std::endl;
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         for (int i = 0; i < iterations + 1; i++) {
             PoolType::ptr_type msg = pool.allocate_ptr();
 
-            const DCF::ByteStorage &storage = std::move(buffer.byteStorage());
+            const DCF::ByteStorage &storage = buffer.byteStorage();
             if (!msg->decode(storage)) {
                 break;
             }

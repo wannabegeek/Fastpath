@@ -6,13 +6,33 @@
 #define TFDCF_TRANSPORT_H
 
 #include <messages/StorageTypes.h>
+#include <transport/TransportIOEvent.h>
 #include <chrono>
 #include <string>
+#include <functional>
 #include <status.h>
 
 namespace DCF {
+    class EventManager;
+    class TransportIOEvent;
+
     class Transport {
+        friend class MessageListener;
+    public:
+        typedef enum {
+            CONNECTED,
+            DISCONNECTED,
+            CORRUPT_MESSAGE,
+            SLOW_CONSUMER
+        } notification_type;
+    private:
         const std::string m_description;
+        const EventManager *m_eventManager = nullptr;
+    protected:
+        std::function<void(notification_type type, const char *reason)> m_notificationHandler;
+
+        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) = 0;
+
     public:
         Transport(const char *description) : m_description(description) {};
         virtual ~Transport() {}
@@ -26,6 +46,10 @@ namespace DCF {
 
         const char *description() const noexcept {
             return m_description.c_str();
+        }
+
+        void setNotificationHandler(std::function<void(notification_type type, const char *reason)> handler) {
+            m_notificationHandler = handler;
         }
     };
 }

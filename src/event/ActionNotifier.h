@@ -7,9 +7,67 @@
 
 #include <unistd.h>
 #include <atomic>
+#include <Exception.h>
+#include "../config.h"
+
+#ifdef HAVE_EVENTFD
+#include <sys/eventfd.h>
+#else
+#include <fcntl.h>
+#endif
+
 #include "PollManager.h"
 
 namespace DCF {
+#ifdef HAVE_EVENTFD
+    class ActionNotifier {
+    private:
+        int m_fd;
+        std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
+
+    public:
+        explicit ActionNotifier() {
+            m_fd = eventfd(0, O_NONBLOCK);
+            if (m_fd == -1) {
+                ThrowException(fp::exception, "Failed to create eventfd: " << strerror(errno));
+            }
+        }
+
+        ActionNotifier(ActionNotifier &&other) {
+            m_fd = other.m_fd;
+        }
+
+        ~ActionNotifier() {
+            close(m_fd);
+        }
+
+        inline void notify_and_wait() {
+            m_locked.test_and_set(std::memory_order_acquire);
+            this->notify();
+            while(!m_locked.test_and_set(std::memory_order_acquire));
+        }
+
+        inline void notify() {
+            const uint64_t data = 1;
+            write(m_fd, &data, sizeof(uint64_t));
+        }
+
+        inline void reset() {
+            m_locked.clear(std::memory_order_release);
+            uint64_t data;
+            read(m_fd, &data, sizeof(uint64_t));
+        }
+
+        inline int read_handle() const noexcept {
+            return m_fd;
+        }
+
+        inline EventPollElement pollElement() const {
+            return {m_fd, EventType::READ};
+        }
+    };
+
+#else
     class ActionNotifier {
     private:
         int m_fd[2];
@@ -18,7 +76,11 @@ namespace DCF {
 
     public:
         explicit ActionNotifier() {
-            ::pipe(m_fd);
+            if (::pipe(m_fd) == -1) {
+                ThrowException(fp::exception, "Failed to create pipe: " << strerror(errno));
+            }
+            ::fcntl(m_fd[0], F_SETFD, O_NONBLOCK);
+            ::fcntl(m_fd[1], F_SETFD, O_NONBLOCK);
         }
 
         ActionNotifier(ActionNotifier &&other) {
@@ -58,6 +120,7 @@ namespace DCF {
             return {m_fd[0], EventType::READ};
         }
     };
+#endif
 }
 
 #endif //TFDCF_ACTIONNOTIFIER_H

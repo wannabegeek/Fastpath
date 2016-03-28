@@ -17,14 +17,13 @@ namespace fp {
     void bootstrap::run() {
         // Start server socket listening
         if (m_server.connect(DCF::SocketOptionsDisableNagle | DCF::SocketOptionsDisableSigPipe | DCF::SocketOptionsNonBlocking)) {
-            DCF::IOEvent connectionAttempt(&m_dispatchQueue, m_server.getSocket(), DCF::EventType::READ, [&](DCF::IOEvent *event, const DCF::EventType eventType) {
+            DCF::DataEvent *connectionAttempt = m_dispatchQueue.registerEvent(m_server.getSocket(), DCF::EventType::READ, [&](DCF::DataEvent *event, const DCF::EventType eventType) {
                 INFO_LOG("Someone has tried to connect");
                 m_connections.emplace_back(std::make_unique<peer_connection>(&m_dispatchQueue,
                                                                              m_server.acceptPendingConnection(),
                                                                              std::bind(&bootstrap::message_handler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
                                                                              std::bind(&bootstrap::disconnection_handler, this, std::placeholders::_1)));
             });
-
 
             // todo:
             // Start heartbeat thread
@@ -33,11 +32,13 @@ namespace fp {
             while (!m_shutdown) {
                 m_dispatchQueue.dispatch();
             }
+
+            m_dispatchQueue.unregisterEvent(connectionAttempt);
         }
         DEBUG_LOG("Shutting down");
     }
 
-    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, DCF::ByteStorage &msgData) {
+    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const DCF::ByteStorage &msgData) {
         DEBUG_LOG("Processing message");
         // send the message out to all local client who are interested
         std::for_each(m_connections.begin(), m_connections.end(), [&](auto &connection) {
@@ -56,6 +57,7 @@ namespace fp {
             return c.get() == connection;
         });
         if (it != m_connections.end()) {
+            DEBUG_LOG("Client has disconnected");
             m_connections.erase(it);
         } else {
             ERROR_LOG("Received disconnect notification for unknown connection");
