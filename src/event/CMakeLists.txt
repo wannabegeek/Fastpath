@@ -6,8 +6,8 @@ set(SOURCE_FILES
         EventManager.cpp
         PollManager.h
         EventType.h
-        PollManager_epoll.h
-        PollManager_kqueue.h
+        arch/linux/PollManager.h
+        arch/mac/PollManager.h
         PollManager_select.h
         TimerEvent.h
         TimerEvent.cpp
@@ -29,6 +29,7 @@ set(SOURCE_FILES
         Subscriber.cpp
         Subscriber.h
         MessageListener.cpp
-        DataEvent.h DataEvent.cpp)
+        DataEvent.h
+        DataEvent.cpp)
 
 add_library(event OBJECT ${SOURCE_FILES})

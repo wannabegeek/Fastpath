@@ -41,31 +41,27 @@ namespace  DCF {
 	class TimerEvent final : public Event {
         friend class EventManager;
 
-//    private:
-    public:
-        typedef enum {
-			TIMEOUTSTATE_NONE,
-			TIMEOUTSTATE_START,
-			TIMEOUTSTATE_PROGRESS
-		} TimeoutState;
-
-        mutable TimeoutState m_timeoutState = TIMEOUTSTATE_NONE;
+    private:
+#if defined HAVE_KEVENT
+        static std::atomic<int> s_identifier;
+#elif defined HAVE_EPOLL
+#endif
 		std::chrono::microseconds m_timeout;
-		// TODO: this needs to be atomic, since it can be updated by the event loop and the client side
-		mutable std::chrono::microseconds m_timeLeft;
-		mutable std::chrono::steady_clock::time_point m_lastTime;
-		bool pendingRemoval = false;
 
         std::function<void(TimerEvent *)> m_callback;
+        const int m_identifier;
 
         void dispatch(TimerEvent *event);
 
     public:
-		TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback);
+		TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback);
 		TimerEvent(TimerEvent &&other);
 
         void reset();
 		void setTimeout(const std::chrono::microseconds &timeout);
+
+        const int identifer() const noexcept { return m_identifier; }
+        const std::chrono::microseconds &timeout() const noexcept { return m_timeout; }
 
 		const bool isEqual(const Event &other) const noexcept override;
         const bool __notify(const EventType &eventType) noexcept override;

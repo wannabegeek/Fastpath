@@ -7,6 +7,7 @@
 
 #include "Queue.h"
 #include "InlineEventManager.h"
+#include "TimerEvent.h"
 
 namespace DCF {
     /**
@@ -19,6 +20,7 @@ namespace DCF {
     class InlineQueue final : public Queue {
     private:
         InlineEventManager m_eventManager;
+        std::unique_ptr<TimerEvent> m_timeout;
 
         virtual inline EventManager *eventManager() override {
             return &m_eventManager;
@@ -29,6 +31,11 @@ namespace DCF {
         }
 
     public:
+        InlineQueue() {
+            m_timeout = std::make_unique<TimerEvent>(this, std::chrono::microseconds(0), [&](TimerEvent *event) {
+                // no-op
+            });
+        }
         /**
          * Attempt to dispatch any pending events and return immediately.
          * For an inline queue, there can't be any pending events, so this always returns NO_EVENTS.
@@ -53,8 +60,16 @@ namespace DCF {
          * @return OK, or and error if one occurred
          */
         inline const status dispatch(const std::chrono::milliseconds &timeout) override {
-            m_eventManager.waitForEvent(timeout);
-            return OK;
+            status status = OK;
+            if ((status = this->try_dispatch()) == NO_EVENTS) {
+                // Create a TimerEvent and add to the dispatch loop
+                m_timeout->setTimeout(timeout);
+                m_eventManager.registerHandler(m_timeout.get());
+                status = this->dispatch();
+                m_eventManager.unregisterHandler(m_timeout.get());
+            }
+
+            return status;
         }
 
         /**

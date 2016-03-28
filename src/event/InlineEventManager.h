@@ -14,20 +14,16 @@ namespace DCF {
     class InlineEventManager final : public EventManager {
     private:
         using IOEventTable = std::unordered_map<int, std::vector<IOEvent *>>;
+        using TimerEventTable = std::unordered_map<int, TimerEvent *>;
+
+        IOEventTable m_ioHandlerLookup;
+        TimerEventTable m_timerHandlerLookup;
 
         mutable bool m_servicingEvents;
         mutable bool m_servicingTimers;
 
-        bool m_pendingFileDescriptorRegistrationEvents;
-        bool m_pendingTimerRegistrationEvents;
-        std::vector<TimerEvent *> m_pendingTimerHandlers;
-
-        std::vector<TimerEvent *> m_timerHandlers;
-        IOEventTable m_ioHandlerLookup;
-
-        void processPendingRegistrations() override;
-        void foreach_timer(std::function<void(TimerEvent *)> callback) const override;
-        void foreach_event_matching(const EventPollElement &event, std::function<void(IOEvent *)> callback) const override;
+        void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const override;
+        void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const override;
 
         const bool haveHandlers() const override;
     public:
@@ -36,10 +32,11 @@ namespace DCF {
 
         ~InlineEventManager();
 
-        void registerHandler(TimerEvent *eventRegistration) override;
-        void registerHandler(IOEvent *eventRegistration) override;
-        void unregisterHandler(TimerEvent *handler) override;
-        void unregisterHandler(IOEvent *handler) override;
+        void registerHandler(TimerEvent *event) override;
+        void registerHandler(IOEvent *event) override;
+        void updateHandler(TimerEvent *event) override;
+        void unregisterHandler(TimerEvent *event) override;
+        void unregisterHandler(IOEvent *event) override;
 
         void notify(bool wait = false) override {}
     };

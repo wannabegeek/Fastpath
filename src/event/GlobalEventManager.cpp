@@ -31,20 +31,19 @@ namespace DCF {
         }
     }
 
-    void GlobalEventManager::serviceEvent(const EventPollElement &event) {
-        if (event.fd == m_actionNotifier.read_handle()) {
-            m_actionNotifier.reset();
-        } else {
-            EventManager::serviceEvent(event);
-        }
-    }
+//    void GlobalEventManager::serviceEvent(const EventPollIOElement &event) {
+//        if (event.identifier == m_actionNotifier.read_handle()) {
+//            m_actionNotifier.reset();
+//        } else {
+//            EventManager::serviceEvent(event);
+//        }
+//    }
 
     void GlobalEventManager::registerHandler(TimerEvent *event) {
-        m_pendingTimerRegistrations.try_enqueue(event);
         m_lock.lock();
-        m_timerHandlers.push_back(event);
+        m_timerHandlerLookup.emplace(event->identifer(), event);
         m_lock.unlock();
-        this->notify(true);
+        m_eventLoop.add({event->identifer(), event->timeout()});
     }
 
     void GlobalEventManager::registerHandler(IOEvent *event) {
@@ -70,15 +69,19 @@ namespace DCF {
         }
     }
 
+    void GlobalEventManager::updateHandler(TimerEvent *eventRegistration) {
+
+    }
+
     void GlobalEventManager::unregisterHandler(TimerEvent *event) {
         // read lock
         m_lock.lock_shared();
-        auto it = std::find(m_timerHandlers.begin(), m_timerHandlers.end(), event);
-        if (it != m_timerHandlers.end()) {
+        auto it = m_timerHandlerLookup.find(event->identifer());
+        if (it != m_timerHandlerLookup.end()) {
+            m_eventLoop.remove({event->identifer()});
             // upgrade read lock to write lock
             m_lock.lock_upgrade();
-            m_timerHandlers.erase(it);
-            // unlock write lock
+            m_timerHandlerLookup.erase(it);
             m_lock.unlock_upgrade();
         }
         m_lock.unlock_shared();
@@ -96,9 +99,7 @@ namespace DCF {
                 // We can only remove the FD from listening if no one else is registered
                 // for callbacks on it
                 if (registered_events.size() == 1) {
-                    if (decltype(m_eventLoop)::can_remove_events_async) {
-                        m_eventLoop.remove({event->fileDescriptor(), event->eventTypes()});
-                    }
+                    m_eventLoop.remove({event->fileDescriptor(), event->eventTypes()});
                     // upgrade read lock to write lock
                     m_lock.lock_upgrade();
                     m_ioHandlerLookup.erase(it);
@@ -112,26 +113,16 @@ namespace DCF {
                 if (event->__awaitingDispatch()) {
                     //assert(false); // We are removing an event which is awaiting dispatch
                 }
-                if (!decltype(m_eventLoop)::can_remove_events_async) {
-                    this->notify(true);
-                }
             }
         }
         m_lock.unlock_shared();
     }
 
-    void GlobalEventManager::foreach_timer(std::function<void(TimerEvent *)> callback) const {
-        // read lock
-        m_lock.lock_shared();
-        std::for_each(m_timerHandlers.begin(), m_timerHandlers.end(), std::forward<decltype(callback)>(callback));
-        m_lock.unlock_shared();
-    }
-
-    void GlobalEventManager::foreach_event_matching(const EventPollElement &event,
+    void GlobalEventManager::foreach_event_matching(const EventPollIOElement &event,
                                                     std::function<void(IOEvent *)> callback) const {
         // read lock
         m_lock.lock_shared();
-        auto it = m_ioHandlerLookup.find(event.fd);
+        auto it = m_ioHandlerLookup.find(event.identifier);
         if (it != m_ioHandlerLookup.end()) {
             std::for_each(it->second.begin(), it->second.end(), [&](IOEvent *e) {
                 if ((e->eventTypes() & event.filter) != EventType::NONE) {
@@ -142,9 +133,20 @@ namespace DCF {
         m_lock.unlock_shared();
     }
 
+    void GlobalEventManager::foreach_timer_matching(const EventPollTimerElement &event,
+                                                    std::function<void(TimerEvent *)> callback) const {
+        // read lock
+        m_lock.lock_shared();
+        auto it = m_timerHandlerLookup.find(event.identifier);
+        if (it != m_timerHandlerLookup.end()) {
+            callback(it->second);
+        }
+        m_lock.unlock_shared();
+    }
+
     const bool GlobalEventManager::haveHandlers() const {
         // read lock
         std::shared_lock<tf::rwlock> lock(m_lock);
-        return !(m_timerHandlers.empty() && m_ioHandlerLookup.empty());
+        return !(m_timerHandlerLookup.empty() && m_ioHandlerLookup.empty());
     }
 }

@@ -6,31 +6,19 @@
 #include "InlineEventManager.h"
 #include "IOEvent.h"
 #include "TimerEvent.h"
-
+#include <cassert>
 
 namespace DCF {
 
-    InlineEventManager::InlineEventManager() : m_servicingEvents(false), m_servicingTimers(false), m_pendingFileDescriptorRegistrationEvents(false), m_pendingTimerRegistrationEvents(false) {
+    InlineEventManager::InlineEventManager() : m_servicingEvents(false), m_servicingTimers(false) {
     }
 
     InlineEventManager::~InlineEventManager() {
     }
 
-    void InlineEventManager::processPendingRegistrations() {
-        if (m_pendingTimerRegistrationEvents) {
-            m_timerHandlers = m_pendingTimerHandlers;
-            m_pendingTimerRegistrationEvents = false;
-        }
-    }
-
     void InlineEventManager::registerHandler(TimerEvent *event) {
-        if (m_servicingTimers) {
-            m_pendingTimerRegistrationEvents = true;
-            m_pendingTimerHandlers.push_back(event);
-        } else {
-            m_timerHandlers.push_back(event);
-            m_pendingTimerHandlers.push_back(event);
-        }
+        m_timerHandlerLookup.emplace(event->identifer(), event);
+        m_eventLoop.add({event->identifer(), event->timeout()});
     }
 
     void InlineEventManager::registerHandler(IOEvent *event) {
@@ -51,18 +39,15 @@ namespace DCF {
         m_eventLoop.add({event->fileDescriptor(), event->eventTypes()});
     }
 
+    void InlineEventManager::updateHandler(TimerEvent *event) {
+        m_eventLoop.update({event->identifer(), event->timeout()});
+    }
+
     void InlineEventManager::unregisterHandler(TimerEvent *event) {
-        auto it = std::find(m_pendingTimerHandlers.begin(), m_pendingTimerHandlers.end(), event);
-        if (it != m_pendingTimerHandlers.end()) {
-            m_pendingTimerHandlers.erase(it);
-        }
-        if (m_servicingTimers) {
-            m_pendingTimerRegistrationEvents = true;
-        } else {
-            auto it = std::find(m_timerHandlers.begin(), m_timerHandlers.end(), event);
-            if (it != m_timerHandlers.end()) {
-                m_timerHandlers.erase(it);
-            }
+        auto it = m_timerHandlerLookup.find(event->identifer());
+        if (it != m_timerHandlerLookup.end()) {
+            m_timerHandlerLookup.erase(it);
+            m_eventLoop.remove({event->identifer()});
         }
     }
 
@@ -92,15 +77,9 @@ namespace DCF {
         }
     }
 
-    void InlineEventManager::foreach_timer(std::function<void(TimerEvent *)> callback) const {
-        m_servicingTimers = true;
-        std::for_each(m_timerHandlers.begin(), m_timerHandlers.end(), std::forward<decltype(callback)>(callback));
-        m_servicingTimers = false;
-    }
-
-    void InlineEventManager::foreach_event_matching(const EventPollElement &event,
+    void InlineEventManager::foreach_event_matching(const EventPollIOElement &event,
                                                     std::function<void(IOEvent *)> callback) const {
-        auto it = m_ioHandlerLookup.find(event.fd);
+        auto it = m_ioHandlerLookup.find(event.identifier);
         if (it != m_ioHandlerLookup.end()) {
             m_servicingEvents = true;
             std::for_each(it->second.begin(), it->second.end(), [&](IOEvent *e) {
@@ -112,7 +91,19 @@ namespace DCF {
         }
     }
 
-    const bool InlineEventManager::haveHandlers() const {
-        return !(m_timerHandlers.empty() && m_ioHandlerLookup.empty());
+    void InlineEventManager::foreach_timer_matching(const EventPollTimerElement &event,
+                                                    std::function<void(TimerEvent *)> callback) const {
+
+        auto it = m_timerHandlerLookup.find(event.identifier);
+        if (it != m_timerHandlerLookup.end()) {
+            m_servicingEvents = true;
+            callback(it->second);
+            m_servicingEvents = false;
+        }
     }
+
+    const bool InlineEventManager::haveHandlers() const {
+        return !(m_timerHandlerLookup.empty() && m_ioHandlerLookup.empty());
+    }
+
 }

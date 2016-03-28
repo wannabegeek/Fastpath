@@ -19,7 +19,7 @@ namespace DCF {
     }
 
     DataEvent *Queue::registerEvent(const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback) {
-        auto result = m_registeredEvents.insert(make_set_unique<Event>(new DataEvent(this, fd, eventType, callback)));
+        auto result = m_registeredEvents.emplace(make_set_unique<Event>(new DataEvent(this, fd, eventType, callback)));
         assert(result.second == true);
         DataEvent *event = reinterpret_cast<DataEvent *>(result.first->get());
         EventManager *em = this->eventManager();
@@ -43,7 +43,16 @@ namespace DCF {
         return event;
     }
 
-    status Queue::unregisterEvent(DataEvent *event) {
+    status Queue::updateEvent(TimerEvent *event) {
+        EventManager *em = this->eventManager();
+        if (em != nullptr) {
+            em->updateHandler(event);
+            return OK;
+        }
+        return EVM_NOTRUNNING;
+    }
+
+        status Queue::unregisterEvent(DataEvent *event) {
         // This will block any further callback to client code, which may still exist in the queue
         event->__setPendingRemoval(true);
         EventManager *em = this->eventManager();

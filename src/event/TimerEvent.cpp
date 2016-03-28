@@ -29,11 +29,30 @@
 
 namespace DCF {
 
-    TimerEvent::TimerEvent(Queue *queue, const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback)
-            : Event(queue), m_timeoutState(TIMEOUTSTATE_START), m_timeout(timeout), m_timeLeft(timeout), m_callback(callback) {
+#if defined HAVE_KEVENT
+    TimerEvent::TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback)
+            : Event(queue), m_timeout(timeout), m_callback(callback), m_identifier(++TimerEvent::s_identifier) {
     }
+#elif defined HAVE_EPOLL
+    TimerEvent::TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback)
+            : Event(queue), m_timeout(timeout), m_callback(callback) {
+            m_identifier = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 
-    TimerEvent::TimerEvent(TimerEvent &&other) : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)) {
+            struct timespec timeout;
+            timeout.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+            timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>(std::chrono::duration_cast<std::chrono::microseconds>(duration).count() - (timeout.tv_sec * 1000000));
+
+            struct itimerspec interval;
+            interval.it_interval = timeout;
+            interval.it_value = timeout;
+
+            if (timerfd_settime(m_identifier, 0, &interval, NULL) == -1) {
+                throw fp::exception("Failed to create timer: " << strerror(errno));
+            }
+    }
+#endif
+
+    TimerEvent::TimerEvent(TimerEvent &&other) : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)), m_identifier(other.m_identifier) {
     }
 
     void TimerEvent::dispatch(TimerEvent *event) {
@@ -44,8 +63,21 @@ namespace DCF {
     }
 
     void TimerEvent::reset() {
-        m_timeLeft = m_timeout;
-        m_queue->__notifyEventManager();
+#if defined HAVE_KEVENT
+        m_queue->updateEvent(this);
+#elif defined HAVE_EPOLL
+        struct timespec timeout;
+        timeout.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+        timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>(std::chrono::duration_cast<std::chrono::microseconds>(duration).count() - (timeout.tv_sec * 1000000));
+
+        struct itimerspec interval;
+        interval.it_interval = timeout;
+        interval.it_value = timeout;
+
+        if (timerfd_settime(m_identifier, 0, &interval, NULL) == -1) {
+            throw fp::exception("Failed to create timer: " << strerror(errno));
+        }
+#endif
     }
 
     void TimerEvent::setTimeout(const std::chrono::microseconds &timeout) {
@@ -71,4 +103,8 @@ namespace DCF {
     void TimerEvent::__destroy() {
         m_queue->unregisterEvent(this);
     }
+
+#if defined HAVE_KEVENT
+    std::atomic<int> TimerEvent::s_identifier = ATOMIC_VAR_INIT(0);
+#endif
 }

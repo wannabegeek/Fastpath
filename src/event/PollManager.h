@@ -25,20 +25,31 @@ namespace DCF {
 	using DistantFutureType = std::chrono::microseconds;
 	static constexpr DistantFutureType DistantFuture = DistantFutureType::max();
 
-	struct EventPollElement {
-		EventPollElement() {}
-		EventPollElement(const int _fd, const int _filter) : fd(_fd), filter(_filter) {}
+	struct EventPollIOElement {
+		EventPollIOElement() {}
+		EventPollIOElement(const int _fd, const int _filter) : identifier(_fd), filter(_filter) {}
 
-		int fd = -1;
+		int identifier = -1;
 		int filter = 0;
 	};
+
+	struct EventPollTimerElement {
+        EventPollTimerElement() {}
+        EventPollTimerElement(const int _fd, const std::chrono::microseconds _timeout) : identifier(_fd), timeout(_timeout) {}
+        EventPollTimerElement(const int _fd) : identifier(_fd) {}
+
+		int identifier = -1;
+        std::chrono::microseconds timeout;
+	};
+
 }
 #if defined HAVE_KEVENT
-#	include "PollManager_kqueue.h"
+#	include "event/arch/mac/PollManager.h"
 #elif defined HAVE_EPOLL
-#	include "PollManager_epoll.h"
+#	include "event/arch/linux/PollManager.h"
 #else
-#	include "PollManager_select.h"
+#error "Requires either kqueue or epoll"
+//#	include "PollManager_select.h"
 #endif
 
 #endif /* defined(__TFFIXEngine__TFEventPollManager__) */

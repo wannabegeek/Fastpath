@@ -9,7 +9,7 @@
 #ifndef TFFIXEngine_TFEventPollManager_epoll_h
 #define TFFIXEngine_TFEventPollManager_epoll_h
 
-#include "EventType.h"
+#include "event/EventType.h"
 #include "utils/logger.h"
 
 #include <thread>
@@ -48,6 +48,43 @@ namespace DCF {
         ~EventPoll() {
         }
 
+        bool add(const EventPollTimerElement &event) {
+            struct epoll_event ev;
+            memset(&ev, 0, sizeof(struct epoll_event));
+            ++m_events;
+
+            ev.events = EPOLLIN;
+            ev.data.fd = event.identifier;
+
+            if (epoll_ctl(epollfd, EPOLL_CTL_ADD, event.fd, &ev) == -1) {
+                ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
+                return false;
+            }
+
+            return true;
+        }
+
+        bool update(const EventPollTimerElement &event) {
+            // no-op : this is handled by TimerEvent on Linux
+            return true;
+        }
+
+        bool remove(const EventPollTimerElement &event) {
+            struct epoll_event ev;
+            memset(&ev, 0, sizeof(struct epoll_event));
+            --m_events;
+
+            ev.events = EPOLLIN;
+            ev.data.fd = event.identifier;
+
+            if (epoll_ctl(epollfd, EPOLL_CTL_DEL, event.fd, &ev) == -1) {
+                ERROR_LOG("Failed to remove event with epoll_ctl: " << strerror(errno));
+                return false;
+            }
+
+            return true;
+        }
+
         bool add(const EventPollElement &event) {
             struct epoll_event ev;
             memset(&ev, 0, sizeof(struct epoll_event));
@@ -62,10 +99,11 @@ namespace DCF {
             ++m_events;
 
             ev.events = filter;
-            ev.data.fd = event.fd;
+            ev.data.fd = event.identifier;
 
             if (epoll_ctl(epollfd, EPOLL_CTL_ADD, event.fd, &ev) == -1) {
                 ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
+                return false;
             }
 
             return true;
@@ -85,7 +123,7 @@ namespace DCF {
             --m_events;
 
             ev.events = filter;
-            ev.data.fd = event.fd;
+            ev.data.fd = event.identifier;
 
             if (epoll_ctl(epollfd, EPOLL_CTL_DEL, event.fd, &ev) == -1) {
                 if (errno != EBADF) { // probably the fd is already closed (& epoll with automatically remove it)
@@ -97,17 +135,11 @@ namespace DCF {
             return true;
         }
 
-        int run(std::array<EventPollElement, MAX_EVENTS> *events, int &numEvents,
-                const std::chrono::steady_clock::duration &duration) {
+        int run(std::array<EventPollElement, MAX_EVENTS> *events, int &numEvents) {
             int result = -1;
 
             if (m_events != 0) {
-                long long timeout = -1;
-                if (duration != DistantFuture) {
-                    timeout = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-                }
-
-                result = epoll_wait(epollfd, _events, m_events, timeout);
+                result = epoll_wait(epollfd, _events, m_events, nullptr);
                 if (result == -1) {
                     if (errno == EINTR && err_count < 10) {
                         ++err_count;
@@ -132,15 +164,8 @@ namespace DCF {
                         }
                     }
                 }
-            } else {
-                std::this_thread::sleep_for(duration);
             }
             return 0;
-        }
-
-        friend std::ostream &operator<<(std::ostream &out, const EventPoll &event) {
-            out << "Event loop registrations:\n";
-            return out;
         }
     };
 }

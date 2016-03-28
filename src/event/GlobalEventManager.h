@@ -5,7 +5,6 @@
 #ifndef TFDCF_GLOBALEVENTMANAGER_H
 #define TFDCF_GLOBALEVENTMANAGER_H
 
-#include <utils/concurrentqueue.h>
 #include <utils/tfspinlock.h>
 #include <unordered_map>
 #include <utils/rwlock.h>
@@ -16,23 +15,18 @@ namespace DCF {
 
     class GlobalEventManager final : public EventManager {
     private:
-        using PendingTimerType = moodycamel::ConcurrentQueue<TimerEvent *>;
-        using PendingIOType = moodycamel::ConcurrentQueue<IOEvent *>;
         using IOEventTable = std::unordered_map<int, std::vector<IOEvent *>>;
+        using TimerEventTable = std::unordered_map<int, TimerEvent *>;
 
         ActionNotifier m_actionNotifier;
-        PendingTimerType m_pendingTimerRegistrations;
-        PendingIOType m_pendingIORegistrations;
 
-        std::vector<TimerEvent *> m_timerHandlers;
         IOEventTable m_ioHandlerLookup;
+        TimerEventTable m_timerHandlerLookup;
 
         mutable tf::rwlock m_lock;
 
-        void serviceEvent(const EventPollElement &event) override;
-
-        void foreach_timer(std::function<void(TimerEvent *)> callback) const override;
-        void foreach_event_matching(const EventPollElement &event, std::function<void(IOEvent *)> callback) const override;
+        void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const override;
+        void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const override;
 
         const bool haveHandlers() const override;
     public:
@@ -41,6 +35,7 @@ namespace DCF {
 
         void registerHandler(TimerEvent *eventRegistration) override;
         void registerHandler(IOEvent *eventRegistration) override;
+        void updateHandler(TimerEvent *eventRegistration) override;
         void unregisterHandler(TimerEvent *handler) override;
         void unregisterHandler(IOEvent *handler) override;
 

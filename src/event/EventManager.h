@@ -29,45 +29,38 @@ namespace DCF {
 	class EventManager {
     public:
         static constexpr const size_t maxEvents = std::numeric_limits<uint16_t>::max();
-    private:
-        std::array<EventPollElement, maxEvents> *m_events;
-
-        bool setTimeout(std::chrono::microseconds &timeout) const;
 
     protected:
         EventPoll<maxEvents> m_eventLoop;
 
         std::atomic<bool> m_in_event_wait = ATOMIC_VAR_INIT(false);
 
-		virtual void serviceEvent(const EventPollElement &event);
-		virtual void serviceTimers();
+        virtual void serviceIOEvent(const EventPollIOElement &event);
+        virtual void serviceTimerEvent(const EventPollTimerElement &event);
 
-        virtual void processPendingRegistrations() {};
-        virtual void foreach_timer(std::function<void(TimerEvent *)> callback) const = 0;
-        virtual void foreach_event_matching(const EventPollElement &event, std::function<void(IOEvent *)> callback) const = 0;
+        virtual void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const = 0;
+        virtual void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const = 0;
 
         virtual const bool haveHandlers() const = 0;
 
     public:
-		EventManager();
+        EventManager() {}
+
         EventManager(const EventManager &) = delete;
         EventManager &operator=(const EventManager &) = delete;
 
-        virtual ~EventManager();
+        virtual ~EventManager() {};
 
-		virtual void registerHandler(TimerEvent *eventRegistration) = 0;
+        virtual void registerHandler(TimerEvent *eventRegistration) = 0;
 		virtual void registerHandler(IOEvent *eventRegistration) = 0;
+        virtual void updateHandler(TimerEvent *eventRegistration) = 0;
 		virtual void unregisterHandler(TimerEvent *handler) = 0;
 		virtual void unregisterHandler(IOEvent *handler) = 0;
 
 		virtual void notify(bool wait = false) = 0;
 
 		void waitForEvent();
-		template<typename T> void waitForEvent(const T &timeout) {
-            waitForEvent(std::chrono::duration_cast<std::chrono::microseconds>(timeout));
-		}
 	};
 
-    template<> void EventManager::waitForEvent<std::chrono::microseconds>(const std::chrono::microseconds &timeout);
 }
 #endif /* defined(__TFFIXEngine__TFSessionEventManager__) */

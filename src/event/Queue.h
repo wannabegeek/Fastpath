@@ -96,6 +96,8 @@ namespace DCF {
         DataEvent *registerEvent(const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback);
         TimerEvent *registerEvent(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback);
 
+        status updateEvent(TimerEvent *event);
+
         status unregisterEvent(DataEvent *event);
         status unregisterEvent(TimerEvent *event);
 
