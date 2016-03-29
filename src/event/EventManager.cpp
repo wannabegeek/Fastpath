@@ -40,6 +40,8 @@
 #include "IOEvent.h"
 
 namespace DCF {
+    EventManager::EventManager() : m_ioCallback(std::bind(&EventManager::serviceIOEvent, this, std::placeholders::_1)), m_timerCallback(std::bind(&EventManager::serviceTimerEvent, this, std::placeholders::_1)) {}
+
 	bool isFileDescriptorValid(int fd) {
 		return (!(::fcntl(fd, F_GETFL) == -1 && errno != EBADF));
 	}
@@ -47,7 +49,7 @@ namespace DCF {
     void EventManager::waitForEvent() {
 		int result = 0;
         m_in_event_wait.store(true); // not sure if this should be before the setTimeout() or below - lets be safe
-        result = m_eventLoop.run(std::bind(&EventManager::serviceIOEvent, this, std::placeholders::_1), std::bind(&EventManager::serviceTimerEvent, this, std::placeholders::_1));
+        result = m_eventLoop.run(m_ioCallback, m_timerCallback);
         m_in_event_wait.store(false);
         if (tf::unlikely(result == -1)) {
             ERROR_LOG("We have an error: [errno: " << strerror(errno) << "(" << errno << ")]");

@@ -33,7 +33,7 @@ namespace DCF {
         void subscribe(Transport *transport, const char *subject) noexcept;
         void unsubscribe(Transport *transport, const char *subject) noexcept;
 
-        void handleMessage(const Transport *transport, Message *message);
+        void handleMessage(const Transport *transport, Transport::MessageType &message);
 
         const bool registerTransport(Transport *transport, EventManager *eventManager);
     public:

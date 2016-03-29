@@ -7,6 +7,8 @@
 
 #include <messages/StorageTypes.h>
 #include <transport/TransportIOEvent.h>
+#include <utils/tfpool.h>
+#include <messages/Message.h>
 #include <chrono>
 #include <string>
 #include <functional>
@@ -25,17 +27,27 @@ namespace DCF {
             CORRUPT_MESSAGE,
             SLOW_CONSUMER
         } notification_type;
+
+        typedef tf::pool<Message> MessagePoolType;
+        using MessageType = MessagePoolType::ptr_type;
+
     private:
         const std::string m_description;
         const EventManager *m_eventManager = nullptr;
     protected:
+        MessagePoolType m_msg_pool;
+
         std::function<void(notification_type type, const char *reason)> m_notificationHandler;
 
-        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) = 0;
+        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) = 0;
 
     public:
-        Transport(const char *description) : m_description(description) {};
+        Transport(const char *description) : m_description(description), m_msg_pool(10000) {};
         virtual ~Transport() {}
+
+        status sendMessage(const MessageType &msg) {
+            return sendMessage(*(msg.get()));
+        };
 
         virtual status sendMessage(const Message &msg) = 0;
         virtual status sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) = 0;

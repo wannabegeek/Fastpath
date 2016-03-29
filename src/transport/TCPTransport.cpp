@@ -107,7 +107,7 @@ namespace DCF {
         return m_peer->isConnected();
     }
 
-    std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) {
+    std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
         return std::make_unique<TransportIOEvent>(m_peer->getSocket(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
             static const size_t MTU_SIZE = 1500;
 
@@ -118,13 +118,15 @@ namespace DCF {
 
                 if (result == DCF::Socket::MoreData) {
                     const DCF::ByteStorage &storage = m_readBuffer.byteStorage();
-                    DCF::Message message;
+
                     while (true) {
+                        MessagePoolType::ptr_type message = m_msg_pool.allocate_ptr();
                         storage.mark();
-                        if (message.decode(storage)) {
-                            messageCallback(this, &message);
+                        if (message->decode(storage)) {
+                            messageCallback(this, message);
                         } else {
                             storage.resetRead();
+                            message.reset(nullptr);
                             break;
                         }
                     }

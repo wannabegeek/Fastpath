@@ -37,7 +37,7 @@ namespace DCF {
 
         bool is_interested(const fp::subject<> subject) const;
 
-        void __dispatch(Message *message) const;
+        void __dispatch(Transport::MessageType &message) const;
     };
 }
 

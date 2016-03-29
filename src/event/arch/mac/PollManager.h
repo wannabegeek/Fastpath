@@ -159,10 +159,10 @@ namespace DCF {
                             filter |= EventType::WRITE;
                         }
                         if (filter != EventType::NONE) {
-                            io_events(std::move(EventPollIOElement(static_cast<int>(_events[i].ident), filter)));
+                            io_events(EventPollIOElement(static_cast<int>(_events[i].ident), filter));
                         } else if ((_events[i].filter & EVFILT_TIMER) == EVFILT_TIMER) {
                             for (int64_t i = 0; i < _events[i].data; i++) {
-                                timer_events(std::move(EventPollTimerElement(static_cast<int>(_events[i].ident))));
+                                timer_events(EventPollTimerElement(static_cast<int>(_events[i].ident)));
                             }
                         }
                     }

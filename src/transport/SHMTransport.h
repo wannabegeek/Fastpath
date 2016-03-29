@@ -13,7 +13,7 @@
 namespace DCF {
     class SHMTransport : public Transport {
     private:
-        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) override;
+        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) override;
 
     public:
         // This should have the format dcf://localhost:1234

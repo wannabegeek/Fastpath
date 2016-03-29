@@ -71,7 +71,7 @@ int main( int argc, char *argv[] )  {
         sendMsg.setSubject("TEST.PERF.SOURCE");
         sendMsg.addScalarField("id", id);
 
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(1000) / rate);
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::microseconds(1000000) / rate);
         INFO_LOG("Sending a message every " << duration.count() << " us");
 
         queue.registerEvent(duration, [&](DCF::TimerEvent *event) {

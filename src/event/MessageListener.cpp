@@ -53,7 +53,7 @@ namespace DCF {
     }
 
 
-    void MessageListener::handleMessage(const Transport *transport, Message *message) {
+    void MessageListener::handleMessage(const Transport *transport, Transport::MessageType &message) {
         auto it = m_observers.find(transport);
         if (it != m_observers.end()) {
             fp::subject<> subject(message->subject());
@@ -83,14 +83,6 @@ namespace DCF {
 
         return OK;
 
-//
-//        auto callback = std::bind(&MessageListener::dispatcher, this, queue, subscriber, std::placeholder::_1);
-//
-//        auto result = m_observers.emplace(std::make_tuple(queue, &subscriber));
-//        this->subscribe(subscriber.subject());
-//
-//        return result.second ? OK : CANNOT_CREATE;
-//        return status;
     }
 
     status MessageListener::removeObserver(Queue *queue, const Subscriber &subscriber) {

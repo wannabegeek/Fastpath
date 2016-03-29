@@ -31,7 +31,7 @@ namespace DCF {
         return false;
     }
 
-    std::unique_ptr<TransportIOEvent> SHMTransport::createReceiverEvent(const std::function<void(const Transport *, Message *)> &messageCallback) {
+    std::unique_ptr<TransportIOEvent> SHMTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
         return nullptr;
     }
 }

@@ -31,7 +31,7 @@ namespace DCF {
         return event;
     }
 
-    TimerEvent *Queue::registerEvent(const std::chrono::milliseconds &timeout, const std::function<void(TimerEvent *)> &callback) {
+    TimerEvent *Queue::registerEvent(const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback) {
         auto result = m_registeredEvents.emplace(make_set_unique<Event>(new TimerEvent(this, timeout, callback)));
         TimerEvent *event = reinterpret_cast<TimerEvent *>(result.first->get());
         EventManager *em = this->eventManager();

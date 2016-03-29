@@ -30,6 +30,9 @@ namespace DCF {
     public:
         static constexpr const size_t maxEvents = std::numeric_limits<uint16_t>::max();
 
+	private:
+		std::function<void(EventPollIOElement &&)> m_ioCallback;
+		std::function<void(EventPollTimerElement &&)> m_timerCallback;
     protected:
         EventPoll<maxEvents> m_eventLoop;
 
@@ -44,7 +47,7 @@ namespace DCF {
         virtual const bool haveHandlers() const = 0;
 
     public:
-        EventManager() {}
+        EventManager();
 
         EventManager(const EventManager &) = delete;
         EventManager &operator=(const EventManager &) = delete;
