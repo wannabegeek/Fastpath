@@ -20,7 +20,7 @@ add_executable(tests
         SocketTests.cpp
         URLTests.cpp
         TCPTransportTests.cpp
-        SubscriptionTests.cpp
+#        SubscriptionTests.cpp
         )
 
 target_link_libraries(tests TFDCF ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

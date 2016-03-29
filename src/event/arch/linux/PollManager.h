@@ -25,7 +25,7 @@ namespace DCF {
         int m_events = 0;
         int err_count = 0;
 
-        constexpr uint64_t TimerIdentifier = 1 << 33;
+        static constexpr uint64_t TimerIdentifier = 1l << 33;
 
         static constexpr const bool greater_than(const size_t x, const size_t y) { return x >= y; }
 
@@ -58,7 +58,7 @@ namespace DCF {
             ev.events = EPOLLIN;
             ev.data.u64 = event.identifier | TimerIdentifier;
 
-            if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, event.fd, &ev) == -1) {
+            if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
                 ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
                 return false;
             }
@@ -79,7 +79,7 @@ namespace DCF {
             ev.events = EPOLLIN;
             ev.data.fd = event.identifier;
 
-            if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, event.fd, &ev) == -1) {
+            if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
                 ERROR_LOG("Failed to remove event with epoll_ctl: " << strerror(errno));
                 return false;
             }
@@ -87,7 +87,7 @@ namespace DCF {
             return true;
         }
 
-        bool add(const EventPollElement &event) {
+        bool add(const EventPollIOElement &event) {
             struct epoll_event ev;
             memset(&ev, 0, sizeof(struct epoll_event));
 
@@ -103,7 +103,7 @@ namespace DCF {
             ev.events = filter;
             ev.data.fd = event.identifier;
 
-            if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, event.fd, &ev) == -1) {
+            if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
                 ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
                 return false;
             }
@@ -111,7 +111,7 @@ namespace DCF {
             return true;
         }
 
-        bool remove(const EventPollElement &event) {
+        bool remove(const EventPollIOElement &event) {
             struct epoll_event ev;
             memset(&ev, 0, sizeof(struct epoll_event));
 
@@ -127,7 +127,7 @@ namespace DCF {
             ev.events = filter;
             ev.data.fd = event.identifier;
 
-            if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, event.fd, &ev) == -1) {
+            if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
                 if (errno != EBADF) { // probably the fd is already closed (& epoll with automatically remove it)
                     ERROR_LOG("Failed to remove event with epoll_ctl: " << strerror(errno));
                     return false;
@@ -141,7 +141,7 @@ namespace DCF {
             int result = -1;
 
             if (m_events != 0) {
-                result = epoll_wait(m_epollfd, _events, m_events, nullptr);
+                result = epoll_wait(m_epollfd, _events, m_events, 0);
                 if (result == -1) {
                     if (errno == EINTR && err_count < 10) {
                         ++err_count;
@@ -151,7 +151,6 @@ namespace DCF {
                     return -1;
                 } else {
                     err_count = 0;
-                    numEvents = 0;
                     for (int j = 0; j < result; ++j) {
                         int filter = EventType::NONE;
                         if ((_events[j].events & EPOLLIN) == EPOLLIN) {

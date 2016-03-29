@@ -320,7 +320,7 @@ namespace tf {
             ssize_t oldCount = m_count.fetch_add(count, std::memory_order_release);
             ssize_t toRelease = -oldCount < count ? -oldCount : count;
             if (toRelease > 0) {
-                m_sema.signal((int)toRelease);
+                m_sema.signal(static_cast<int>(toRelease));
             }
         }
 

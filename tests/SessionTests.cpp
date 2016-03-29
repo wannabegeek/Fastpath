@@ -24,7 +24,7 @@ TEST(Session, Shutdown) {
 
     const auto actual = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     // Did it happen in a timley manner?
-    EXPECT_LT(actual.count(), 50);
+    EXPECT_GT(50u, actual.count());
 }
 
 TEST(Session, SimpleTimeout) {
@@ -42,14 +42,14 @@ TEST(Session, SimpleTimeout) {
         callbackFired = true;
     });
 
-    EXPECT_EQ(1, queue.event_count());
+    EXPECT_EQ(1u, queue.event_count());
 
     EXPECT_EQ(DCF::OK, queue.dispatch());
     const auto endTime = std::chrono::steady_clock::now();
     const auto actual = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
 
     EXPECT_TRUE(callbackFired);
-    EXPECT_LT(actual.count(), 50);
+    EXPECT_GT(50u, actual.count());
 
     EXPECT_EQ(DCF::OK, DCF::Session::destroy());
 }
@@ -73,7 +73,7 @@ TEST(Session, SimpleReadInline) {
     });
     DEBUG_LOG("Registered listener");
 
-    EXPECT_EQ(1, queue.event_count());
+    EXPECT_EQ(1u, queue.event_count());
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -108,7 +108,7 @@ TEST(Session, SimpleReadBusySpin) {
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
     });
 
-    EXPECT_EQ(1, queue.event_count());
+    EXPECT_EQ(1u, queue.event_count());
 
     std::thread signal([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -319,10 +319,10 @@ TEST(Session, TimerBacklog) {
         callbackFired = true;
     });
 
-    EXPECT_EQ(1, queue.event_count());
+    EXPECT_EQ(1u, queue.event_count());
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
-    EXPECT_LT(200, queue.eventsInQueue());
+    EXPECT_LT(200u, queue.eventsInQueue());
 
     size_t counter = 0;
     while (shutdown == false) {
@@ -350,10 +350,10 @@ TEST(Session, TimerUnregisterWithBacklog) {
         EXPECT_EQ(1, counter);
     });
 
-    EXPECT_EQ(1, queue.event_count());
+    EXPECT_EQ(1u, queue.event_count());
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
-    EXPECT_LT(200, queue.eventsInQueue());
+    EXPECT_LT(200u, queue.eventsInQueue());
 
     queue.dispatch(std::chrono::seconds(1));
 

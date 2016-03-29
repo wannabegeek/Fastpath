@@ -27,6 +27,10 @@
 #include "TimerEvent.h"
 #include "Queue.h"
 
+#if defined HAVE_EPOLL
+#   include <sys/timerfd.h>
+#endif
+
 namespace DCF {
 
 #if defined HAVE_KEVENT
@@ -35,19 +39,18 @@ namespace DCF {
     }
 #elif defined HAVE_EPOLL
     TimerEvent::TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback)
-            : Event(queue), m_timeout(timeout), m_callback(callback) {
-            m_identifier = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+            : Event(queue), m_timeout(timeout), m_callback(callback), m_identifier(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) {
 
-            struct timespec timeout;
-            timeout.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
-            timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>(std::chrono::duration_cast<std::chrono::microseconds>(duration).count() - (timeout.tv_sec * 1000000));
+            struct timespec t;
+            t.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(timeout).count();
+            t.tv_nsec = static_cast<decltype(t.tv_nsec)>(std::chrono::duration_cast<std::chrono::nanoseconds>(timeout).count() - (t.tv_sec * 1000000000));
 
             struct itimerspec interval;
-            interval.it_interval = timeout;
-            interval.it_value = timeout;
+            interval.it_interval = t;
+            interval.it_value = t;
 
             if (timerfd_settime(m_identifier, 0, &interval, NULL) == -1) {
-                throw fp::exception("Failed to create timer: " << strerror(errno));
+                throw fp::exception("Failed to create timer: "); // << strerror(errno));
             }
     }
 #endif
@@ -66,16 +69,16 @@ namespace DCF {
 #if defined HAVE_KEVENT
         m_queue->updateEvent(this);
 #elif defined HAVE_EPOLL
-        struct timespec timeout;
-        timeout.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
-        timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>(std::chrono::duration_cast<std::chrono::microseconds>(duration).count() - (timeout.tv_sec * 1000000));
+        struct timespec t;
+        t.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(m_timeout).count();
+        t.tv_nsec = static_cast<decltype(t.tv_nsec)>(std::chrono::duration_cast<std::chrono::nanoseconds>(m_timeout).count() - (t.tv_sec * 1000000000));
 
         struct itimerspec interval;
-        interval.it_interval = timeout;
-        interval.it_value = timeout;
+        interval.it_interval = t;
+        interval.it_value = t;
 
         if (timerfd_settime(m_identifier, 0, &interval, NULL) == -1) {
-            throw fp::exception("Failed to create timer: " << strerror(errno));
+            throw fp::exception("Failed to create timer: ");// << strerror(errno));
         }
 #endif
     }

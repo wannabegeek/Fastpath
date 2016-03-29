@@ -62,7 +62,7 @@ namespace DCF {
             return m_fd;
         }
 
-        inline EventPollElement pollElement() const {
+        inline EventPollIOElement pollElement() const {
             return {m_fd, EventType::READ};
         }
     };
