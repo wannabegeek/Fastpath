@@ -5,6 +5,7 @@
 #include "MessageListener.h"
 #include "utils/logger.h"
 #include "IOEvent.h"
+#include "Queue.h"
 #include "transport/TCPTransport.h"
 
 namespace DCF {
@@ -57,10 +58,10 @@ namespace DCF {
         auto it = m_observers.find(transport);
         if (it != m_observers.end()) {
             fp::subject<> subject(message->subject());
-            ObserversType &subscribers = it->second;
-            std::for_each(subscribers.begin(), subscribers.end(), [&](auto &subscriber) {
-                if (subscriber->is_interested(subject)) {
-                    subscriber->__dispatch(message);
+            ObserversType &observers = it->second;
+            std::for_each(observers.begin(), observers.end(), [&](auto &messageEvent) {
+                if (messageEvent->subscriber()->is_interested(subject)) {
+                    messageEvent->__notify(message);
                 }
             });
         }
@@ -71,10 +72,12 @@ namespace DCF {
         if (this->registerTransport(subscriber.transport(), eventManager)) {
             auto it = m_observers.find(subscriber.transport());
             if (it == m_observers.end()) {
-                m_observers.emplace(subscriber.transport(), ObserversType(1, &subscriber));
+                ObserversType subscribers;
+                subscribers.emplace_back(std::make_unique<MessageEvent>(queue, &subscriber));
+                m_observers.emplace(subscriber.transport(), std::move(subscribers));
             } else {
                 ObserversType &subscribers = it->second;
-                subscribers.push_back(&subscriber);
+                subscribers.emplace_back(std::make_unique<MessageEvent>(queue, &subscriber));
             }
             this->subscribe(subscriber.transport(), subscriber.subject());
         } else {

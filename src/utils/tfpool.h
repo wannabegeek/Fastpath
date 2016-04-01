@@ -103,7 +103,6 @@ namespace tf {
             return it != m_objectCache.end();
         }
 
-
         const double utilisation() const {
             m_lock.lock();
             double result = static_cast<double>(m_freeAllocations.size()) / static_cast<double>(m_poolSize);
@@ -125,7 +124,8 @@ namespace tf {
         std::function<void(T *)> m_deleter;
 
     public:
-        using ptr_type = std::unique_ptr<T, decltype(m_deleter)>;
+        using unique_ptr_type = std::unique_ptr<T, decltype(m_deleter)>;
+        using shared_ptr_type = std::shared_ptr<T>;
 
         pool(size_t poolSize = 100) : m_release_function(std::bind(&pool<T>::release, this, std::placeholders::_1)) {
             m_deleter = [](T *p){
@@ -143,11 +143,13 @@ namespace tf {
         }
 
         virtual ~pool() {
+            INFO_LOG("Removing Queue " << m_freeAllocations.size() << " vs " << m_objectCache.size());
             m_lock.lock();
             assert(m_freeAllocations.size() == m_objectCache.size()); // We still have objects allocated out whilst trying to destruct our pool
             std::for_each(m_objectCache.begin(), m_objectCache.end(), [&](T *obj) {
                 delete obj;
             });
+            m_lock.unlock();
         }
 
         // delete the copy/move/assignment
@@ -155,8 +157,16 @@ namespace tf {
         pool(const pool &) = delete;
         pool &operator=(const pool &) = delete;
 
-        ptr_type allocate_ptr() {
-            return ptr_type(allocate(), m_deleter);
+        std::function<void(T *)> pool_release_fn() const noexcept {
+            return m_deleter;
+        }
+
+        unique_ptr_type allocate_unique_ptr() {
+            return unique_ptr_type(allocate(), m_deleter);
+        }
+
+        shared_ptr_type allocate_shared_ptr() {
+            return shared_ptr_type(allocate(), m_deleter);
         }
 
         T *allocate() {
@@ -182,16 +192,19 @@ namespace tf {
             assert(object != nullptr);
             object->prepareForReuse();
 
+            INFO_LOG("Allocating " << object << " from the pool");
             return object;
         }
 
         void release(reusable *object) {
             if (object != nullptr) {
+                INFO_LOG("Releasing " << object << " back to the pool");
                 m_lock.lock();
 #ifdef CHECK_DOUBLE_FREE
                 auto it = std::find(m_freeAllocations.begin(), m_freeAllocations.end(), object);
                 assert(it == m_freeAllocations.end());
 #endif
+                assert(m_freeAllocations.size() < m_poolSize);
                 m_freeAllocations.push_back(static_cast<T *>(object));
                 m_lock.unlock();
             }

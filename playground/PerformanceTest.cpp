@@ -13,12 +13,12 @@ int main(int argc, char *argv[])
 
     PoolType pool(iterations);
 
-    std::vector<PoolType::ptr_type> encoded_messages(iterations);
+    std::vector<PoolType::shared_ptr_type> encoded_messages(iterations);
     DCF::MessageBuffer buffer(1000000);
 
     std::cout << "encode x" << iterations << ": " << tf::measure<std::chrono::microseconds>::execution([&]() {
         for (int i = 0; i < iterations; i++) {
-            PoolType::ptr_type msg = pool.allocate_ptr();
+            auto msg = pool.allocate_shared_ptr();
             msg->setSubject("SOME.TEST.SUBJECT");
             float32_t t = 22.0;
             msg->addScalarField("TEST", t);
@@ -30,10 +30,10 @@ int main(int argc, char *argv[])
         }
     }) / static_cast<float>(iterations) << "us" << std::endl;
 
-    std::vector<PoolType::ptr_type> decoded_messages(iterations);
+    std::vector<PoolType::shared_ptr_type> decoded_messages(iterations);
     std::cout << "decode x" << iterations << ": " << tf::measure<std::chrono::microseconds>::execution([&]() {
         for (int i = 0; i < iterations + 1; i++) {
-            PoolType::ptr_type msg = pool.allocate_ptr();
+            auto msg = pool.allocate_shared_ptr();
 
             const DCF::ByteStorage &storage = buffer.byteStorage();
             if (!msg->decode(storage)) {

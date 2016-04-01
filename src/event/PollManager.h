@@ -41,8 +41,8 @@ namespace DCF {
 		int identifier = -1;
         std::chrono::microseconds timeout;
 	};
-
 }
+
 #if defined HAVE_KEVENT
 #	include "event/arch/mac/PollManager.h"
 #elif defined HAVE_EPOLL

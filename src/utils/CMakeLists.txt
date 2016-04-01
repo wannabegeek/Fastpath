@@ -10,6 +10,6 @@ set(SOURCE_FILES
         tfpool.h
         tfringbuffer.h
         tfspinlock.h
-        rwlock.h tfmultiringbuffer.h)
+        rwlock.h tfmultiringbuffer.h ref_count_ptr.h)
 
 add_library(utils OBJECT ${SOURCE_FILES})

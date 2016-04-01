@@ -4,6 +4,7 @@
 
 #include <future>
 #include <chrono>
+#include <utils/ref_count_ptr.h>
 #include "utils/logger.h"
 
 #include "TCPTransport.h"
@@ -120,13 +121,11 @@ namespace DCF {
                     const DCF::ByteStorage &storage = m_readBuffer.byteStorage();
 
                     while (true) {
-                        MessagePoolType::ptr_type message = m_msg_pool.allocate_ptr();
+                        MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
                         storage.mark();
                         if (message->decode(storage)) {
                             messageCallback(this, message);
                         } else {
-                            storage.resetRead();
-                            message.reset(nullptr);
                             break;
                         }
                     }

@@ -29,7 +29,7 @@ namespace DCF {
         } notification_type;
 
         typedef tf::pool<Message> MessagePoolType;
-        using MessageType = MessagePoolType::ptr_type;
+        using MessageType = MessagePoolType::shared_ptr_type;
 
     private:
         const std::string m_description;

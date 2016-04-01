@@ -12,6 +12,6 @@ namespace DCF {
 
     void Subscriber::__dispatch(Transport::MessageType &message) const {
         m_callback(this, message.get());
-        message.reset(nullptr); // this will release the message back to the pool
+        INFO_LOG("Dispatched " << message.use_count());
     }
 }

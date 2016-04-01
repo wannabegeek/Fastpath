@@ -32,6 +32,7 @@ namespace DCF {
                 assert(it != m_registeredEvents.end());
                 m_registeredEvents.erase(it);
             }
+            dispatcher.clear();
         }
 
     public:

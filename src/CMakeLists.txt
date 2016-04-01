@@ -59,7 +59,7 @@ set(SOURCE_FILES
         MessageBuffer.h
         types.h
         status.h
-        )
+        event/MessageEvent.cpp event/MessageEvent.h)
 
 add_library(TFDCF SHARED ${SOURCE_FILES} $<TARGET_OBJECTS:utils>
         $<TARGET_OBJECTS:event>

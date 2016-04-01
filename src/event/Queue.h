@@ -51,10 +51,15 @@ namespace DCF {
         Event *event;
         FnType function;
         QueueElement() {}
-        QueueElement(Event *e, FnType &&fn) : event(e), function(std::move(fn)) {}
-        QueueElement(QueueElement &&other) : event(other.event), function(std::move(other.function)) {}
+        QueueElement(Event *e, FnType &&fn) noexcept : event(e), function(std::move(fn)) {}
+        QueueElement(QueueElement &&other) noexcept : event(other.event), function(std::move(other.function)) {}
 
-        const QueueElement &operator=(const QueueElement &other) {
+        void clear() noexcept {
+            event = nullptr;
+            function = nullptr;
+        }
+
+        const QueueElement &operator=(const QueueElement &other) noexcept {
             event = other.event;
             function = other.function;
             return *this;
