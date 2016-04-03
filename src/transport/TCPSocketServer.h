@@ -9,26 +9,26 @@
 #ifndef __TFFIXEngine__TFSocketServer__
 #define __TFFIXEngine__TFSocketServer__
 
-#include "Socket.h"
+#include "TCPSocket.h"
 #include <vector>
 #include <cstring>
 #include <memory>
 
 namespace DCF {
-    class SocketServer final : public Socket {
+    class TCPSocketServer final : public TCPSocket {
     public:
-        SocketServer(const std::string &host, const std::string &service) throw(SocketException)
-                : Socket(host, service) {
+        TCPSocketServer(const std::string &host, const std::string &service) throw(socket_error)
+                : TCPSocket(host, service) {
         }
 
-        SocketServer(const std::string &host, const uint16_t &port) throw(SocketException) : Socket(host, port) {
+        TCPSocketServer(const std::string &host, const uint16_t &port) throw(socket_error) : TCPSocket(host, port) {
         }
 
-        virtual ~SocketServer();
+        virtual ~TCPSocketServer();
 
         virtual bool connect(SocketOptions options = SocketOptionsNone) noexcept override;
 
-        std::unique_ptr<Socket> acceptPendingConnection() noexcept;
+        std::unique_ptr<TCPSocket> acceptPendingConnection() noexcept;
     };
 }
 

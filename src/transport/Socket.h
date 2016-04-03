@@ -16,6 +16,7 @@
 #include <netdb.h>
 #include <functional>
 #include <atomic>
+#include <utils/logger.h>
 
 //#include "TFException.h"
 
@@ -30,19 +31,14 @@ namespace DCF {
 
     using SocketOptions = uint32_t;
 
-    class SocketException { //: public Exception {
+    class socket_error : public std::logic_error{
     public:
-        SocketException(const std::string &reason) { //: Exception("SocketException", reason) {
+        socket_error(const std::string &reason) : std::logic_error(reason) {
         };
     };
 
     class Socket {
     protected:
-        uint16_t m_port;
-        struct hostent m_host;
-
-        struct addrinfo *m_hostInfo = NULL;
-
         int m_socket;
         std::atomic<bool> m_connected;
 
@@ -55,10 +51,7 @@ namespace DCF {
 
         std::function<void(bool connected)> m_handler;
 
-        //	TFSocket(const std::string &host, const std::string &service, int socketFd) throw(TFSocketException); // initialise a connected socket
-
-    protected:
-        void setOptions(int options);
+        virtual void setOptions(int options) noexcept = 0;
 
     public:
         typedef enum {
@@ -67,9 +60,8 @@ namespace DCF {
             Closed
         } ReadResult;
 
-        Socket(const std::string &host, const std::string &service) throw(SocketException);
-        Socket(const std::string &host, const uint16_t &port) throw(SocketException);
-        Socket(const struct hostent *host, const uint16_t &port);
+        Socket();
+        Socket(Socket &&other);
         Socket(const int socketFd, const bool connected);
 
         virtual ~Socket();

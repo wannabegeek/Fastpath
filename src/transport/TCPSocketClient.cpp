@@ -6,13 +6,13 @@
 //  Copyright (c) 2013 Tom Fewster. All rights reserved.
 //
 
-#include "SocketClient.h"
+#include "TCPSocketClient.h"
 #include <unistd.h>
 #include <sys/fcntl.h>
 #include <netinet/tcp.h>
 
 namespace DCF {
-    bool SocketClient::connect(SocketOptions options) noexcept {
+    bool TCPSocketClient::connect(SocketOptions options) noexcept {
         if (!m_connected) {
             m_options = options;
             struct addrinfo *p = nullptr;

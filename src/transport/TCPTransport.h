@@ -6,7 +6,7 @@
 #define TFDCF_TCPTRANSPORT_H
 
 #include "Transport.h"
-#include "SocketClient.h"
+#include "TCPSocketClient.h"
 #include "URL.h"
 #include <future>
 #include <MessageBuffer.h>
@@ -20,7 +20,7 @@ namespace DCF {
     private:
         virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) override;
     protected:
-        std::unique_ptr<SocketClient> m_peer;
+        std::unique_ptr<TCPSocketClient> m_peer;
         const url m_url;
 
         std::atomic<bool> m_shouldDisconnect;

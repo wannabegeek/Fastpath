@@ -9,16 +9,16 @@
 #ifndef __TFFIXEngine__TFSocketClient__
 #define __TFFIXEngine__TFSocketClient__
 
-#include "Socket.h"
+#include "TCPSocket.h"
 
 namespace DCF {
-    class SocketClient final : public Socket {
+    class TCPSocketClient final : public TCPSocket {
     public:
-        SocketClient(const std::string &host, const std::string &service) throw(SocketException)
-                : Socket(host, service) {
+        TCPSocketClient(const std::string &host, const std::string &service) throw(socket_error)
+                : TCPSocket(host, service) {
         }
 
-        SocketClient(const std::string &host, const uint16_t &port) throw(SocketException) : Socket(host, port) {
+        TCPSocketClient(const std::string &host, const uint16_t &port) throw(socket_error) : TCPSocket(host, port) {
         }
 
 

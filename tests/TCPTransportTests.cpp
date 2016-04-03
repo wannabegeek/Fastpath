@@ -7,7 +7,7 @@
 #include <thread>
 #include <memory>
 #include <utils/logger.h>
-#include <transport/SocketServer.h>
+#include <transport/TCPSocketServer.h>
 #include <event/InlineQueue.h>
 #include <event/BlockingQueue.h>
 #include <event/IOEvent.h>
@@ -43,7 +43,7 @@ TEST(TCPTransport, TryConnectSuccess) {
 
     std::thread server([&]() {
 
-        DCF::SocketServer svr("localhost", "6867");
+        DCF::TCPSocketServer svr("localhost", "6867");
         ASSERT_TRUE(svr.connect(DCF::SocketOptionsNonBlocking));
         ASSERT_NE(-1, svr.getSocket());
 
@@ -134,7 +134,7 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
 
     std::thread server([&]() {
 
-        DCF::SocketServer svr("localhost", "6867");
+        DCF::TCPSocketServer svr("localhost", "6867");
         ASSERT_TRUE(svr.connect(DCF::SocketOptionsNonBlocking));
         ASSERT_NE(-1, svr.getSocket());
 

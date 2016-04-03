@@ -3,8 +3,8 @@
 #include <event/EventManager.h>
 #include <event/IOEvent.h>
 #include <event/InlineQueue.h>
-#include <transport/SocketServer.h>
-#include <transport/SocketClient.h>
+#include <transport/TCPSocketServer.h>
+#include <transport/TCPSocketClient.h>
 
 #include <chrono>
 #include <memory>
@@ -16,7 +16,7 @@
 TEST(Socket, SimpleReadWrite) {
 
     std::thread server([&]() {
-        DCF::SocketServer svr("localhost", "6969");
+        DCF::TCPSocketServer svr("localhost", "6969");
         ASSERT_TRUE(svr.connect());
         std::shared_ptr<DCF::Socket> connection = svr.acceptPendingConnection();
 
@@ -42,7 +42,7 @@ TEST(Socket, SimpleReadWrite) {
     });
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    DCF::SocketClient client("localhost", "6969");
+    DCF::TCPSocketClient client("localhost", "6969");
     ASSERT_TRUE(client.connect());
     EXPECT_TRUE(client.send("tom", 4)); // send 4bytes (including \0)
 
@@ -58,7 +58,7 @@ TEST(Socket, NonBlockingReadWrite) {
 
     std::thread server([&]() {
         DEBUG_LOG("Started server thread");
-        DCF::SocketServer svr("localhost", "6967");
+        DCF::TCPSocketServer svr("localhost", "6967");
         ASSERT_TRUE(svr.connect());
         std::shared_ptr<DCF::Socket> connection = svr.acceptPendingConnection();
         DEBUG_LOG("Accepted connection");
@@ -90,7 +90,7 @@ TEST(Socket, NonBlockingReadWrite) {
     });
 
     std::this_thread::sleep_for(std::chrono::microseconds(100));
-    DCF::SocketClient client("localhost", "6967");
+    DCF::TCPSocketClient client("localhost", "6967");
     DCF::BusySpinQueue queue;
 
 
@@ -142,7 +142,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     DCF::Session::initialise();
 
     std::thread server([&]() {
-        DCF::SocketServer svr("localhost", "6966");
+        DCF::TCPSocketServer svr("localhost", "6966");
         ASSERT_TRUE(svr.connect(DCF::SocketOptionsNonBlocking));
         ASSERT_NE(-1, svr.getSocket());
 
@@ -203,7 +203,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     DCF::BusySpinQueue queue;
 
     std::this_thread::sleep_for(std::chrono::microseconds(100));
-    DCF::SocketClient client("localhost", "6966");
+    DCF::TCPSocketClient client("localhost", "6966");
 
     ASSERT_TRUE(client.connect(DCF::SocketOptionsDisableSigPipe));
     EXPECT_NE(-1, client.getSocket());

@@ -29,9 +29,18 @@ add_executable(SharedMemoryReceiver SharedMemoryReceiver.cpp)
 add_executable(SharedMemorySender SharedMemorySender.cpp)
 add_executable(PerformanceTest PerformanceTest.cpp performance.h)
 add_executable(SubjectTest SubjectTest.cpp)
+add_executable(ipc_send ipc_send.cpp IPC/InterprocessNotifier.h IPC/InterprocessNotifier.cpp IPC/InterprocessNotifierServer.cpp IPC/InterprocessNotifierServer.h IPC/InterprocessNotifierClient.cpp IPC/InterprocessNotifierClient.h)
+add_executable(ipc_recv ipc_recv.cpp IPC/InterprocessNotifier.h IPC/InterprocessNotifier.cpp IPC/InterprocessNotifierServer.cpp IPC/InterprocessNotifierServer.h IPC/InterprocessNotifierClient.cpp IPC/InterprocessNotifierClient.h)
+
+#add_executable(ipc_send_mac arch/mac/ipc_send_mac.cpp)
+#add_executable(ipc_recv ipc_recv.cpp arch/mac/ipc_send_mac.cpp)
 
 target_link_libraries(SharedMemoryReceiver TFDCF ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_LIBRARIES})
 target_link_libraries(SharedMemorySender TFDCF ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_LIBRARIES})
 target_link_libraries(PerformanceTest TFDCF ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(SubjectTest ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(ipc_send TFDCF ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(ipc_recv TFDCF ${CMAKE_THREAD_LIBS_INIT})
+#target_link_libraries(ipc_send_mac TFDCF ${CMAKE_THREAD_LIBS_INIT})
+#target_link_libraries(ipc_recv_mac TFDCF ${CMAKE_THREAD_LIBS_INIT})
 

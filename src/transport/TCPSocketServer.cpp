@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Tom Fewster. All rights reserved.
 //
 
-#include "SocketServer.h"
+#include "TCPSocketServer.h"
 
 #include <utils/logger.h>
 
@@ -15,11 +15,11 @@
 #include <netinet/tcp.h>
 
 namespace DCF {
-    SocketServer::~SocketServer() {
+    TCPSocketServer::~TCPSocketServer() {
     }
 
 
-    bool SocketServer::connect(SocketOptions options) noexcept {
+    bool TCPSocketServer::connect(SocketOptions options) noexcept {
         if (!m_connected) {
             struct addrinfo *p = nullptr;
             for (p = m_hostInfo; p != nullptr; p = p->ai_next) {
@@ -60,7 +60,7 @@ namespace DCF {
         return false;
     }
 
-    std::unique_ptr<Socket> SocketServer::acceptPendingConnection() noexcept {
+    std::unique_ptr<TCPSocket> TCPSocketServer::acceptPendingConnection() noexcept {
         struct sockaddr_storage remoteaddr; // client address
         socklen_t addrlen;
         memset(&remoteaddr, 0, sizeof(struct sockaddr_storage));
@@ -68,7 +68,7 @@ namespace DCF {
 
         int newSocketFd = ::accept(m_socket, reinterpret_cast<struct sockaddr *>(&remoteaddr), &addrlen);
         if (newSocketFd != -1) {
-            return std::make_unique<Socket>(newSocketFd, true);
+            return std::make_unique<TCPSocket>(newSocketFd, true);
         } else {
             return nullptr;
         }

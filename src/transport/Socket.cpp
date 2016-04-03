@@ -27,53 +27,11 @@
 
 namespace DCF {
 
-    Socket::Socket(const std::string &host, const std::string &service) throw(SocketException)
-            : m_socket(-1), m_connected(false) {
-        struct addrinfo hints;
-        memset(&hints, 0, sizeof hints);
-        hints.ai_family = AF_INET; //AF_UNSPEC; // use AF_INET6 to force IPv6
-        hints.ai_socktype = SOCK_STREAM;
-
-        if (host.size() == 0) {
-            if (getaddrinfo(NULL, service.c_str(), &hints, &m_hostInfo) != 0) {
-                ERROR_LOG("Failed to resolve service; service: " << service);
-                throw SocketException("Failed to resolve host or service");
-            }
-        } else {
-            if (getaddrinfo(host.c_str(), service.c_str(), &hints, &m_hostInfo) != 0) {
-                ERROR_LOG("Failed to resolve host or service; Host: " << host << " service: " << service);
-                throw SocketException("Failed to resolve host or service");
-            }
-        }
-
+    Socket::Socket() : m_socket(-1), m_connected(false) {
     }
 
-    Socket::Socket(const std::string &host, const uint16_t &port) throw(SocketException)
-            : m_port(port), m_socket(-1), m_connected(false) {
-
-        std::ostringstream service;
-        service << port;
-
-        struct addrinfo hints;
-        memset(&hints, 0, sizeof hints);
-        hints.ai_family = AF_UNSPEC; // use AF_INET6 to force IPv6
-        hints.ai_socktype = SOCK_STREAM;
-
-        if (host.size() == 0) {
-            if (getaddrinfo(NULL, service.str().c_str(), &hints, &m_hostInfo) != 0) {
-                ERROR_LOG("Failed to resolve service; service: " << port);
-                throw SocketException("Failed to resolve service");
-            }
-        } else {
-            if (getaddrinfo(host.c_str(), service.str().c_str(), &hints, &m_hostInfo) != 0) {
-                ERROR_LOG("Failed to resolve host or service; Host: " << host << " service: " << port);
-                throw SocketException("Failed to resolve host or service");
-            }
-        }
-    }
-
-    Socket::Socket(const struct hostent *host, const uint16_t &port) : m_port(port), m_socket(-1), m_connected(false) {
-        memcpy(&m_host, host, sizeof(decltype(*host)));
+    Socket::Socket(Socket &&other) : m_socket(other.m_socket), m_connected(other.m_connected.load()), m_handler(std::move(other.m_handler)) {
+        other.m_connected = false;
     }
 
     Socket::Socket(const int socketFd, const bool connected) {
@@ -82,10 +40,6 @@ namespace DCF {
     }
 
     Socket::~Socket() {
-        if (m_hostInfo != NULL) {
-            freeaddrinfo(m_hostInfo);
-        }
-
         if (m_connected) {
             close(m_socket);
         }
@@ -114,54 +68,6 @@ namespace DCF {
 
         return false;
     }
-
-    void Socket::setOptions(int options) {
-        m_options = options;
-
-        int oldfl = fcntl(m_socket, F_GETFL);
-
-        if ((options & SocketOptionsNonBlocking) == SocketOptionsNonBlocking) {
-            fcntl(m_socket, F_SETFL, oldfl | O_NONBLOCK);
-        } else {
-            fcntl(m_socket, F_SETFL, oldfl & ~O_NONBLOCK);
-        }
-
-        if ((options & SocketOptionsDisableNagle) == SocketOptionsDisableNagle) {
-            int flag = 1;
-            if (setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, static_cast<void *>(&flag), sizeof(flag)) == -1) {
-                // failed to turn off TCP delay
-                ERROR_LOG("Failed to set TCP_NODELAY on FileDescriptor[" << m_socket << "]");
-            }
-        }
-
-        if ((options & SocketOptionsHighPriority) == SocketOptionsHighPriority) {
-#ifdef HAVE_IPTOS_LOWDELAY
-            int tos = IPTOS_LOWDELAY;       /* see <netinet/ip.h> */
-            if (setsockopt(m_socket, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1) {
-               WARNING_LOG("Failed to set socket priority to " << tos << " (do you have the CAP_NET_ADMIN capability?)");
-            }
-#else
-            ERROR_LOG("Setting socket priority not supported");
-#endif
-        }
-
-#ifdef HAVE_NOSIGPIPE
-        if ((options & SocketOptionsDisableSigPipe) == SocketOptionsDisableSigPipe) {
-            int flag = 1;
-            if (setsockopt(m_socket, SOL_SOCKET, SO_NOSIGPIPE, static_cast<void *>(&flag), sizeof(flag)) == -1) {
-                // failed to disagle SIG_PIPE interupts
-                ERROR_LOG("Failed to set SO_NOSIGPIPE on FileDescriptor[" << m_socket << "]");
-            }
-        }
-#endif
-    }
-
-    //void TFSocket::setBufferSize() {
-    //	int optval = 0;
-    //	int optlen = sizeof(optval);
-    //	getsockopt(socket, SOL_SOCKET, SO_SNDBUF, (int *)&optval, &optlen);
-    //}
-
 
     bool Socket::send(const char *data, ssize_t length) noexcept {
         if (m_connected) {

@@ -7,7 +7,7 @@
 
 #include <iosfwd>
 #include <memory>
-#include <transport/SocketServer.h>
+#include <transport/TCPSocketServer.h>
 #include <event/InlineQueue.h>
 #include "peer_connection.h"
 
@@ -16,7 +16,7 @@ namespace fp{
     private:
         DCF::InlineQueue m_dispatchQueue;
 
-        DCF::SocketServer m_server;
+        DCF::TCPSocketServer m_server;
         bool m_shutdown = false;
 
         std::vector<std::unique_ptr<peer_connection>> m_connections;
