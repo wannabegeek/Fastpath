@@ -16,7 +16,7 @@ namespace DCF {
      * This queue will wait for an event to be placed on the queue,
      * it will then dispatch the event to the relevant callback.
      */
-    class BlockingQueue : public SharedQueue<tf::blocking_ringbuffer<Queue::queue_value_type, 256>> {
+    class BlockingQueue : public SharedQueue<tf::blocking_ringbuffer<Queue::queue_value_type, 4096>> {
     public:
         /**
          * Attempt to dispatch any pending events and return immediately.

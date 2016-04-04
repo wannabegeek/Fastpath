@@ -20,12 +20,6 @@ namespace tf {
             }
         }
 
-        void pop_wait(T &&object) {
-            while (!this->pop(std::move(object))) {
-                m_semaphore.wait();
-            }
-        }
-
         virtual bool push(const T &&object) override {
             bool v = ringbuffer<T, SIZE>::push(std::move(object));
             m_semaphore.signal();

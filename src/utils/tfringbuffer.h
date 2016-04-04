@@ -7,7 +7,7 @@
 
 #include <atomic>
 #include <cstddef>
-#include <array>
+#include <memory>
 #include "optimize.h"
 
 #ifndef CACHELINE_SIZE
@@ -15,9 +15,14 @@
 #endif
 
 namespace tf {
-    template<typename T, size_t SIZE = 1024>
+    template<typename T, size_t SIZE = 1024, typename Allocator = std::allocator<T>>
     class ringbuffer {
-        std::array<T, SIZE> m_buffer;
+        using storage_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<T>;
+        using storage_traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
+
+        storage_alloc m_allocator;
+
+        T *m_buffer;
         alignas(CACHELINE_SIZE) std::atomic<size_t> m_head;
         alignas(CACHELINE_SIZE) std::atomic<size_t> m_tail;
 
@@ -29,9 +34,12 @@ namespace tf {
         static constexpr size_t max_size = SIZE;
 
         ringbuffer() : m_head(0), m_tail(0) {
+            m_buffer = storage_traits::allocate(m_allocator, SIZE);
         }
 
-        virtual ~ringbuffer() { }
+        virtual ~ringbuffer() {
+            storage_traits::deallocate(m_allocator, m_buffer, SIZE);
+        }
 
         virtual bool push(const T &&object) {
             size_t head = m_head.load(std::memory_order_relaxed);
@@ -57,25 +65,14 @@ namespace tf {
             return true;
         }
 
-        T pop(bool &result) {
-            size_t tail = m_tail.load(std::memory_order_relaxed);
-            if (likely(tail == m_head.load(std::memory_order_acquire))) {
-                result = false;
-            }
-
-            result = true;
-            T v = std::move(m_buffer[tail]);
-            m_tail.store(next(tail), std::memory_order_release);
-            return v;
-        }
-
         bool pop(T &object) {
             size_t tail = m_tail.load(std::memory_order_relaxed);
             if (likely(tail == m_head.load(std::memory_order_acquire))) {
                 return false;
             }
 
-            object = m_buffer[tail];
+            object = std::move(m_buffer[tail]);
+            m_buffer[tail].~T();
             m_tail.store(next(tail), std::memory_order_release);
             return true;
         }

@@ -128,9 +128,6 @@ namespace tf {
         using shared_ptr_type = std::shared_ptr<T>;
 
         pool(size_t poolSize = 100) : m_release_function(std::bind(&pool<T>::release, this, std::placeholders::_1)) {
-            m_deleter = [](T *p){
-                p->release();
-            };
             m_poolSize = poolSize;
             m_freeAllocations.reserve(m_poolSize);
             m_objectCache.reserve(m_poolSize);
@@ -162,11 +159,11 @@ namespace tf {
         }
 
         unique_ptr_type allocate_unique_ptr() {
-            return unique_ptr_type(allocate(), m_deleter);
+            return unique_ptr_type(allocate(), m_release_function);
         }
 
         shared_ptr_type allocate_shared_ptr() {
-            return shared_ptr_type(allocate(), m_deleter);
+            return shared_ptr_type(allocate(), m_release_function);
         }
 
         T *allocate() {
@@ -214,7 +211,6 @@ namespace tf {
             auto it = std::find(m_objectCache.begin(), m_objectCache.end(), object);
             return it != m_objectCache.end();
         }
-
 
         const double utilisation() const {
             m_lock.lock();

@@ -38,6 +38,7 @@ namespace DCF {
         const size_t encode(MessageBuffer &buffer) const noexcept override;
         const bool decode(const ByteStorage &buffer) override;
 
+        static const bool have_complete_message(const ByteStorage &buffer) noexcept;
         static const bool addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length);
     };
 }

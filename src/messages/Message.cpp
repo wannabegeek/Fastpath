@@ -74,6 +74,18 @@ namespace DCF {
         return total_len;
     }
 
+    const bool Message::have_complete_message(const ByteStorage &buffer) noexcept {
+        if (buffer.remainingReadLength() >= MsgAddressing::size()) {
+            const byte *bytes = buffer.readBytes() + sizeof(MsgAddressing::addressing_start);
+            MsgAddressing::msg_length msg_length = readScalar<MsgAddressing::msg_length>(bytes);
+            if (buffer.remainingReadLength() >= msg_length) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     const bool Message::addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length) {
         length = subject_length = 0;
         bool result = false;

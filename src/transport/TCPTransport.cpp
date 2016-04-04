@@ -109,22 +109,20 @@ namespace DCF {
     }
 
     bool TCPTransport::processData(const DCF::ByteStorage &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
+        if (Message::have_complete_message(storage)) {
+            MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
+            storage.mark();
 
-        // TODO: this may need to be thread local
-        static MessagePoolType::shared_ptr_type message = nullptr;
-        if (message == nullptr) {
-            message = m_msg_pool.allocate_shared_ptr();
-        }
-        storage.mark();
-        if (message->decode(storage)) {
-            messageCallback(this, message);
-            message = nullptr;
-        } else {
-            storage.resetRead();
-            return false;
+            if (message->decode(storage)) {
+                messageCallback(this, message);
+                return true;
+            } else {
+                storage.resetRead();
+                message = nullptr;
+            }
         }
 
-        return true;
+        return false;
     }
 
     std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
