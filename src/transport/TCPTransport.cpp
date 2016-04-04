@@ -108,6 +108,25 @@ namespace DCF {
         return m_peer->isConnected();
     }
 
+    bool TCPTransport::processData(const DCF::ByteStorage &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
+
+        // TODO: this may need to be thread local
+        static MessagePoolType::shared_ptr_type message = nullptr;
+        if (message == nullptr) {
+            message = m_msg_pool.allocate_shared_ptr();
+        }
+        storage.mark();
+        if (message->decode(storage)) {
+            messageCallback(this, message);
+            message = nullptr;
+        } else {
+            storage.resetRead();
+            return false;
+        }
+
+        return true;
+    }
+
     std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
         return std::make_unique<TransportIOEvent>(m_peer->getSocket(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
             static const size_t MTU_SIZE = 1500;
@@ -120,15 +139,8 @@ namespace DCF {
                 if (result == DCF::Socket::MoreData) {
                     const DCF::ByteStorage &storage = m_readBuffer.byteStorage();
 
-                    while (true) {
-                        MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
-                        storage.mark();
-                        if (message->decode(storage)) {
-                            messageCallback(this, message);
-                        } else {
-                            break;
-                        }
-                    }
+                    while (this->processData(storage, messageCallback));
+
                     m_readBuffer.erase_front(storage.bytesRead());
                 } else if (result == DCF::Socket::NoData) {
                     break;

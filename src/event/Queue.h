@@ -50,7 +50,7 @@ namespace DCF {
         using FnType = std::function<void ()>;
         Event *event;
         FnType function;
-        QueueElement() {}
+        QueueElement() noexcept {}
         QueueElement(Event *e, FnType &&fn) noexcept : event(e), function(std::move(fn)) {}
         QueueElement(QueueElement &&other) noexcept : event(other.event), function(std::move(other.function)) {}
 

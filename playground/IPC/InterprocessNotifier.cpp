@@ -66,7 +66,7 @@ namespace DCF {
         cmhp->cmsg_len = CMSG_LEN(sizeof(int) * num_fds);
         cmhp->cmsg_level = SOL_SOCKET;
         cmhp->cmsg_type = SCM_RIGHTS;
-        for (int i = 0; i < num_fds; i++) {
+        for (size_t i = 0; i < num_fds; i++) {
             INFO_LOG("Sending fd " << fds[i]);
             ((int *)CMSG_DATA(cmhp))[i] = fds[i];
         }
@@ -106,7 +106,7 @@ namespace DCF {
             struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msgh);
             if (cmsg != nullptr) {
                 num_fds = std::min(num_fds, (cmsg->cmsg_len - sizeof(struct cmsghdr)) / sizeof(int));
-                for (int i = 0; i < num_fds; i++) {
+                for (size_t i = 0; i < num_fds; i++) {
                     fds[i] = ((int *)CMSG_DATA(cmsg))[i];
                 }
 

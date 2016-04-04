@@ -19,6 +19,7 @@ namespace DCF {
     class TCPTransport : public Transport {
     private:
         virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) override;
+        bool processData(const DCF::ByteStorage &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept;
     protected:
         std::unique_ptr<TCPSocketClient> m_peer;
         const url m_url;
