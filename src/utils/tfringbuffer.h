@@ -41,13 +41,13 @@ namespace tf {
             storage_traits::deallocate(m_allocator, m_buffer, SIZE);
         }
 
-        virtual bool push(const T &&object) {
+        virtual bool push(T &&object) {
             size_t head = m_head.load(std::memory_order_relaxed);
             size_t nextHead = next(head);
             if (unlikely(nextHead == m_tail.load(std::memory_order_acquire))) {
                 return false;
             }
-            m_buffer[head] = std::move(object);
+            new(&m_buffer[head]) T(std::forward<T>(object));
             m_head.store(nextHead, std::memory_order_release);
 
             return true;

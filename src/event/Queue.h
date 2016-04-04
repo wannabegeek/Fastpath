@@ -59,6 +59,12 @@ namespace DCF {
             function = nullptr;
         }
 
+        const QueueElement &operator=(const QueueElement &&other) noexcept {
+            event = std::move(other.event);
+            function = std::move(other.function);
+            return *this;
+        }
+
         const QueueElement &operator=(const QueueElement &other) noexcept {
             event = other.event;
             function = other.function;

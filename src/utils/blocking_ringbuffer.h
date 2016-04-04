@@ -20,8 +20,8 @@ namespace tf {
             }
         }
 
-        virtual bool push(const T &&object) override {
-            bool v = ringbuffer<T, SIZE>::push(std::move(object));
+        virtual bool push(T &&object) override {
+            bool v = ringbuffer<T, SIZE>::push(std::forward<T>(object));
             m_semaphore.signal();
             return v;
         }
