@@ -12,6 +12,5 @@ namespace DCF {
 
     void Subscriber::__dispatch(Transport::MessageType &message) const {
         m_callback(this, message.get());
-        INFO_LOG("Dispatched " << message.use_count());
     }
 }

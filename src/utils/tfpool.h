@@ -140,7 +140,7 @@ namespace tf {
         }
 
         virtual ~pool() {
-            INFO_LOG("Removing Queue " << m_freeAllocations.size() << " vs " << m_objectCache.size());
+            DEBUG_LOG("Removing Queue " << m_freeAllocations.size() << " vs " << m_objectCache.size());
             m_lock.lock();
             assert(m_freeAllocations.size() == m_objectCache.size()); // We still have objects allocated out whilst trying to destruct our pool
             std::for_each(m_objectCache.begin(), m_objectCache.end(), [&](T *obj) {
@@ -189,13 +189,11 @@ namespace tf {
             assert(object != nullptr);
             object->prepareForReuse();
 
-            INFO_LOG("Allocating " << object << " from the pool");
             return object;
         }
 
         void release(reusable *object) {
             if (object != nullptr) {
-                INFO_LOG("Releasing " << object << " back to the pool");
                 m_lock.lock();
 #ifdef CHECK_DOUBLE_FREE
                 auto it = std::find(m_freeAllocations.begin(), m_freeAllocations.end(), object);
