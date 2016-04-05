@@ -10,5 +10,6 @@
 #cmakedefine HAVE_NOSIGNAL 1
 #cmakedefine HAVE_NOSIGPIPE 1
 #cmakedefine HAVE_IPTOS_LOWDELAY 1
+#cmakedefine HAVE_PIPE2 1
 
 #cmakedefine HAVE_EVENTFD 1
