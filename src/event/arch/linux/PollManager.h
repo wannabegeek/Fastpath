@@ -161,9 +161,9 @@ namespace DCF {
                         }
 
                         if ((_events[j].data.u64 & TimerIdentifier) == TimerIdentifier) {
-                            timer_events(std::move(EventPollTimerElement(_events[j].data.u64 & ~TimerIdentifier)));
+                            timer_events(EventPollTimerElement(_events[j].data.u64 & ~TimerIdentifier));
                         } else if (filter != EventType::NONE) {
-                            io_events(std::move(EventPollIOElement(_events[j].data.fd, filter)));
+                            io_events(EventPollIOElement(_events[j].data.fd, filter));
                         }
                     }
                 }
