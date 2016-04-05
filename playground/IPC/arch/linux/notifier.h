@@ -5,7 +5,10 @@
 #ifndef TFDCF_NOTIFIER_H
 #define TFDCF_NOTIFIER_H
 
+#include <fcntl.h>
 #include <sys/eventfd.h>
+
+#include <Exception.h>
 
 namespace tf {
     class notifier {
@@ -25,10 +28,16 @@ namespace tf {
 
         notifier(notifier &&other) noexcept {
             m_fd = other.m_fd;
+            other.m_fd = -1;
         }
 
+        notifier(const notifier &other) = delete;
+        notifier &operator=(const notifier &other) = delete;
+
         ~notifier() noexcept {
-            ::close(m_fd);
+            if (m_fd != -1) {
+                ::close(m_fd);
+            }
         }
 
         inline bool notify() noexcept {

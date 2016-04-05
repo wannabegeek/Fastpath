@@ -18,40 +18,35 @@ int main(int argc, char *argv[]) {
     DCF::InlineEventManager evm;
     std::vector<tf::notifier> m_notifiers;
 
+    bool shutdown = false;
+    auto notificationHandler = [&](DCF::TransportIOEvent *event, const DCF::EventType type, tf::notifier *notifier) {
+        INFO_LOG("Received notification..... " << event->fileDescriptor());
+        if (!notifier->reset()) {
+            DEBUG_LOG("Setting shutdown flag " << strerror(errno));
+            shutdown = true;
+        }
+    };
+
     try {
         INFO_LOG("Started");
-        bool shutdown = false;
         std::unique_ptr<DCF::TransportIOEvent> notification_handler;
         DCF::InterprocessNotifierServer notifier([&](tf::notifier &&notifier) {
-            DEBUG_LOG("Need to add callback for " << notifier.read_handle());
+            int fd = notifier.read_handle();
+            DEBUG_LOG("Need to add callback for " << fd);
+            m_notifiers.push_back(std::move(notifier));
 
-            notification_handler = std::make_unique<DCF::TransportIOEvent>(notifier.read_handle(), DCF::EventType::READ, [&](DCF::TransportIOEvent *event, const DCF::EventType type) {
-                INFO_LOG("Received notification..... " << event->fileDescriptor());
-                if (!notifier.reset()) {
-                    shutdown = true;
-                }
-//                char buffer[1];
-//                ssize_t readSize = ::read(event->fileDescriptor(), &buffer, 1);
-//                switch (readSize) {
-//                    case -1:
-//                        ERROR_LOG("Error reading from pipe" << strerror(errno));
-//                    case 0:
-//                        INFO_LOG("Pipe closed by remote end");
-//                        shutdown = true;
-//                        break;
-//                    default:
-//                        INFO_LOG("Received: " << buffer[0]);
-//                }
-            });
+            notification_handler = std::make_unique<DCF::TransportIOEvent>(fd, DCF::EventType::READ, std::bind(notificationHandler, std::placeholders::_1, std::placeholders::_2, &m_notifiers.back()));
 
             evm.registerHandler(notification_handler.get());
         });
+
         auto event = notifier.createReceiverEvent();
         evm.registerHandler(event.get());
 
         while(!shutdown) {
             evm.waitForEvent();
         };
+        DEBUG_LOG("Event loop dropped out");
 
     } catch (const DCF::socket_error &e) {
         ERROR_LOG("BOOM - it's broken: " << e.what());
