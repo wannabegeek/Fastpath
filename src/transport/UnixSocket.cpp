@@ -4,6 +4,7 @@
 
 #include <sys/un.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/uio.h>
 #include <errno.h>
 #include "UnixSocket.h"
@@ -25,6 +26,7 @@ namespace DCF {
     }
 
     UnixSocket::UnixSocket(UnixSocket &&other) : Socket(std::move(other)), m_addr(other.m_addr) {
+        DEBUG_LOG("moving");
     }
 
     UnixSocket::~UnixSocket() {
@@ -32,6 +34,15 @@ namespace DCF {
 
     void UnixSocket::setOptions(int options) noexcept {
         m_options = options;
+
+        int oldfl = fcntl(m_socket, F_GETFL);
+
+        if ((options & SocketOptionsNonBlocking) == SocketOptionsNonBlocking) {
+            fcntl(m_socket, F_SETFL, oldfl | O_NONBLOCK);
+        } else {
+            fcntl(m_socket, F_SETFL, oldfl & ~O_NONBLOCK);
+        }
+
     }
 
     bool UnixSocket::send_ancillary(const struct msghdr *msg, int flags) noexcept {

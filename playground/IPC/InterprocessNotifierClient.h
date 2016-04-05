@@ -6,11 +6,18 @@
 #define TFDCF_INTERPROCESSNOTIFIERCLIENT_H
 
 #include "InterprocessNotifier.h"
+#include "notifier.h"
 
 namespace DCF {
     class InterprocessNotifierClient : public InterprocessNotifier {
+    private:
+        tf::notifier inbound_notification;
+        tf::notifier outbound_notification;
+
     public:
         InterprocessNotifierClient();
+
+        bool notify() noexcept;
     };
 }
 

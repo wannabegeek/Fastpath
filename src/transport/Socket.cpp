@@ -135,22 +135,24 @@ namespace DCF {
         ReadResult result = MoreData;
 
         ssize_t readSize = ::recv(m_socket, const_cast<char *>(data), maxLength, MSG_DONTWAIT);
-        if (readSize > 0) {
-            length = readSize;
-        } else if (readSize == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                length = 0;
-                result = NoData;
-            } else {
+        switch(readSize) {
+            case 0:
                 length = 0;
                 disconnect();
                 result = Closed;
-            }
-        } else if (readSize == 0) {
-            // Remote end closed the socket
-            length = 0;
-            disconnect();
-            result = Closed;
+                break;
+            case -1:
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    length = 0;
+                    result = NoData;
+                } else {
+                    length = 0;
+                    disconnect();
+                    result = Closed;
+                }
+                break;
+            default:
+                length = readSize;
         }
 
         return result;

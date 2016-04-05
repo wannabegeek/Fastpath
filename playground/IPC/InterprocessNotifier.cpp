@@ -20,22 +20,9 @@
 
 namespace DCF {
     InterprocessNotifier::InterprocessNotifier(std::unique_ptr<UnixSocket> &&socket) : m_socket(std::move(socket)) {
-//#ifdef HAVE_EVENTFD
-//        m_fd = eventfd(0, O_NONBLOCK);
-//#else
-//        int p[2];
-//        if (::pipe(p) == -1) {
-//            ThrowException(fp::exception, "Failed to create pipe: " << strerror(errno));
-//        }
-//        m_fd = p[0];
-//#endif
-//        if (m_fd == -1) {
-//            ThrowException(fp::exception, "Failed to create eventfd: " << strerror(errno));
-//        }
     }
 
     InterprocessNotifier::~InterprocessNotifier() {
-//        close(m_fd);
     }
 
 
@@ -54,12 +41,14 @@ namespace DCF {
             /* Space large enough to hold an 'int' */
         } control_un;
 
+        char cmsgbuf[CMSG_SPACE(sizeof(int) * num_fds)];
+
         msgh.msg_iov = &iov;
         msgh.msg_iovlen = 1;
         msgh.msg_name = NULL;
         msgh.msg_namelen = 0;
-        msgh.msg_control = control_un.control;
-        msgh.msg_controllen = sizeof(struct cmsghdr) + sizeof(int) * num_fds;
+        msgh.msg_control = cmsgbuf;
+        msgh.msg_controllen = CMSG_LEN(sizeof(int) * num_fds);
 
         struct cmsghdr *cmhp;
         cmhp = CMSG_FIRSTHDR(&msgh);
@@ -79,7 +68,7 @@ namespace DCF {
         return true;
     }
 
-    bool InterprocessNotifier::receive_fd(int *fds, size_t &num_fds) noexcept {
+    bool InterprocessNotifier::receive_fd(UnixSocket *socket, int *fds, size_t &num_fds) noexcept {
         assert(num_fds < MAX_FDS);
 
         struct iovec iov;
@@ -101,7 +90,7 @@ namespace DCF {
         msgh.msg_control = control_un.control;
         msgh.msg_controllen = sizeof(struct cmsghdr) + sizeof(int) * num_fds;
 
-        DCF::UnixSocket::ReadResult result = m_socket->read_ancillary(&msgh);
+        DCF::UnixSocket::ReadResult result = socket->read_ancillary(&msgh);
         if (result == DCF::UnixSocket::MoreData) {
             struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msgh);
             if (cmsg != nullptr) {

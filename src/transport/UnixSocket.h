@@ -15,8 +15,6 @@ namespace DCF {
     protected:
         struct sockaddr_un m_addr;
 
-        void setOptions(int options) noexcept override;
-
     public:
 
         UnixSocket(const std::string &path) throw(socket_error);
@@ -25,6 +23,8 @@ namespace DCF {
         UnixSocket(UnixSocket &&other);
 
         virtual ~UnixSocket();
+
+        void setOptions(int options) noexcept override;
 
         bool send_ancillary(const struct msghdr *msg, int flags) noexcept;
         const Socket::ReadResult read_ancillary(struct msghdr *msg) noexcept;
