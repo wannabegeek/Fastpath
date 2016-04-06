@@ -89,7 +89,7 @@ TEST(Socket, NonBlockingReadWrite) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     });
 
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     DCF::TCPSocketClient client("localhost", "6967");
     DCF::BusySpinQueue queue;
 
