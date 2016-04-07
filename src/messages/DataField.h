@@ -60,19 +60,19 @@ namespace DCF {
             m_storage.setData(reinterpret_cast<const byte *>(value), length);
         }
 
-        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() {
+        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() const noexcept {
             assert(m_type == field_traits<T>::type);
             const byte *bytes = nullptr;
             m_storage.bytes(&bytes);
             return reinterpret_cast<T>(bytes);
         }
 
-        const size_t get(const byte **data) {
+        const size_t get(const byte **data) const noexcept {
             assert(m_type == StorageType::data);
             return m_storage.bytes(data);
         }
 
-        const size_t get(const char **data) {
+        const size_t get(const char **data) const noexcept {
             assert(m_type == StorageType::string);
             const byte *bytes = nullptr;
             const size_t r =m_storage.bytes(&bytes);

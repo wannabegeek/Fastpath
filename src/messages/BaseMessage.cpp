@@ -13,15 +13,27 @@ namespace DCF {
 
     BaseMessage::BaseMessage(BaseMessage &&other) noexcept : m_payload(std::move(other.m_payload)),
                                         m_keys(std::move(other.m_keys)) {
+        m_payload.clear();
+        m_keys.clear();
+    }
+
+    BaseMessage::~BaseMessage() {
+        this->clear();
     }
 
     void BaseMessage::clear() {
+        for (Field *field : m_payload) {
+            delete field;
+//            field->~Field();
+//            field_allocator_traits::deallocate(m_field_allocator, reinterpret_cast<char *>(field), sizeof(*field));
+        }
         m_payload.clear();
         m_keys.clear();
     }
 
     bool BaseMessage::addDataField(const char *field, const byte *value, const size_t size) {
-        std::shared_ptr<DataField> e = std::make_shared<DataField>();
+//        void *block = field_allocator_traits::allocate(m_field_allocator, sizeof(DataField));
+        DataField *e = new DataField();
         e->set(field, value, size);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -31,7 +43,8 @@ namespace DCF {
     }
 
     bool BaseMessage::addDataField(const char *field, const char *value) {
-        std::shared_ptr<DataField> e = std::make_shared<DataField>();
+//        void *block = field_allocator_traits::allocate(m_field_allocator, sizeof(DataField));
+        DataField *e = new DataField();
         e->set(field, value);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -41,7 +54,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addMessageField(const char *field, const BaseMessage *msg) {
-        std::shared_ptr<MessageField> e = std::make_shared<MessageField>();
+        MessageField *e = new MessageField();
         e->set(field, msg);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -51,7 +64,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time) {
-        std::shared_ptr<DateTimeField> e = std::make_shared<DateTimeField>();
+        DateTimeField *e = new DateTimeField();
         e->set(field, time);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -65,6 +78,7 @@ namespace DCF {
             auto index = m_keys.find(field);
             if (index != m_keys.end()) {
                 m_keys.erase(field);
+                delete field;
                 auto it = m_payload.begin();
                 std::advance(it, index->second);
                 m_payload.erase(it);
@@ -93,7 +107,7 @@ namespace DCF {
         b = writeScalar(b, static_cast<MsgHeader::field_count>(this->size()));
 //        b += sizeof(MsgHeader::field_count);
 
-        for (const std::shared_ptr<Field> &field : m_payload) {
+        for (const Field *field : m_payload) {
             msgLength += field->encode(buffer);
         }
 
@@ -116,20 +130,20 @@ namespace DCF {
 
             for (size_t i = 0; i < field_count; i++) {
                 const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
-                std::shared_ptr<Field> field;
+                Field *field = nullptr;
                 switch (type) {
                     case StorageType::string:
                     case StorageType::data:
-                        field = std::make_shared<DataField>();
+                        field = new DataField();
                         break;
                     case StorageType::date_time:
-                        field = std::make_shared<DateTimeField>();
+                        field = new DateTimeField();
                         break;
                     case StorageType::message:
-                        field = std::make_shared<MessageField>();
+                        field = new MessageField();
                         break;
                     default:
-                        field = std::make_shared<ScalarField>();
+                        field = new ScalarField();
                         break;
                 }
 
@@ -164,11 +178,11 @@ namespace DCF {
 
     std::ostream &BaseMessage::output(std::ostream &out) const {
         bool first = true;
-        for (const std::shared_ptr<Field> &field : m_payload) {
+        for (const Field *field : m_payload) {
             if (!first) {
                 out << ", ";
             }
-            out << "{" << *field.get() << "}";
+            out << "{" << *field << "}";
             first = false;
         }
 

@@ -93,7 +93,7 @@ namespace DCF {
         }
 
         template<typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>>
-        const T get() const {
+        const T get() const noexcept {
             assert(m_type == field_traits<T>::type);
             return readScalar<T>(m_raw);
         }

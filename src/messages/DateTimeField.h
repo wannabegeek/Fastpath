@@ -45,11 +45,11 @@ namespace DCF {
             m_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(time).count() % 1000;
         }
 
-        const void get(std::chrono::time_point<std::chrono::system_clock> &data) {
+        const void get(std::chrono::time_point<std::chrono::system_clock> &data) const noexcept {
             data = m_time_point;
         }
 
-        const std::chrono::time_point<std::chrono::system_clock> &get() {
+        const std::chrono::time_point<std::chrono::system_clock> &get() const noexcept {
             return m_time_point;
         }
 

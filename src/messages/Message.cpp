@@ -32,7 +32,7 @@ namespace DCF {
 
     const bool Message::setSubject(const char *subject) {
         if (strlen(subject) < max_subject_length) {
-            strcpy(&m_subject[0], subject);
+            strncpy(&m_subject[0], subject, max_subject_length);
             return true;
         }
 

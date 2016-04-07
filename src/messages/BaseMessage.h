@@ -17,6 +17,7 @@
 #include "Field.h"
 #include "Exception.h"
 #include "utils/tfpool.h"
+#include "utils/fast_linear_allocator.h"
 #include "types.h"
 #include "ScalarField.h"
 #include "DataField.h"
@@ -80,9 +81,9 @@ namespace DCF {
      */
     class BaseMessage : public Serializable, public tf::reusable {
     private:
-        typedef std::vector<std::shared_ptr<Field>> PayloadContainer;
-//        typedef std::unordered_map<const char *, const size_t, FieldIdentifierHash, FieldIdentifierComparitor> KeyMappingsContainer;
-        typedef std::unordered_map<std::string, const size_t> KeyMappingsContainer;
+        typedef std::vector<Field *> PayloadContainer;
+        typedef std::unordered_map<const char *, const size_t, FieldIdentifierHash, FieldIdentifierComparitor> KeyMappingsContainer;
+//        typedef std::unordered_map<std::string, const size_t> KeyMappingsContainer;
 
         static constexpr const uint8_t body_flag = 2;
 
@@ -90,6 +91,10 @@ namespace DCF {
         KeyMappingsContainer m_keys;
 
         static const DataStorageType getStorageType(const StorageType type);
+
+        using field_allocator = std::allocator_traits<tf::linear_allocator<char>>::template rebind_alloc<char>;
+        using field_allocator_traits = std::allocator_traits<tf::linear_allocator<char>>::template rebind_traits<char>;
+        field_allocator m_field_allocator;
 
     protected:
         /// @cond DEV
@@ -103,13 +108,13 @@ namespace DCF {
         /**
          * Constructor
          */
-        BaseMessage() {}
+        BaseMessage() : m_field_allocator(1024 * 1024) {}
 
         /**
          * Move constructor
          */
         BaseMessage(BaseMessage &&msg) noexcept;
-        virtual ~BaseMessage() {}
+        virtual ~BaseMessage();
 
         BaseMessage(const BaseMessage &msg) = delete;
         BaseMessage& operator=(BaseMessage const&) = delete;
@@ -129,7 +134,7 @@ namespace DCF {
          * @return The storage type.
          */
         const StorageType storageType(const char *field) const {
-            const std::shared_ptr<Field> element = m_payload[m_keys.at(field)];
+            const Field *element = m_payload[m_keys.at(field)];
             return element->type();
         }
 
@@ -146,7 +151,8 @@ namespace DCF {
          * @return `true` if the field was successfully added, `false` otherwise
          */
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> bool addScalarField(const char *field, const T &value) {
-            std::shared_ptr<ScalarField> e = std::make_shared<ScalarField>();
+//            void *block = field_allocator_traits::allocate(m_field_allocator, sizeof(ScalarField));
+            ScalarField *e = new ScalarField();
             e->set(field, value);
             auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
             if (result.second) {
@@ -211,9 +217,9 @@ namespace DCF {
             if (field != nullptr) {
                 auto index = m_keys.find(field);
                 if (index != m_keys.end()) {
-                    const std::shared_ptr<ScalarField> element = std::static_pointer_cast<ScalarField>(
+                    const ScalarField *element = reinterpret_cast<ScalarField *>(
                             m_payload[index->second]);
-                    value = element.get()->get<T>();
+                    value = element->get<T>();
                     return true;
                 }
             }
@@ -224,8 +230,8 @@ namespace DCF {
             if (field != nullptr) {
                 auto index = m_keys.find(field);
                 if (index != m_keys.end()) {
-                    const std::shared_ptr<DataField> element = std::static_pointer_cast<DataField>(m_payload[index->second]);
-                    length = element.get()->get(value);
+                    const DataField *element = reinterpret_cast<DataField *>(m_payload[index->second]);
+                    length = element->get(value);
                     return true;
                 }
             }

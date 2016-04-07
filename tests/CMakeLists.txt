@@ -21,7 +21,7 @@ add_executable(tests
         URLTests.cpp
         TCPTransportTests.cpp
 #        SubscriptionTests.cpp
-        )
+        linear_allocator_tests.cpp)
 
 target_link_libraries(tests TFDCF ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
