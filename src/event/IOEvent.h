@@ -41,9 +41,9 @@ namespace DCF {
 
 	public:
 
-		IOEvent(Queue *queue, const int fd, const EventType eventType);
-		IOEvent(IOEvent &&other);
-		virtual ~IOEvent() {}
+		IOEvent(Queue *queue, const int fd, const EventType eventType) noexcept;
+		IOEvent(IOEvent &&other) noexcept;
+		virtual ~IOEvent() noexcept {}
 
         inline const int fileDescriptor() const noexcept {
             return m_fd;

@@ -22,33 +22,52 @@ namespace DCF {
     }
 
     void BaseMessage::clear() {
+//        size_t size = 0;
         for (Field *field : m_payload) {
             delete field;
+//            switch (field->type()) {
+//                case StorageType::string:
+//                case StorageType::data:
+//                    size = sizeof(DataField);
+//                    break;
+//                case StorageType::date_time:
+//                    size = sizeof(DateTimeField);
+//                    break;
+//                case StorageType::message:
+//                    size = sizeof(MessageField);
+//                    break;
+//                default:
+//                    size = sizeof(ScalarField);
+//                    break;
+//            }
+//
 //            field->~Field();
-//            field_allocator_traits::deallocate(m_field_allocator, reinterpret_cast<char *>(field), sizeof(*field));
+//            field_allocator_traits::deallocate(m_field_allocator, reinterpret_cast<char *>(field), size);
         }
         m_payload.clear();
         m_keys.clear();
     }
 
     bool BaseMessage::addDataField(const char *field, const byte *value, const size_t size) {
-//        void *block = field_allocator_traits::allocate(m_field_allocator, sizeof(DataField));
         DataField *e = new DataField();
         e->set(field, value, size);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
+        } else {
+            delete e;
         }
         return result.second;
     }
 
     bool BaseMessage::addDataField(const char *field, const char *value) {
-//        void *block = field_allocator_traits::allocate(m_field_allocator, sizeof(DataField));
         DataField *e = new DataField();
         e->set(field, value);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
+        } else {
+            delete e;
         }
         return result.second;
     }
@@ -59,6 +78,8 @@ namespace DCF {
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
+        } else {
+            delete e;
         }
         return result.second;
     }
@@ -69,6 +90,8 @@ namespace DCF {
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
+        } else {
+            delete e;
         }
         return result.second;
     }
@@ -93,7 +116,7 @@ namespace DCF {
 
     const bool BaseMessage::operator==(const BaseMessage &other) const {
         return std::equal(m_payload.begin(), m_payload.end(), other.m_payload.begin(), [](const PayloadContainer::value_type& item1, const PayloadContainer::value_type& item2) -> bool {
-                        return *item1 == *item2;
+                        return item1 == item2;
                 });
     }
 
@@ -182,7 +205,7 @@ namespace DCF {
             if (!first) {
                 out << ", ";
             }
-            out << "{" << *field << "}";
+            out << "{" << field << "}";
             first = false;
         }
 

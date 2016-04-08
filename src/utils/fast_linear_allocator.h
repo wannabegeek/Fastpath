@@ -23,17 +23,67 @@ namespace tf {
         typedef char* storage_type;
 
         struct slab {
-            pointer content;
-            std::size_t size;
+            pointer m_content;
+            std::size_t m_size;
+            std::size_t m_allocated;
             pointer m_head;
-            slab *next;
+            slab *m_next;
+
+            slab(std::size_t size) noexcept : m_size(size), m_allocated(0), m_next(nullptr) {
+                INFO_LOG("Creating new slab of size " << m_size);
+                m_content = reinterpret_cast<pointer>(::malloc(m_size));
+                m_head = m_content;
+            }
+
+            ~slab() noexcept {
+                ::free(m_content);
+            }
+
+            std::size_t free() const noexcept {
+                return m_size - m_allocated;
+            }
+
+            pointer allocate(std::size_t size) noexcept {
+                assert(this->free() >= size);
+                pointer p = m_head;
+                std::advance(m_head, size);
+                m_allocated = std::distance(m_content, m_head);
+                return p;
+            }
+
+            void deallocate(pointer ptr, std::size_t size) noexcept {
+                m_allocated -= size;
+                if (ptr + size == m_head) {
+                    m_head = ptr;
+                } else if (m_allocated == 0) {
+                    m_head = m_content;
+                }
+                m_allocated = std::distance(m_content, m_head);
+            }
         };
 
-        pointer m_slab;
+        slab *m_root_slab;
+        slab *m_current_slab;
 
-        pointer m_head;
-        pointer m_tail;
-        size_t m_allocated_size = 0;
+        inline slab *find_slab_with_space(slab *start, std::size_t size) const noexcept {
+            if (start->free() >= size) {
+                return start;
+            } else if (start->m_next != nullptr) {
+                return find_slab_with_space(start->m_next, size);
+            }
+
+            return nullptr;
+        }
+
+        inline slab *find_slab_containing(slab *start, T *ptr) const noexcept {
+            if (ptr > start->m_content && ptr < start->m_head) {
+                return start;
+            } else if (start->m_next != nullptr) {
+                return find_slab_containing(start->m_next, ptr);
+            }
+
+            return nullptr;
+        }
 
     public:
         template<typename U> struct rebind {
@@ -41,34 +91,39 @@ namespace tf {
         };
 
         linear_allocator(std::size_t initial_size = 64) {
-            m_slab = static_cast<char *>(malloc(initial_size * sizeof(T)));
-            m_tail = m_head = m_slab;
-            std::advance(m_tail, initial_size * sizeof(T));
+            m_root_slab = m_current_slab = new slab(initial_size);
         }
 
         ~linear_allocator() {
-            free(m_slab);
+            slab *s = m_root_slab;
+            while (s != nullptr) {
+                slab *m = s;
+                s = s->m_next;
+                delete m;
+            }
         }
 
         linear_allocator(const linear_allocator &other) {
         }
 
-        pointer allocate(std::size_t size) {
-            pointer old_head = m_head;
-            m_allocated_size += size;
-            std::cout << "out: " << size << std::endl;
-            m_head += size;
-            assert(m_head <= m_tail);
-            return old_head;
+        pointer allocate(std::size_t size) noexcept {
+            INFO_LOG("Allocating " << size);
+
+            if (find_slab_with_space(m_root_slab, size) != nullptr) {
+                return m_current_slab->allocate(size);
+            } else {
+                m_current_slab->m_next = new slab(size);
+                m_current_slab = m_current_slab->m_next;
+                return m_current_slab->allocate(size);
+            }
         }
 
-        void deallocate(T* p, std::size_t size) {
-            m_allocated_size -= size;
-            std::cout << "..and back: "  << size << std::endl;
-            if (m_allocated_size == 0) {
-                m_head = m_slab;
-                std::cout << "..and back properly" << std::endl;
+        void deallocate(T* p, std::size_t size) noexcept {
+            slab *s = find_slab_containing(m_root_slab, p);
+            if (s != nullptr) {
+                s->deallocate(p, size);
             }
+            INFO_LOG("Deallocated " << size);
         }
     };
 

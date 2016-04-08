@@ -17,7 +17,7 @@ namespace fp {
                                        std::placeholders::_2));
     }
 
-    peer_connection::peer_connection(peer_connection &&other)
+    peer_connection::peer_connection(peer_connection &&other) noexcept
             : m_subscriptions(std::move(other.m_subscriptions)),
               m_queue(other.m_queue),
               m_socket(std::move(other.m_socket)),

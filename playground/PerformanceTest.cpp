@@ -8,10 +8,13 @@
 
 int main(int argc, char *argv[])
 {
+
+    LOG_LEVEL(tf::logger::debug);
+
     const size_t iterations = 1000000;
     typedef tf::pool<DCF::Message> PoolType;
 
-    PoolType pool(iterations);
+    PoolType pool(10);
 
     std::vector<PoolType::shared_ptr_type> encoded_messages(iterations);
     DCF::MessageBuffer buffer(1000000);
@@ -23,7 +26,7 @@ int main(int argc, char *argv[])
             float32_t t = 22.0;
             msg->addScalarField("TEST", t);
             msg->addDataField("Name", "Tom");
-            msg->addDataField("Name", "Zac");
+            msg->addDataField("Name2", "Zac");
 
             /* const size_t encoded_len = */msg->encode(buffer);
             //encoded_messages.emplace_back(std::move(msg));

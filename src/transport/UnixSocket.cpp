@@ -22,14 +22,14 @@ namespace DCF {
         m_socket = socket(AF_UNIX, SOCK_STREAM, 0);
     }
 
-    UnixSocket::UnixSocket(const int socketFd, const bool connected) : Socket(socketFd, connected) {
+    UnixSocket::UnixSocket(const int socketFd, const bool connected) noexcept : Socket(socketFd, connected) {
     }
 
-    UnixSocket::UnixSocket(UnixSocket &&other) : Socket(std::move(other)), m_addr(other.m_addr) {
+    UnixSocket::UnixSocket(UnixSocket &&other) noexcept : Socket(std::move(other)), m_addr(other.m_addr) {
         DEBUG_LOG("moving");
     }
 
-    UnixSocket::~UnixSocket() {
+    UnixSocket::~UnixSocket() noexcept {
     }
 
     void UnixSocket::setOptions(int options) noexcept {

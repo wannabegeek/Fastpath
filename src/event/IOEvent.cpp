@@ -31,7 +31,7 @@ namespace DCF {
             : Event(queue), m_fd(fd), m_eventTypes(eventType) {
     }
 
-    IOEvent::IOEvent(IOEvent &&other) : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes) {
+    IOEvent::IOEvent(IOEvent &&other) noexcept : Event(std::move(other)), m_fd(other.m_fd), m_eventTypes(other.m_eventTypes) {
     }
 
     const bool IOEvent::isEqual(const Event &other) const noexcept {

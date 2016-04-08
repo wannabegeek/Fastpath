@@ -55,7 +55,7 @@ namespace  DCF {
 
     public:
 		TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback);
-		TimerEvent(TimerEvent &&other);
+		TimerEvent(TimerEvent &&other) noexcept;
 
         void reset();
 		void setTimeout(const std::chrono::microseconds &timeout);

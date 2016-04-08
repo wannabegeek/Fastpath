@@ -18,7 +18,7 @@ namespace DCF {
             : IOEvent(queue, fd, eventType), m_callback(callback) {
     }
 
-    DataEvent::DataEvent(DataEvent &&other) : IOEvent(std::move(other)), m_callback(std::move(other.m_callback)) {
+    DataEvent::DataEvent(DataEvent &&other) noexcept : IOEvent(std::move(other)), m_callback(std::move(other.m_callback)) {
     }
 
     const bool DataEvent::isEqual(const Event &other) const noexcept {

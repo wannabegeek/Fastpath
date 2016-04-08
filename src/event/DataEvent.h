@@ -16,7 +16,7 @@ namespace DCF {
 
     public:
         DataEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback);
-        DataEvent(DataEvent &&other);
+        DataEvent(DataEvent &&other) noexcept ;
 
         const bool isEqual(const Event &other) const noexcept override;
         const bool __notify(const EventType &eventType) noexcept override;

@@ -9,7 +9,7 @@ namespace DCF {
     UnixSocketClient::UnixSocketClient(const std::string &path) : UnixSocket(path) {
     }
 
-    UnixSocketClient::UnixSocketClient(UnixSocketClient &&other) : UnixSocket(std::move(other)) {
+    UnixSocketClient::UnixSocketClient(UnixSocketClient &&other) noexcept : UnixSocket(std::move(other)) {
     }
 
     bool UnixSocketClient::connect(SocketOptions options) noexcept {

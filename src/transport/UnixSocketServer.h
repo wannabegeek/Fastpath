@@ -12,9 +12,9 @@ namespace DCF {
     class UnixSocketServer final : public UnixSocket {
     public:
         UnixSocketServer(const std::string &path);
-        UnixSocketServer(UnixSocketServer &&other);
+        UnixSocketServer(UnixSocketServer &&other) noexcept;
 
-        virtual ~UnixSocketServer();
+        virtual ~UnixSocketServer() noexcept;
 
         bool connect(SocketOptions options) noexcept override;
         std::unique_ptr<UnixSocket> acceptPendingConnection() noexcept;

@@ -26,8 +26,8 @@ namespace fp {
             component_type type;
 
             component(const typename hasher::result_type &h, const component_type &t) : component_hash(h), type(t) {}
-            component(const component &other) : component_hash(other.component_hash), type(other.type) {}
-            component(component &&other) : component_hash(other.component_hash), type(other.type) {}
+            component(const component &other) noexcept : component_hash(other.component_hash), type(other.type) {}
+            component(component &&other) noexcept : component_hash(other.component_hash), type(other.type) {}
 
             component& operator=(const component& other) {
                 component_hash = other.component_hash;
@@ -102,7 +102,7 @@ namespace fp {
 
         subscription(subscription &&other) noexcept : m_components(std::move(other.m_components)), m_contains_wildcard(other.m_contains_wildcard), m_subject_hash(other.m_subject_hash) {}
 
-        ~subscription() {};
+        ~subscription() noexcept {};
 
         subscription& operator=(const subscription& other) {
             std::copy(other.m_components.begin(), other.m_components.end(), std::back_inserter(m_components));

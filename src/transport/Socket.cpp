@@ -27,29 +27,29 @@
 
 namespace DCF {
 
-    Socket::Socket() : m_socket(-1), m_connected(false) {
+    Socket::Socket() noexcept : m_socket(-1), m_connected(false) {
     }
 
-    Socket::Socket(Socket &&other) : m_socket(other.m_socket), m_connected(other.m_connected.load()), m_handler(std::move(other.m_handler)) {
+    Socket::Socket(Socket &&other) noexcept : m_socket(other.m_socket), m_connected(other.m_connected.load()), m_handler(std::move(other.m_handler)) {
         other.m_connected = false;
     }
 
-    Socket::Socket(const int socketFd, const bool connected) {
+    Socket::Socket(const int socketFd, const bool connected) noexcept {
         m_socket = socketFd;
         m_connected = connected;
     }
 
-    Socket::~Socket() {
+    Socket::~Socket() noexcept {
         if (m_connected) {
             close(m_socket);
         }
     }
 
-    void Socket::setConnectionStateHandler(std::function<void(bool connected)> handler) {
+    void Socket::setConnectionStateHandler(std::function<void(bool connected)> handler) noexcept {
         m_handler = handler;
     }
 
-    void Socket::setSocket(const int socket, const bool isConnected) {
+    void Socket::setSocket(const int socket, const bool isConnected) noexcept {
         m_socket = socket;
         m_connected = isConnected;
     }

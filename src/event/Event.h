@@ -32,10 +32,10 @@ namespace DCF {
         }
 
     public:
-        Event(Queue *queue) : m_queue(queue) {
+        Event(Queue *queue) noexcept : m_queue(queue) {
         }
 
-        Event(Event &&other) : m_queue(other.m_queue), m_pendingRemoval(other.m_pendingRemoval) {
+        Event(Event &&other) noexcept : m_queue(other.m_queue), m_pendingRemoval(other.m_pendingRemoval) {
         }
 
         Event(const Event &other) = delete;

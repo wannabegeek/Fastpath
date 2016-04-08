@@ -88,6 +88,8 @@ namespace DCF {
     public:
         using queue_value_type = QueueElement;
 
+        Queue() noexcept {}
+
         virtual ~Queue();
 
         virtual const status dispatch() = 0;

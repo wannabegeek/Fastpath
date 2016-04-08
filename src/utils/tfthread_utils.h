@@ -24,7 +24,7 @@ namespace tf {
         auto_thread(std::thread &thread) : m_thread(std::move(thread)) {
         }
 
-        auto_thread(std::thread &&thread) : m_thread(std::move(thread)) {
+        auto_thread(std::thread &&thread) noexcept : m_thread(std::move(thread)) {
         }
 
         auto_thread(auto_thread &&other) noexcept : m_thread(std::move(other.m_thread)) {

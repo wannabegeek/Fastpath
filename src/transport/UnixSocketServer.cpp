@@ -16,10 +16,10 @@ namespace DCF {
         }
     }
 
-    UnixSocketServer::UnixSocketServer(UnixSocketServer &&other) : UnixSocket(std::move(other)) {
+    UnixSocketServer::UnixSocketServer(UnixSocketServer &&other) noexcept : UnixSocket(std::move(other)) {
     }
 
-    UnixSocketServer::~UnixSocketServer() {
+    UnixSocketServer::~UnixSocketServer() noexcept {
         ::unlink(m_addr.sun_path);
     }
 

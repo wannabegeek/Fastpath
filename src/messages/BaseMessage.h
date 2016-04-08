@@ -94,7 +94,7 @@ namespace DCF {
 
         using field_allocator = std::allocator_traits<tf::linear_allocator<char>>::template rebind_alloc<char>;
         using field_allocator_traits = std::allocator_traits<tf::linear_allocator<char>>::template rebind_traits<char>;
-        field_allocator m_field_allocator;
+//        field_allocator m_field_allocator;
 
     protected:
         /// @cond DEV
@@ -108,7 +108,7 @@ namespace DCF {
         /**
          * Constructor
          */
-        BaseMessage() : m_field_allocator(1024 * 1024) {}
+        BaseMessage() {}
 
         /**
          * Move constructor
@@ -151,12 +151,13 @@ namespace DCF {
          * @return `true` if the field was successfully added, `false` otherwise
          */
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> bool addScalarField(const char *field, const T &value) {
-//            void *block = field_allocator_traits::allocate(m_field_allocator, sizeof(ScalarField));
             ScalarField *e = new ScalarField();
             e->set(field, value);
             auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
             if (result.second) {
                 m_payload.emplace_back(e);
+            } else {
+                delete e;
             }
             return result.second;
         }

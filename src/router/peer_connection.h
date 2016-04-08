@@ -38,8 +38,8 @@ namespace fp {
         void handle_admin_message(const subject<> subject, DCF::Message &message);
     public:
         peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
-        peer_connection(peer_connection &&other);
-        ~peer_connection();
+        peer_connection(peer_connection &&other) noexcept;
+        ~peer_connection() noexcept;
 
         void add_subscription(const char *subject);
         void remove_subscription(const char *subject);

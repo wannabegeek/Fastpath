@@ -55,7 +55,7 @@ namespace DCF {
     }
 #endif
 
-    TimerEvent::TimerEvent(TimerEvent &&other) : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)), m_identifier(other.m_identifier) {
+    TimerEvent::TimerEvent(TimerEvent &&other) noexcept : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)), m_identifier(other.m_identifier) {
     }
 
     void TimerEvent::dispatch(TimerEvent *event) {

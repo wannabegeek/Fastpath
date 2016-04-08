@@ -60,29 +60,29 @@ namespace DCF {
             Closed
         } ReadResult;
 
-        Socket();
-        Socket(Socket &&other);
-        Socket(const int socketFd, const bool connected);
+        Socket() noexcept;
+        Socket(Socket &&other) noexcept;
+        Socket(const int socketFd, const bool connected) noexcept;
 
-        virtual ~Socket();
+        virtual ~Socket() noexcept;
 
         bool isConnected() const throw() {
             return m_connected;
         }
 
-        int getSocket() {
+        int getSocket() const noexcept{
             return m_socket;
         }
 
-        void setSocket(const int socket, const bool isConnected = true);
+        void setSocket(const int socket, const bool isConnected = true) noexcept;
 
-        void setConnectionStateHandler(std::function<void(bool connected)> m_handler);
+        void setConnectionStateHandler(std::function<void(bool connected)> m_handler) noexcept;
 
         virtual bool connect(SocketOptions options = SocketOptionsNone) noexcept {
             return false;
         };
 
-        bool disconnect() throw();
+        bool disconnect() noexcept;
 
         bool send(const char *data, ssize_t length) noexcept;
         bool send(const std::string &data) noexcept;

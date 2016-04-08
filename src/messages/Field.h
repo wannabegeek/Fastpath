@@ -40,7 +40,7 @@ namespace DCF {
         virtual const bool decode(const ByteStorage &buffer) noexcept override = 0;
 
         void setIdentifier(const char *identifier) {
-            strncpy(m_identifier, identifier, 256);
+            strcpy(m_identifier, identifier);
         }
 
         virtual const bool operator==(const Field &other) const {

@@ -12,7 +12,7 @@ namespace DCF {
     class UnixSocketClient final : public UnixSocket {
     public:
         UnixSocketClient(const std::string &path);
-        UnixSocketClient(UnixSocketClient &&other);
+        UnixSocketClient(UnixSocketClient &&other) noexcept;
 
         bool connect(SocketOptions options = SocketOptionsNone) noexcept override;
     };

@@ -18,16 +18,17 @@ namespace DCF {
     public:
 
         UnixSocket(const std::string &path) throw(socket_error);
-        UnixSocket(const int socketFd, const bool connected);
+        UnixSocket(const int socketFd, const bool connected) noexcept;
 
-        UnixSocket(UnixSocket &&other);
+        UnixSocket(UnixSocket &&other) noexcept;
 
-        virtual ~UnixSocket();
+        virtual ~UnixSocket() noexcept;
 
         void setOptions(int options) noexcept override;
 
         bool send_ancillary(const struct msghdr *msg, int flags) noexcept;
-        const Socket::ReadResult read_ancillary(struct msghdr *msg) noexcept;
+        const Socket::ReadResult read_ancillary(struct msghdr *msg)
+                noexcept;
     };
 }
 

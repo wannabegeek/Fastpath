@@ -10,10 +10,10 @@
 
 namespace DCF {
 
-    InlineEventManager::InlineEventManager() : m_servicingEvents(false), m_servicingTimers(false) {
+    InlineEventManager::InlineEventManager() noexcept : m_servicingEvents(false), m_servicingTimers(false) {
     }
 
-    InlineEventManager::~InlineEventManager() {
+    InlineEventManager::~InlineEventManager() noexcept  {
     }
 
     void InlineEventManager::registerHandler(TimerEvent *event) {

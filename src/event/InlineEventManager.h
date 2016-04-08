@@ -27,10 +27,10 @@ namespace DCF {
 
         const bool haveHandlers() const override;
     public:
-        InlineEventManager();
-        InlineEventManager(InlineEventManager &&other);
+        InlineEventManager() noexcept;
+        InlineEventManager(InlineEventManager &&other) noexcept;
 
-        ~InlineEventManager();
+        ~InlineEventManager() noexcept;
 
         void registerHandler(TimerEvent *event) override;
         void registerHandler(IOEvent *event) override;
