@@ -11,41 +11,6 @@
 #include "types.h"
 
 namespace DCF {
-    ByteStorage::ByteStorage(const size_t allocation) noexcept : m_storedLength(0), m_no_copy(false), m_read_ptr(m_storage.first), m_mark_ptr(m_read_ptr) {
-        allocateStorage(allocation);
-    }
-
-    ByteStorage::ByteStorage(const byte *bytes, size_t length, bool no_copy) noexcept : m_storedLength(0), m_no_copy(no_copy) {
-        if (m_no_copy) {
-            m_storage.first = const_cast<byte *>(bytes);
-            m_storage.second = 0;
-            m_storedLength = length;
-        } else {
-            allocateStorage(length);
-            std::copy(bytes, &bytes[length], m_storage.first);
-            m_storedLength = length;
-        }
-        m_read_ptr = m_storage.first;
-        m_mark_ptr = m_read_ptr;
-    }
-
-    ByteStorage::ByteStorage(ByteStorage &&orig) noexcept : m_storage(orig.m_storage), m_storedLength(orig.m_storedLength), m_no_copy(orig.m_no_copy) {
-        orig.m_storage.first = nullptr;
-        orig.m_storage.second = 0;
-        orig.m_storedLength = 0;
-        orig.m_no_copy = true;
-        orig.m_read_ptr = orig.m_storage.first;
-        orig.m_mark_ptr = 0;
-        m_read_ptr = m_storage.first;
-        m_mark_ptr = m_read_ptr;
-    }
-
-    ByteStorage::~ByteStorage() noexcept {
-        if (!m_no_copy) {
-            storage_traits::deallocate(m_allocator, m_storage.first, m_storage.second);
-        }
-    }
-
     void ByteStorage::allocateStorage(const size_t length) {
         // this will find the next x^2 number larger than the one provided
         m_storage.second = length;
@@ -58,23 +23,6 @@ namespace DCF {
         m_storage.second++;
 
         m_storage.first = storage_traits::allocate(m_allocator, m_storage.second);
-    }
-
-    const size_t ByteStorage::bytes(const byte **data) const noexcept {
-        *data = m_storedLength > 0 ? m_storage.first : nullptr;
-        return m_storedLength;
-    }
-
-    const bool ByteStorage::operator==(const ByteStorage &other) const noexcept {
-        if (m_storedLength == other.m_storedLength) {
-            for (size_t i = 0; i < m_storedLength; i++) {
-                if (m_storage.first[i] != other.m_storage.first[i]) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
     }
 
     void ByteStorage::mark() const noexcept {
