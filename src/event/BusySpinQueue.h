@@ -25,18 +25,18 @@ namespace DCF {
         std::unique_ptr<TimerEvent> m_timeout;
     public:
         BusySpinQueue() {
-            m_timeout = std::make_unique<TimerEvent>(this, std::chrono::microseconds(0), [&](TimerEvent *event) {
+            m_timeout = std::make_unique<TimerEvent>(this, std::chrono::microseconds(0), [&](TimerEvent *event) noexcept {
                 // no-op
             });
         }
 
-        virtual ~BusySpinQueue() { }
+        virtual ~BusySpinQueue() noexcept { }
 
         /**
          * Attempt to dispatch any pending events and return immediately.
          * @return OK, or and error if one occurred
          */
-        inline const status try_dispatch() override {
+        inline const status try_dispatch() noexcept override {
             if (tf::likely(this->isInitialised())) {
                 status result = NO_EVENTS;
                 queue_value_type dispatcher;
@@ -54,7 +54,7 @@ namespace DCF {
          * Dispatch an event. Will block until one or more events have been dispatched
          * @return OK, or and error if one occurred
          */
-        inline const status dispatch() override {
+        inline const status dispatch() noexcept override {
             status status = OK;
             while ((status = this->try_dispatch()) == NO_EVENTS) {
                 // no-op - we will spin trying to get from the queue
@@ -71,7 +71,7 @@ namespace DCF {
          * @param timeout The maximum time in which to wait for an event.
          * @return OK, or and error if one occurred
          */
-        inline const status dispatch(const std::chrono::milliseconds &timeout) override {
+        inline const status dispatch(const std::chrono::milliseconds &timeout) noexcept override {
             status status = OK;
             if ((status = this->try_dispatch()) == NO_EVENTS) {
                 // Create a TimerEvent and add to the dispatch loop

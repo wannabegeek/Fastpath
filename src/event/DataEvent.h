@@ -12,7 +12,7 @@ namespace DCF {
     private:
         std::function<void(DataEvent *, const EventType)> m_callback;
 
-        void dispatch(DataEvent *event, const EventType &eventType);
+        void dispatch(DataEvent *event, const EventType &eventType) noexcept;
 
     public:
         DataEvent(Queue *queue, const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback);
@@ -20,7 +20,7 @@ namespace DCF {
 
         const bool isEqual(const Event &other) const noexcept override;
         const bool __notify(const EventType &eventType) noexcept override;
-        void __destroy() override;
+        void __destroy() noexcept override;
     };
 }
 

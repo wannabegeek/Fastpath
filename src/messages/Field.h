@@ -37,7 +37,7 @@ namespace DCF {
         virtual const size_t size() const noexcept = 0;
 
         virtual const size_t encode(MessageBuffer &buffer) const noexcept override = 0;
-        virtual const bool decode(const ByteStorage &buffer) noexcept override = 0;
+        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override = 0;
 
         void setIdentifier(const char *identifier) {
             strcpy(m_identifier, identifier);

@@ -23,7 +23,7 @@ namespace DCF {
     public:
         BackoffStrategy() : m_current(min_retry_interval()) {}
 
-        void backoff() {
+        void backoff() noexcept {
             std::this_thread::sleep_for(m_current);
             m_current = std::min(m_current * 2, max_retry_interval());
         }
@@ -51,11 +51,11 @@ namespace DCF {
         });
     }
 
-    TCPTransport::~TCPTransport() {
+    TCPTransport::~TCPTransport() noexcept {
         this->__disconnect();
     }
 
-    bool TCPTransport::__connect() {
+    bool TCPTransport::__connect() noexcept {
         BackoffStrategy strategy;
         while (!m_peer->isConnected() && m_shouldDisconnect == false) {
             if (!m_peer->connect()) {
@@ -68,7 +68,7 @@ namespace DCF {
         return true;
     }
 
-    bool TCPTransport::__disconnect() {
+    bool TCPTransport::__disconnect() noexcept {
         m_shouldDisconnect = true;
         if (m_peer->isConnected()) {
             return m_peer->disconnect();
@@ -82,7 +82,7 @@ namespace DCF {
         return true;
     }
 
-    status TCPTransport::sendMessage(const Message &msg) {
+    status TCPTransport::sendMessage(const Message &msg) noexcept {
         if (m_peer->isConnected()) {
             msg.encode(m_sendBuffer);
             const byte *data = nullptr;
@@ -96,11 +96,11 @@ namespace DCF {
     }
 
     status TCPTransport::sendMessageWithResponse(const Message &request, Message &reply,
-                                                         std::chrono::duration<std::chrono::milliseconds> &timeout) {
+                                                         std::chrono::duration<std::chrono::milliseconds> &timeout) noexcept {
         return this->sendMessage(request);
     }
 
-    status TCPTransport::sendReply(const Message &reply, const Message &request) {
+    status TCPTransport::sendReply(const Message &reply, const Message &request) noexcept {
         return this->sendMessage(reply);
     }
 
@@ -108,8 +108,9 @@ namespace DCF {
         return m_peer->isConnected();
     }
 
-    bool TCPTransport::processData(const DCF::ByteStorage &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
-        if (Message::have_complete_message(storage)) {
+    bool TCPTransport::processData(const DCF::MessageBuffer::ByteStorageType &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
+        size_t msg_length = 0;
+        if (Message::have_complete_message(storage, msg_length) == CompleteMessage) {
             MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
             storage.mark();
 
@@ -135,7 +136,7 @@ namespace DCF {
                 m_readBuffer.erase_back(MTU_SIZE - size);
 
                 if (result == DCF::Socket::MoreData) {
-                    const DCF::ByteStorage &storage = m_readBuffer.byteStorage();
+                    const DCF::MessageBuffer::ByteStorageType &storage = m_readBuffer.byteStorage();
 
                     while (this->processData(storage, messageCallback));
 

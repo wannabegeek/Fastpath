@@ -59,7 +59,7 @@ namespace DCF {
         if (it != m_observers.end()) {
             fp::subject<> subject(message->subject());
             ObserversType &observers = it->second;
-            std::for_each(observers.begin(), observers.end(), [&](auto &messageEvent) {
+            std::for_each(observers.begin(), observers.end(), [&](auto &messageEvent) noexcept {
                 if (messageEvent->subscriber()->is_interested(subject)) {
                     messageEvent->__notify(message);
                 }

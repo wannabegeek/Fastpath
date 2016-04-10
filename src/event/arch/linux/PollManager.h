@@ -50,7 +50,7 @@ namespace DCF {
         ~EventPoll() {
         }
 
-        bool add(const EventPollTimerElement &event) {
+        bool add(const EventPollTimerElement &event) noexcept {
             struct epoll_event ev;
             memset(&ev, 0, sizeof(struct epoll_event));
             ++m_events;
@@ -66,12 +66,12 @@ namespace DCF {
             return true;
         }
 
-        bool update(const EventPollTimerElement &event) {
+        bool update(const EventPollTimerElement &event) noexcept {
             // no-op : this is handled by TimerEvent on Linux
             return true;
         }
 
-        bool remove(const EventPollTimerElement &event) {
+        bool remove(const EventPollTimerElement &event) noexcept {
             struct epoll_event ev;
             memset(&ev, 0, sizeof(struct epoll_event));
             --m_events;
@@ -87,7 +87,7 @@ namespace DCF {
             return true;
         }
 
-        bool add(const EventPollIOElement &event) {
+        bool add(const EventPollIOElement &event) noexcept {
             struct epoll_event ev;
             memset(&ev, 0, sizeof(struct epoll_event));
 
@@ -111,7 +111,7 @@ namespace DCF {
             return true;
         }
 
-        bool remove(const EventPollIOElement &event) {
+        bool remove(const EventPollIOElement &event) noexcept {
             struct epoll_event ev;
             memset(&ev, 0, sizeof(struct epoll_event));
 
@@ -137,7 +137,7 @@ namespace DCF {
             return true;
         }
 
-        int run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events) {
+        int run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events) noexcept {
             int result = -1;
 
             if (m_events != 0) {

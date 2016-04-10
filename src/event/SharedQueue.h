@@ -22,9 +22,9 @@ namespace DCF {
         SharedQueue() : m_timeout(nullptr) {
         }
 
-        virtual ~SharedQueue() { }
+        virtual ~SharedQueue() noexcept { }
 
-        virtual inline void dispatch_event(queue_value_type &dispatcher) {
+        virtual inline void dispatch_event(queue_value_type &dispatcher) noexcept {
             Event *event = dispatcher.event;
             dispatcher.function();
             if (event->__pendingRemoval() && !event->__awaitingDispatch()) {

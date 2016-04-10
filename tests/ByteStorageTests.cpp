@@ -4,11 +4,12 @@
 
 #include <gtest/gtest.h>
 #include <ByteStorage.h>
+#include <types.h>
 
 TEST(ByteStorage, StoreCopy) {
     const char *data = "Hello World";
 
-    DCF::ByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
+    DCF::ByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
 
     ASSERT_EQ(strlen(data) + 1, buffer.length());
     ASSERT_TRUE(buffer.owns_copy());
@@ -21,7 +22,7 @@ TEST(ByteStorage, StoreCopy) {
 TEST(ByteStorage, StoreNoCopy) {
     const char *data = "Hello World";
 
-    DCF::ByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1, true);
+    DCF::ByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1, true);
 
     ASSERT_EQ(strlen(data) + 1, buffer.length());
     ASSERT_FALSE(buffer.owns_copy());
@@ -34,7 +35,7 @@ TEST(ByteStorage, StoreNoCopy) {
 TEST(ByteStorage, Operator) {
     const char *data = "Hello World";
 
-    DCF::ByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
+    DCF::ByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
 
     for (size_t i = 0; i < strlen(data); i++) {
         ASSERT_EQ(data[i], buffer[i]);

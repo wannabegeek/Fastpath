@@ -5,7 +5,7 @@
 #cmakedefine HAVE_PTHREAD_GETNAME_NP 1
 
 #cmakedefine HAVE_EPOLL 1
-#cmakedefine HAVE_KEVENT 1
+#cmakedefine HAVE_KQUEUE 1
 
 #cmakedefine HAVE_NOSIGNAL 1
 #cmakedefine HAVE_NOSIGPIPE 1

@@ -24,7 +24,7 @@ namespace DCF {
         int m_kq = 0;
         int m_events = 0;
 
-        static constexpr const bool greater_than(const size_t x, const size_t y) { return x >= y; }
+        static constexpr const bool greater_than(const size_t x, const size_t y) noexcept { return x >= y; }
 
         static constexpr size_t maxDispatchSize = 256;
 
@@ -48,7 +48,7 @@ namespace DCF {
         ~EventPoll() {
         }
 
-        bool add(const EventPollTimerElement &event) {
+        bool add(const EventPollTimerElement &event) noexcept {
             int filter = EVFILT_TIMER;
             struct kevent ke;
 
@@ -64,7 +64,7 @@ namespace DCF {
             return true;
         }
 
-        bool update(const EventPollTimerElement &event) {
+        bool update(const EventPollTimerElement &event) noexcept {
             int filter = EVFILT_TIMER;
             struct kevent ke;
 
@@ -78,7 +78,7 @@ namespace DCF {
             return true;
         }
 
-        bool remove(const EventPollTimerElement &event) {
+        bool remove(const EventPollTimerElement &event) noexcept {
             int filter = EVFILT_TIMER;
             struct kevent ke;
 
@@ -94,7 +94,7 @@ namespace DCF {
             return true;
         }
 
-        bool add(const EventPollIOElement &event) {
+        bool add(const EventPollIOElement &event) noexcept {
             int filter = 0;
             struct kevent ke;
 
@@ -116,7 +116,7 @@ namespace DCF {
             return true;
         }
 
-        bool remove(const EventPollIOElement &event) {
+        bool remove(const EventPollIOElement &event) noexcept {
             int filter = 0;
             struct kevent ke;
 
@@ -142,7 +142,7 @@ namespace DCF {
             return true;
         }
 
-        int run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events) {
+        int run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events) noexcept {
 
             if (m_events != 0) {
                 int result = kevent(m_kq, NULL, 0, _events, maxDispatchSize, nullptr);

@@ -68,7 +68,7 @@ namespace tf {
 
         void use_colors(const bool value) {
             if (value && m_supports_colors) {
-                m_outputfn = [&](const logger::level &level, const char *prefix, const std::string &msg) {
+                m_outputfn = [&](const logger::level &level, const char *prefix, const std::string &msg) noexcept {
                     if (m_log_thread_id) {
                         m_output_stream << description[level] << tf::setcolor(tf::color::yellow) << prefix << tf::setcolor(tf::color::green) << std::this_thread::get_id() << ": " << colors[level] << msg << tf::setcolor(tf::color::normal) << std::endl;
                     } else {
@@ -76,7 +76,7 @@ namespace tf {
                     }
                 };;
             } else {
-                m_outputfn = [&](const logger::level &level, const char *prefix, const std::string &msg) {
+                m_outputfn = [&](const logger::level &level, const char *prefix, const std::string &msg) noexcept {
                     if (m_log_thread_id) {
                         m_output_stream << description[level] << prefix << std::this_thread::get_id() << ": " << msg << std::endl;
                     } else {

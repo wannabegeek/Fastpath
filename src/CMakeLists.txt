@@ -51,15 +51,15 @@ check_cxx_symbol_exists(IPTOS_LOWDELAY "sys/socket.h;netinet/ip.h" HAVE_IPTOS_LO
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 
+set(CMAKE_MACOSX_RPATH 1)
+
 include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
 set(SOURCE_FILES
         Exception.h
         MessageBuffer.h
-        MutableByteStorage.cpp
         MutableByteStorage.h
         SharedMemoryBuffer.h
-        ByteStorage.cpp
         ByteStorage.h
         MessageBuffer.h
         types.h

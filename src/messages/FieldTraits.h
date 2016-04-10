@@ -15,7 +15,7 @@ namespace DCF {
 
     class BaseMessage;
     class ScalarField;
-    class DataField;
+//    class DataField;
     class MessageField;
 
     template<typename T>
@@ -147,68 +147,68 @@ namespace DCF {
         const constexpr char *description() { return "data"; }
     };
 
-    template<StorageType N> struct storage_traits {
-    };
-
-    template<> struct storage_traits<StorageType::boolean> {
-        using storage_type = ScalarField;
-        using field = field_traits<bool>;
-    };
-
-    template<> struct storage_traits<StorageType::int8> {
-        using storage_type = ScalarField;
-        using field = field_traits<int8_t>;
-    };
-
-    template<> struct storage_traits<StorageType::int16> {
-        using storage_type = ScalarField;
-        using field = field_traits<int16_t>;
-    };
-
-    template<> struct storage_traits<StorageType::int32> {
-        using storage_type = ScalarField;
-        using field = field_traits<int32_t>;
-    };
-
-    template<> struct storage_traits<StorageType::int64> {
-        using storage_type = ScalarField;
-        using field = field_traits<int64_t>;
-    };
-
-    template<> struct storage_traits<StorageType::uint8> {
-        using storage_type = ScalarField;
-        using field = field_traits<uint8_t>;
-    };
-
-    template<> struct storage_traits<StorageType::uint16> {
-        using storage_type = ScalarField;
-        using field = field_traits<uint16_t>;
-    };
-
-    template<> struct storage_traits<StorageType::uint32> {
-        using storage_type = ScalarField;
-        using field = field_traits<uint32_t>;
-    };
-
-    template<> struct storage_traits<StorageType::uint64> {
-        using storage_type = ScalarField;
-        using field = field_traits<uint64_t>;
-    };
-
-    template<> struct storage_traits<StorageType::float32> {
-        using storage_type = ScalarField;
-        using field = field_traits<float32_t>;
-    };
-
-    template<> struct storage_traits<StorageType::float64> {
-        using storage_type = ScalarField;
-        using field = field_traits<float64_t>;
-    };
-
-    template<> struct storage_traits<StorageType::message> {
-        using storage_type = MessageField;
-        using field = field_traits<float64_t>;
-    };
+//    template<StorageType N> struct storage_traits {
+//    };
+//
+//    template<> struct storage_traits<StorageType::boolean> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<bool>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::int8> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<int8_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::int16> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<int16_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::int32> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<int32_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::int64> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<int64_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::uint8> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<uint8_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::uint16> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<uint16_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::uint32> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<uint32_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::uint64> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<uint64_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::float32> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<float32_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::float64> {
+//        using storage_type = ScalarField;
+//        using field = field_traits<float64_t>;
+//    };
+//
+//    template<> struct storage_traits<StorageType::message> {
+//        using storage_type = MessageField;
+//        using field = field_traits<float64_t>;
+//    };
 
 //    template<StorageType N>
 //    class FieldTraits {

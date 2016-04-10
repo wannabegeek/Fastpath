@@ -21,7 +21,7 @@ namespace DCF {
         m_eventLoop.remove(m_actionNotifier.pollElement());
     }
 
-    void GlobalEventManager::notify(bool wait) {
+    void GlobalEventManager::notify(bool wait) noexcept {
         if (m_in_event_wait.load()) {
             if (wait) {
                 m_actionNotifier.notify_and_wait();
@@ -39,14 +39,14 @@ namespace DCF {
 //        }
 //    }
 
-    void GlobalEventManager::registerHandler(TimerEvent *event) {
+    void GlobalEventManager::registerHandler(TimerEvent *event) noexcept {
         m_lock.lock();
         m_timerHandlerLookup.emplace(event->identifer(), event);
         m_lock.unlock();
         m_eventLoop.add({event->identifer(), event->timeout()});
     }
 
-    void GlobalEventManager::registerHandler(IOEvent *event) {
+    void GlobalEventManager::registerHandler(IOEvent *event) noexcept {
         if (event->fileDescriptor() <= 0) {
             ERROR_LOG("Failed to register invalid file descriptor: " << event->fileDescriptor());
             throw EventException("Invalid file descriptor");
@@ -69,11 +69,11 @@ namespace DCF {
         }
     }
 
-    void GlobalEventManager::updateHandler(TimerEvent *eventRegistration) {
+    void GlobalEventManager::updateHandler(TimerEvent *eventRegistration) noexcept {
 
     }
 
-    void GlobalEventManager::unregisterHandler(TimerEvent *event) {
+    void GlobalEventManager::unregisterHandler(TimerEvent *event) noexcept {
         // read lock
         m_lock.lock_shared();
         auto it = m_timerHandlerLookup.find(event->identifer());
@@ -87,7 +87,7 @@ namespace DCF {
         m_lock.unlock_shared();
     }
 
-    void GlobalEventManager::unregisterHandler(IOEvent *event) {
+    void GlobalEventManager::unregisterHandler(IOEvent *event) noexcept {
         // read lock
         m_lock.lock_shared();
         auto it = m_ioHandlerLookup.find(event->fileDescriptor());
@@ -119,12 +119,12 @@ namespace DCF {
     }
 
     void GlobalEventManager::foreach_event_matching(const EventPollIOElement &event,
-                                                    std::function<void(IOEvent *)> callback) const {
+                                                    std::function<void(IOEvent *)> callback) const noexcept {
         // read lock
         m_lock.lock_shared();
         auto it = m_ioHandlerLookup.find(event.identifier);
         if (it != m_ioHandlerLookup.end()) {
-            std::for_each(it->second.begin(), it->second.end(), [&](IOEvent *e) {
+            std::for_each(it->second.begin(), it->second.end(), [&](IOEvent *e) noexcept {
                 if ((e->eventTypes() & event.filter) != EventType::NONE) {
                     callback(e);
                 }
@@ -134,7 +134,7 @@ namespace DCF {
     }
 
     void GlobalEventManager::foreach_timer_matching(const EventPollTimerElement &event,
-                                                    std::function<void(TimerEvent *)> callback) const {
+                                                    std::function<void(TimerEvent *)> callback) const noexcept {
         // read lock
         m_lock.lock_shared();
         auto it = m_timerHandlerLookup.find(event.identifier);
@@ -144,7 +144,7 @@ namespace DCF {
         m_lock.unlock_shared();
     }
 
-    const bool GlobalEventManager::haveHandlers() const {
+    const bool GlobalEventManager::haveHandlers() const noexcept {
         // read lock
         std::shared_lock<tf::rwlock> lock(m_lock);
         return !(m_timerHandlerLookup.empty() && m_ioHandlerLookup.empty());

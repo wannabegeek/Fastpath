@@ -5,6 +5,7 @@
 #ifndef TFDCF_SERIALIZABLE_H
 #define TFDCF_SERIALIZABLE_H
 
+#include <MessageBuffer.h>
 #include "types.h"
 
 namespace DCF {
@@ -38,15 +39,12 @@ namespace DCF {
         return p + sizeof(T);
     }
 
-    class MessageBuffer;
-    class ByteStorage;
-
     class Serializable {
     public:
         virtual ~Serializable() {}
 
         virtual const size_t encode(MessageBuffer &buffer) const noexcept = 0;
-        virtual const bool decode(const ByteStorage &buffer) = 0;
+        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) = 0;
     };
 
 }

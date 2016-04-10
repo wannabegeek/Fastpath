@@ -38,13 +38,13 @@ namespace DCF {
 
         std::atomic<bool> m_in_event_wait = ATOMIC_VAR_INIT(false);
 
-        virtual void serviceIOEvent(const EventPollIOElement &event);
-        virtual void serviceTimerEvent(const EventPollTimerElement &event);
+        virtual void serviceIOEvent(const EventPollIOElement &event) noexcept;
+        virtual void serviceTimerEvent(const EventPollTimerElement &event) noexcept;
 
-        virtual void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const = 0;
-        virtual void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const = 0;
+        virtual void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const noexcept = 0;
+        virtual void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const noexcept = 0;
 
-        virtual const bool haveHandlers() const = 0;
+        virtual const bool haveHandlers() const noexcept = 0;
 
     public:
         EventManager();
@@ -54,15 +54,15 @@ namespace DCF {
 
         virtual ~EventManager() {};
 
-        virtual void registerHandler(TimerEvent *eventRegistration) = 0;
-		virtual void registerHandler(IOEvent *eventRegistration) = 0;
-        virtual void updateHandler(TimerEvent *eventRegistration) = 0;
-		virtual void unregisterHandler(TimerEvent *handler) = 0;
-		virtual void unregisterHandler(IOEvent *handler) = 0;
+        virtual void registerHandler(TimerEvent *eventRegistration) noexcept = 0;
+		virtual void registerHandler(IOEvent *eventRegistration) noexcept = 0;
+        virtual void updateHandler(TimerEvent *eventRegistration) noexcept = 0;
+		virtual void unregisterHandler(TimerEvent *handler) noexcept = 0;
+		virtual void unregisterHandler(IOEvent *handler) noexcept = 0;
 
-		virtual void notify(bool wait = false) = 0;
+		virtual void notify(bool wait = false) noexcept = 0;
 
-		void waitForEvent();
+		void waitForEvent() noexcept;
 	};
 
 }

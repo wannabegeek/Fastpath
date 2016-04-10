@@ -28,7 +28,7 @@ namespace DCF {
         return m_queue->__enqueue(QueueElement(this, std::bind(&Subscriber::__dispatch, m_subscriber, message)));
     }
 
-    void MessageEvent::__destroy() {
+    void MessageEvent::__destroy() noexcept {
         m_queue->removeSubscriber(*m_subscriber);
     }
 }

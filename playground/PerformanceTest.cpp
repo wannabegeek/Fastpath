@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     const size_t iterations = 1000000;
     typedef tf::pool<DCF::Message> PoolType;
 
-    PoolType pool(10);
+    PoolType pool(3);
 
     std::vector<PoolType::shared_ptr_type> encoded_messages(iterations);
     DCF::MessageBuffer buffer(1000000);
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         for (size_t i = 0; i < iterations + 1; i++) {
             auto msg = pool.allocate_unique_ptr();
 
-            const DCF::ByteStorage &storage = buffer.byteStorage();
+            const DCF::MessageBuffer::ByteStorageType &storage = buffer.byteStorage();
             if (!msg->decode(storage)) {
                 break;
             }

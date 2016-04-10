@@ -46,7 +46,7 @@ namespace DCF {
 		return (!(::fcntl(fd, F_GETFL) == -1 && errno != EBADF));
 	}
 
-    void EventManager::waitForEvent() {
+    void EventManager::waitForEvent() noexcept {
 		int result = 0;
         m_in_event_wait.store(true); // not sure if this should be before the setTimeout() or below - lets be safe
         result = m_eventLoop.run(m_ioCallback, m_timerCallback);
@@ -56,16 +56,16 @@ namespace DCF {
         }
 	}
 
-	void EventManager::serviceIOEvent(const EventPollIOElement &event) {
-        foreach_event_matching(event, [&](IOEvent *handler) {
+	void EventManager::serviceIOEvent(const EventPollIOElement &event) noexcept {
+        foreach_event_matching(event, [&](IOEvent *handler) noexcept {
             if (!handler->__awaitingDispatch()) {
                 handler->__notify(static_cast<EventType>(handler->eventTypes() & event.filter));
             }
         });
 	}
 
-    void EventManager::serviceTimerEvent(const EventPollTimerElement &event) {
-        foreach_timer_matching(event, [&](TimerEvent *handler) {
+    void EventManager::serviceTimerEvent(const EventPollTimerElement &event) noexcept {
+        foreach_timer_matching(event, [&](TimerEvent *handler) noexcept {
             handler->__notify(EventType::NONE);
         });
     }

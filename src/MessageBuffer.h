@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <cstring>
 #include "MutableByteStorage.h"
+#include "types.h"
 #include <utils/logger.h>
 
 namespace DCF {
@@ -67,10 +68,12 @@ namespace DCF {
     private:
         size_t m_startIndex = 0;
 
-        MutableByteStorage m_storage;
+        MutableByteStorage<byte> m_storage;
         const size_t visible_length() const { return m_storage.length() > m_startIndex ? m_storage.length() - m_startIndex : 0; }
 
     public:
+
+        using ByteStorageType = ByteStorage<byte>;
 
         explicit MessageBuffer(const size_t initialAllocation) noexcept : m_startIndex(0), m_storage(initialAllocation) {
         }
@@ -95,10 +98,10 @@ namespace DCF {
             allocate(length);
         }
 
-        const ByteStorage byteStorage() const noexcept {
+        const ByteStorageType byteStorage() const noexcept {
             const byte *bytes = nullptr;
             m_storage.bytes(&bytes);
-            return ByteStorage(&bytes[m_startIndex], visible_length(), true);
+            return ByteStorageType(&bytes[m_startIndex], visible_length(), true);
         }
 
         inline byte *allocate(const size_t length) {

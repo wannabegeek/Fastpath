@@ -74,60 +74,65 @@ namespace DCF {
         return total_len;
     }
 
-    const bool Message::have_complete_message(const ByteStorage &buffer) noexcept {
+    const MessageDecodeStatus Message::have_complete_message(const MessageBuffer::ByteStorageType &buffer, size_t &msg_length) noexcept {
         if (buffer.remainingReadLength() >= MsgAddressing::size()) {
-            const byte *bytes = buffer.readBytes() + sizeof(MsgAddressing::addressing_start);
-            MsgAddressing::msg_length msg_length = readScalar<MsgAddressing::msg_length>(bytes);
-            if (buffer.remainingReadLength() >= msg_length) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    const bool Message::addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length) {
-        length = subject_length = 0;
-        bool result = false;
-
-        if (buffer.remainingReadLength() >= MsgAddressing::size()) {
+            const byte *bytes = buffer.readBytes();
             MsgAddressing::addressing_start chk = readScalar<MsgAddressing::addressing_start>(buffer.readBytes());
-            buffer.advanceRead(sizeof(MsgAddressing::addressing_start));
             if (chk != addressing_flag) {
-                throw fp::exception("Received corrupt message - incorrect addressing marker");
+                return CorruptMessage;
             }
-
-            MsgAddressing::msg_length msg_length = readScalar<MsgAddressing::msg_length>(buffer.readBytes());
-            buffer.advanceRead(sizeof(MsgAddressing::msg_length));
+            std::advance(bytes, sizeof(MsgAddressing::addressing_start));
+            msg_length = readScalar<MsgAddressing::msg_length>(bytes);
             if (buffer.remainingReadLength() >= msg_length) {
-                flags = readScalar<MsgAddressing::flags>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgAddressing::flags));
-
-                buffer.advanceRead(sizeof(MsgAddressing::reserved));
-
-                subject_length = readScalar<MsgAddressing::subject_length>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgAddressing::subject_length));
-
-                // TODO: check we have enough length for the subject
-                *subject = reinterpret_cast<const char *>(buffer.readBytes());
-                buffer.advanceRead(subject_length);
-                length = msg_length + MsgAddressing::msg_length_offset();
-                result = true;
+                return CompleteMessage;
             }
         }
 
-        return result;
+        return IncompleteMessage;
     }
 
-    const bool Message::decode(const ByteStorage &buffer) {
+    const MessageDecodeStatus Message::addressing_details(const MessageBuffer::ByteStorageType &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length) {
+        length = subject_length = 0;
+        size_t msg_length = 0;
+
+        auto status = Message::have_complete_message(buffer, msg_length);
+
+        if (status == CompleteMessage) {
+            buffer.advanceRead(sizeof(MsgAddressing::addressing_start));
+            buffer.advanceRead(sizeof(MsgAddressing::msg_length));
+            flags = readScalar<MsgAddressing::flags>(buffer.readBytes());
+            buffer.advanceRead(sizeof(MsgAddressing::flags));
+
+            buffer.advanceRead(sizeof(MsgAddressing::reserved));
+
+            subject_length = readScalar<MsgAddressing::subject_length>(buffer.readBytes());
+            buffer.advanceRead(sizeof(MsgAddressing::subject_length));
+
+            // TODO: check we have enough length for the subject
+            *subject = reinterpret_cast<const char *>(buffer.readBytes());
+            buffer.advanceRead(subject_length);
+            length = msg_length + MsgAddressing::msg_length_offset();
+        }
+
+        return status;
+    }
+
+    const bool Message::decode(const MessageBuffer::ByteStorageType &buffer) {
         this->clear();
         size_t subject_length = 0;
         size_t msg_length = 0;
         const char *subject = nullptr;
-        if (Message::addressing_details(buffer, &subject, subject_length, m_flags, msg_length)) {
-            std::copy(subject, &subject[subject_length], m_subject);
-            return BaseMessage::decode(buffer);
+        auto status = Message::addressing_details(buffer, &subject, subject_length, m_flags, msg_length);
+        switch (status) {
+            case CompleteMessage:
+                std::copy(subject, &subject[subject_length], m_subject);
+                return BaseMessage::decode(buffer);
+            case CorruptMessage:
+                throw fp::exception("Received corrupt message - incorrect addressing marker");
+            case IncompleteMessage:
+                break;
         }
+
         return false;
     }
 

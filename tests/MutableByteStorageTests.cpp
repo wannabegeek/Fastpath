@@ -4,12 +4,13 @@
 
 #include <gtest/gtest.h>
 #include <MutableByteStorage.h>
+#include <types.h>
 
 TEST(MutableByteStorage, StoreCopyReplace) {
     const char *data = "Hello World";
     const char *data2 = "Hello Another World Hello Another World";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
+    DCF::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
     buffer.setData(reinterpret_cast<const byte *>(data2), strlen(data2) + 1);
 
     ASSERT_EQ(strlen(data2) + 1, buffer.length());
@@ -24,7 +25,7 @@ TEST(MutableByteStorage, StoreCopyReplace) {
 TEST(MutableByteStorage, UpdateLength) {
     const char *data = "Hello World";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
+    DCF::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
     const size_t len = buffer.capacity();
 
     buffer.increaseLengthBy(1024);
@@ -41,7 +42,7 @@ TEST(MutableByteStorage, UpdateLength) {
 TEST(MutableByteStorage, Clear) {
     const char *data = "Hello World";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
+    DCF::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
     const size_t capacity = buffer.capacity();
 
     buffer.clear();
@@ -58,7 +59,7 @@ TEST(MutableByteStorage, AppendString) {
     const char *data = "Hello World";
     const char *data2 = ", Goodby Universe";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data));
+    DCF::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data));
 
     buffer.append(reinterpret_cast<const byte *>(data2), strlen(data2) + 1);
 
@@ -73,8 +74,8 @@ TEST(MutableByteStorage, AppendObject) {
     const char *data = "Hello World";
     const char *data2 = ", Goodby Universe";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data));
-    DCF::MutableByteStorage buffer2(reinterpret_cast<const byte *>(data2), strlen(data2) + 1);
+    DCF::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data));
+    DCF::MutableByteStorage<byte> buffer2(reinterpret_cast<const byte *>(data2), strlen(data2) + 1);
 
     buffer.append(buffer2);
 

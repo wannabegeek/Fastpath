@@ -38,10 +38,10 @@ namespace fp {
         DEBUG_LOG("Shutting down");
     }
 
-    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const DCF::ByteStorage &msgData) {
+    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const DCF::MessageBuffer::ByteStorageType &msgData) noexcept {
         DEBUG_LOG("Processing message");
         // send the message out to all local client who are interested
-        std::for_each(m_connections.begin(), m_connections.end(), [&](auto &connection) {
+        std::for_each(m_connections.begin(), m_connections.end(), [&](auto &connection) noexcept {
             if (connection->is_interested(subject)) {
                 DEBUG_LOG("Connection is interested");
                 // dispatch the message
@@ -52,8 +52,8 @@ namespace fp {
         });
     }
 
-    void bootstrap::disconnection_handler(peer_connection *connection) {
-        auto it = std::find_if(m_connections.begin(), m_connections.end(), [&](auto &c) {
+    void bootstrap::disconnection_handler(peer_connection *connection) noexcept {
+        auto it = std::find_if(m_connections.begin(), m_connections.end(), [&](auto &c) noexcept {
             return c.get() == connection;
         });
         if (it != m_connections.end()) {

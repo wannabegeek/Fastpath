@@ -22,17 +22,17 @@ namespace DCF {
         InlineEventManager m_eventManager;
         std::unique_ptr<TimerEvent> m_timeout;
 
-        virtual inline EventManager *eventManager() override {
+        virtual inline EventManager *eventManager() noexcept override {
             return &m_eventManager;
         }
 
-        virtual inline const bool isInitialised() const override {
+        virtual inline const bool isInitialised() const noexcept override {
             return true;
         }
 
     public:
         InlineQueue() {
-            m_timeout = std::make_unique<TimerEvent>(this, std::chrono::microseconds(0), [&](TimerEvent *event) {
+            m_timeout = std::make_unique<TimerEvent>(this, std::chrono::microseconds(0), [&](TimerEvent *event) noexcept {
                 // no-op
             });
         }
@@ -41,7 +41,7 @@ namespace DCF {
          * For an inline queue, there can't be any pending events, so this always returns NO_EVENTS.
          * @return false.
          */
-        inline const status try_dispatch() override {
+        inline const status try_dispatch() noexcept override {
             return NO_EVENTS;
         }
 
@@ -49,7 +49,7 @@ namespace DCF {
          * Dispatch an event. Will block until one or more events have been dispatched
          * @return OK, or and error if one occurred
          */
-        inline const status dispatch() override {
+        inline const status dispatch() noexcept override {
             m_eventManager.waitForEvent();
             return OK;
         }
@@ -59,7 +59,7 @@ namespace DCF {
          * @param timeout The maximum time in which to wait for an event.
          * @return OK, or and error if one occurred
          */
-        inline const status dispatch(const std::chrono::milliseconds &timeout) override {
+        inline const status dispatch(const std::chrono::milliseconds &timeout) noexcept override {
             status status = OK;
             if ((status = this->try_dispatch()) == NO_EVENTS) {
                 // Create a TimerEvent and add to the dispatch loop

@@ -12,18 +12,18 @@ namespace DCF {
 
     }
 
-    SHMTransport::~SHMTransport() {
+    SHMTransport::~SHMTransport() noexcept {
     }
 
-    status SHMTransport::sendMessage(const Message &msg) {
+    status SHMTransport::sendMessage(const Message &msg) noexcept {
         return OK;
     }
 
-    status SHMTransport::sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) {
+    status SHMTransport::sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) noexcept {
         return OK;
     }
 
-    status SHMTransport::sendReply(const Message &reply, const Message &request) {
+    status SHMTransport::sendReply(const Message &reply, const Message &request) noexcept {
         return OK;
     }
 

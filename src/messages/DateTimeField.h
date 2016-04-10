@@ -9,12 +9,14 @@
 #include "Field.h"
 
 namespace DCF {
-    class DateTimeField final : public Field {
+    template <typename Allocator> class DateTimeField final : public Field {
     private:
-        MutableByteStorage m_storage;
+        MutableByteStorage<byte, Allocator> m_storage;
         std::chrono::time_point<std::chrono::system_clock> m_time_point;
         int64_t m_seconds;
         int64_t m_microseconds;
+
+        static constexpr std::size_t data_size = sizeof(int64_t) + sizeof(int64_t);
 
     protected:
         virtual const bool isEqual(const Field &other) const noexcept override {
@@ -34,6 +36,8 @@ namespace DCF {
         }
 
     public:
+        DateTimeField(const Allocator allocator = Allocator()) : m_storage(data_size, allocator) {}
+
         const StorageType type() const noexcept override { return StorageType::date_time; }
         const size_t size() const noexcept override { return m_storage.length(); }
 
@@ -64,15 +68,14 @@ namespace DCF {
 
             buffer.append(reinterpret_cast<const byte *>(m_identifier), identifier_length);
 
-            const size_t dataSize = sizeof(int64_t) + sizeof(int64_t);
-            b = buffer.allocate(dataSize);
+            b = buffer.allocate(data_size);
             b = writeScalar(b, m_seconds);
             writeScalar(b, m_microseconds);
 
-            return MsgField::size() + identifier_length + dataSize;
+            return MsgField::size() + identifier_length + data_size;
         }
 
-        const bool decode(const ByteStorage &buffer) noexcept override {
+        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
             if (buffer.remainingReadLength() >= MsgField::size()) {
                 assert(static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes())) == StorageType::date_time);
                 buffer.advanceRead(sizeof(MsgField::type));
@@ -84,8 +87,7 @@ namespace DCF {
                     std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);
                     m_identifier[identifier_length] = '\0';
                     buffer.advanceRead(identifier_length);
-                    const size_t dataSize = sizeof(int64_t) + sizeof(int64_t);
-                    if (buffer.remainingReadLength() >= dataSize) {
+                    if (buffer.remainingReadLength() >= data_size) {
                         m_seconds = readScalar<int64_t>(buffer.readBytes());
                         buffer.advanceRead(sizeof(int64_t));
                         m_microseconds = readScalar<int64_t>(buffer.readBytes());

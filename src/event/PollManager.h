@@ -26,24 +26,24 @@ namespace DCF {
 	static constexpr DistantFutureType DistantFuture = DistantFutureType::max();
 
 	struct EventPollIOElement {
-		EventPollIOElement() {}
-		EventPollIOElement(const int _fd, const int _filter) : identifier(_fd), filter(_filter) {}
+		EventPollIOElement() noexcept {}
+		EventPollIOElement(const int _fd, const int _filter) noexcept : identifier(_fd), filter(_filter) {}
 
 		int identifier = -1;
 		int filter = 0;
 	};
 
 	struct EventPollTimerElement {
-        EventPollTimerElement() {}
-        EventPollTimerElement(const int _fd, const std::chrono::microseconds _timeout) : identifier(_fd), timeout(_timeout) {}
-        EventPollTimerElement(const int _fd) : identifier(_fd) {}
+        EventPollTimerElement() noexcept {}
+        EventPollTimerElement(const int _fd, const std::chrono::microseconds _timeout) noexcept : identifier(_fd), timeout(_timeout) {}
+        EventPollTimerElement(const int _fd) noexcept : identifier(_fd) {}
 
 		int identifier = -1;
         std::chrono::microseconds timeout;
 	};
 }
 
-#if defined HAVE_KEVENT
+#if defined HAVE_KQUEUE
 #	include "event/arch/mac/PollManager.h"
 #elif defined HAVE_EPOLL
 #	include "event/arch/linux/PollManager.h"

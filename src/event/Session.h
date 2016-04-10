@@ -83,7 +83,7 @@ namespace DCF {
             return Session::instance().stop();
         }
 
-        static inline bool is_started() {
+        static inline bool is_started() noexcept {
             return Session::instance().m_started;
         }
 

@@ -18,6 +18,6 @@ namespace DCF {
         return true;
     }
 
-    void TransportIOEvent::__destroy() {
+    void TransportIOEvent::__destroy() noexcept {
     }
 }

@@ -42,7 +42,7 @@ namespace  DCF {
         friend class EventManager;
 
     private:
-#if defined HAVE_KEVENT
+#if defined HAVE_KQUEUE
         static std::atomic<int> s_identifier;
 #elif defined HAVE_EPOLL
 #endif
@@ -51,21 +51,21 @@ namespace  DCF {
         std::function<void(TimerEvent *)> m_callback;
         const int m_identifier;
 
-        void dispatch(TimerEvent *event);
+        void dispatch(TimerEvent *event) noexcept;
 
     public:
 		TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback);
 		TimerEvent(TimerEvent &&other) noexcept;
 
-        void reset();
-		void setTimeout(const std::chrono::microseconds &timeout);
+        void reset() noexcept;
+		void setTimeout(const std::chrono::microseconds &timeout) noexcept;
 
         const int identifer() const noexcept { return m_identifier; }
         const std::chrono::microseconds &timeout() const noexcept { return m_timeout; }
 
 		const bool isEqual(const Event &other) const noexcept override;
         const bool __notify(const EventType &eventType) noexcept override;
-        void __destroy() override;
+        void __destroy() noexcept override;
     };
 }
 

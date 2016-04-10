@@ -11,7 +11,7 @@ namespace fp {
     struct StringHash {
         using result_type = size_t;
 
-        result_type operator()(const char *s) const {
+        result_type operator()(const char *s) const noexcept {
             size_t result = 0;
             const size_t prime = 31;
 
@@ -24,7 +24,7 @@ namespace fp {
             return result;
         }
 
-        result_type operator()(const char *s, const size_t length) const {
+        result_type operator()(const char *s, const size_t length) const noexcept {
             size_t result = 0;
             const size_t prime = 31;
 

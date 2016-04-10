@@ -84,7 +84,7 @@ namespace DCF {
 
     std::ostream &operator<<(std::ostream &out, const url &url) {
         out << "Protocol: '" << url.m_protocol << "' Host: '" << url.m_host << "' Port: '" << url.m_port << "' Path: '" << url.m_path << "' Query: [";
-        std::for_each(url.m_query.begin(), url.m_query.end(), [&](const url::query_type::value_type &pair) {
+        std::for_each(url.m_query.begin(), url.m_query.end(), [&](const url::query_type::value_type &pair) noexcept {
             out << pair.first << " => " << pair.second;
         });
         out << "]";

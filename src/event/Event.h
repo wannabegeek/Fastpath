@@ -41,16 +41,16 @@ namespace DCF {
         Event(const Event &other) = delete;
         Event& operator=(Event const&) = delete;
 
-        virtual ~Event() {}
+        virtual ~Event() noexcept {}
 
         virtual const bool __notify(const EventType &eventType) noexcept = 0;
-        virtual void __destroy() = 0;
+        virtual void __destroy() noexcept = 0;
 
-        void __setPendingRemoval(const bool flag) {
+        void __setPendingRemoval(const bool flag) noexcept {
             m_pendingRemoval = flag;
         }
 
-        inline const bool __pendingRemoval() const {
+        inline const bool __pendingRemoval() const noexcept {
             return m_pendingRemoval;
         }
 
@@ -58,7 +58,7 @@ namespace DCF {
             return m_awaitingDispatch.load(std::memory_order_relaxed) != 0;
         }
 
-        bool operator==(const Event &other) {
+        bool operator==(const Event &other) noexcept {
             return m_queue == other.m_queue
                     && this->isEqual(other);
         }

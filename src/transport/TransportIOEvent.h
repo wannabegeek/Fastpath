@@ -17,7 +17,7 @@ namespace DCF {
 
         const bool isEqual(const Event &other) const noexcept override;
         const bool __notify(const EventType &eventType) noexcept override;
-        void __destroy() override;
+        void __destroy() noexcept override;
     };
 }
 

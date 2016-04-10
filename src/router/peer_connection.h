@@ -30,22 +30,23 @@ namespace fp {
         DCF::DataEvent *m_socketEvent;
 
         DCF::MessageBuffer m_buffer;
-        const std::function<void(peer_connection *, const subject<> &, const DCF::ByteStorage &)> m_messageHandler;
+        const std::function<void(peer_connection *, const subject<> &, const DCF::MessageBuffer::ByteStorageType &)> m_messageHandler;
         const std::function<void(peer_connection *)> m_disconnectionHandler;
 
-        void data_handler(DCF::DataEvent *event, const DCF::EventType eventType);
+        void data_handler(DCF::DataEvent *event, const DCF::EventType eventType) noexcept;
+        DCF::MessageDecodeStatus process_buffer(const DCF::MessageBuffer::ByteStorageType &buffer) noexcept;
 
-        void handle_admin_message(const subject<> subject, DCF::Message &message);
+        void handle_admin_message(const subject<> subject, DCF::Message &message) noexcept;
     public:
-        peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const DCF::ByteStorage &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
+        peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const DCF::MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
         peer_connection(peer_connection &&other) noexcept;
         ~peer_connection() noexcept;
 
-        void add_subscription(const char *subject);
-        void remove_subscription(const char *subject);
-        bool is_interested(const subject<> &subject) const;
+        void add_subscription(const char *subject) noexcept;
+        void remove_subscription(const char *subject) noexcept;
+        bool is_interested(const subject<> &subject) const noexcept;
 
-        bool sendBuffer(const DCF::ByteStorage &buffer);
+        bool sendBuffer(const DCF::MessageBuffer::ByteStorageType &buffer) noexcept;
     };
 }
 

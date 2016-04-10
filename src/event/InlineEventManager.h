@@ -20,25 +20,25 @@ namespace DCF {
         TimerEventTable m_timerHandlerLookup;
 
         mutable bool m_servicingEvents;
-        mutable bool m_servicingTimers;
+//        mutable bool m_servicingTimers;
 
-        void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const override;
-        void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const override;
+        void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const noexcept override;
+        void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const noexcept override;
 
-        const bool haveHandlers() const override;
+        const bool haveHandlers() const noexcept override;
     public:
         InlineEventManager() noexcept;
-        InlineEventManager(InlineEventManager &&other) noexcept;
+//        InlineEventManager(InlineEventManager &&other) noexcept;
 
         ~InlineEventManager() noexcept;
 
-        void registerHandler(TimerEvent *event) override;
-        void registerHandler(IOEvent *event) override;
-        void updateHandler(TimerEvent *event) override;
-        void unregisterHandler(TimerEvent *event) override;
-        void unregisterHandler(IOEvent *event) override;
+        void registerHandler(TimerEvent *event) noexcept override;
+        void registerHandler(IOEvent *event) noexcept override;
+        void updateHandler(TimerEvent *event) noexcept override;
+        void unregisterHandler(TimerEvent *event) noexcept override;
+        void unregisterHandler(IOEvent *event) noexcept override;
 
-        void notify(bool wait = false) override {}
+        void notify(bool wait = false) noexcept override {}
     };
 }
 

@@ -25,21 +25,21 @@ namespace DCF {
 
         mutable tf::rwlock m_lock;
 
-        void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const override;
-        void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const override;
+        void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const noexcept override;
+        void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const noexcept override;
 
-        const bool haveHandlers() const override;
+        const bool haveHandlers() const noexcept override;
     public:
         GlobalEventManager();
         ~GlobalEventManager();
 
-        void registerHandler(TimerEvent *eventRegistration) override;
-        void registerHandler(IOEvent *eventRegistration) override;
-        void updateHandler(TimerEvent *eventRegistration) override;
-        void unregisterHandler(TimerEvent *handler) override;
-        void unregisterHandler(IOEvent *handler) override;
+        void registerHandler(TimerEvent *eventRegistration) noexcept override;
+        void registerHandler(IOEvent *eventRegistration) noexcept override;
+        void updateHandler(TimerEvent *eventRegistration) noexcept override;
+        void unregisterHandler(TimerEvent *handler) noexcept override;
+        void unregisterHandler(IOEvent *handler) noexcept override;
 
-        void notify(bool wait = false) override;
+        void notify(bool wait = false) noexcept override;
     };
 }
 

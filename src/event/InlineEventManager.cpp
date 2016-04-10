@@ -10,18 +10,18 @@
 
 namespace DCF {
 
-    InlineEventManager::InlineEventManager() noexcept : m_servicingEvents(false), m_servicingTimers(false) {
+    InlineEventManager::InlineEventManager() noexcept : m_servicingEvents(false) {
     }
 
     InlineEventManager::~InlineEventManager() noexcept  {
     }
 
-    void InlineEventManager::registerHandler(TimerEvent *event) {
+    void InlineEventManager::registerHandler(TimerEvent *event) noexcept {
         m_timerHandlerLookup.emplace(event->identifer(), event);
         m_eventLoop.add({event->identifer(), event->timeout()});
     }
 
-    void InlineEventManager::registerHandler(IOEvent *event) {
+    void InlineEventManager::registerHandler(IOEvent *event) noexcept {
         if (event->fileDescriptor() <= 0) {
             ERROR_LOG("Failed to register invalid file descriptor: " << event->fileDescriptor());
             throw EventException("Invalid file descriptor");
@@ -39,11 +39,11 @@ namespace DCF {
         m_eventLoop.add({event->fileDescriptor(), event->eventTypes()});
     }
 
-    void InlineEventManager::updateHandler(TimerEvent *event) {
+    void InlineEventManager::updateHandler(TimerEvent *event) noexcept {
         m_eventLoop.update({event->identifer(), event->timeout()});
     }
 
-    void InlineEventManager::unregisterHandler(TimerEvent *event) {
+    void InlineEventManager::unregisterHandler(TimerEvent *event) noexcept {
         auto it = m_timerHandlerLookup.find(event->identifer());
         if (it != m_timerHandlerLookup.end()) {
             m_timerHandlerLookup.erase(it);
@@ -51,7 +51,7 @@ namespace DCF {
         }
     }
 
-    void InlineEventManager::unregisterHandler(IOEvent *event) {
+    void InlineEventManager::unregisterHandler(IOEvent *event) noexcept {
         auto it = m_ioHandlerLookup.find(event->fileDescriptor());
         if (it != m_ioHandlerLookup.end()) {
             auto registered_events = it->second;
@@ -78,11 +78,11 @@ namespace DCF {
     }
 
     void InlineEventManager::foreach_event_matching(const EventPollIOElement &event,
-                                                    std::function<void(IOEvent *)> callback) const {
+                                                    std::function<void(IOEvent *)> callback) const noexcept {
         auto it = m_ioHandlerLookup.find(event.identifier);
         if (it != m_ioHandlerLookup.end()) {
             m_servicingEvents = true;
-            std::for_each(it->second.begin(), it->second.end(), [&](IOEvent *e) {
+            std::for_each(it->second.begin(), it->second.end(), [&](IOEvent *e) noexcept {
                 if ((e->eventTypes() & event.filter) != EventType::NONE) {
                     callback(e);
                 }
@@ -92,7 +92,7 @@ namespace DCF {
     }
 
     void InlineEventManager::foreach_timer_matching(const EventPollTimerElement &event,
-                                                    std::function<void(TimerEvent *)> callback) const {
+                                                    std::function<void(TimerEvent *)> callback) const noexcept {
 
         auto it = m_timerHandlerLookup.find(event.identifier);
         if (it != m_timerHandlerLookup.end()) {
@@ -102,7 +102,7 @@ namespace DCF {
         }
     }
 
-    const bool InlineEventManager::haveHandlers() const {
+    const bool InlineEventManager::haveHandlers() const noexcept {
         return !(m_timerHandlerLookup.empty() && m_ioHandlerLookup.empty());
     }
 

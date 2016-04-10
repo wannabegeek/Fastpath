@@ -6,6 +6,7 @@
 #define TFDCF_FAST_LINEAR_ALLOCATOR_H
 
 #include <cstddef>
+#include <utils/logger.h>
 
 namespace tf {
     template <typename T> class linear_allocator {
@@ -29,9 +30,18 @@ namespace tf {
             pointer m_head;
             slab *m_next;
 
+            static std::size_t align_up(std::size_t n) noexcept {
+                static const size_t alignment = 16;
+                return (n + (alignment-1)) & ~(alignment-1);
+            }
+
+            inline bool pointer_in_buffer(pointer p) const noexcept {
+                return m_content <= p && p <= m_head;
+            }
+
             slab(std::size_t size) noexcept : m_size(size), m_allocated(0), m_next(nullptr) {
                 INFO_LOG("Creating new slab of size " << m_size);
-                m_content = reinterpret_cast<pointer>(::malloc(m_size));
+                m_content = reinterpret_cast<pointer>(::malloc(align_up(m_size)));
                 m_head = m_content;
             }
 
@@ -65,6 +75,8 @@ namespace tf {
         slab *m_root_slab;
         slab *m_current_slab;
 
+        std::size_t m_initial_size;
+
         inline slab *find_slab_with_space(slab *start, std::size_t size) const noexcept {
             if (start->free() >= size) {
                 return start;
@@ -90,7 +102,7 @@ namespace tf {
             typedef linear_allocator<U> other;
         };
 
-        linear_allocator(std::size_t initial_size = 64) {
+        linear_allocator(std::size_t initial_size = 512) : m_initial_size(initial_size) {
             m_root_slab = m_current_slab = new slab(initial_size);
         }
 
@@ -106,13 +118,13 @@ namespace tf {
         linear_allocator(const linear_allocator &other) {
         }
 
-        pointer allocate(std::size_t size) noexcept {
-            INFO_LOG("Allocating " << size);
+        pointer allocate(const std::size_t size) noexcept {
+//            INFO_LOG("Allocating " << size);
 
             if (find_slab_with_space(m_root_slab, size) != nullptr) {
                 return m_current_slab->allocate(size);
             } else {
-                m_current_slab->m_next = new slab(size);
+                m_current_slab->m_next = new slab(std::max(size, m_initial_size));
                 m_current_slab = m_current_slab->m_next;
                 return m_current_slab->allocate(size);
             }

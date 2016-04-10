@@ -67,7 +67,7 @@ TEST(TCPTransport, TryConnectSuccess) {
                 DEBUG_LOG("got stuff");
                 if (result == DCF::Socket::MoreData) {
                     DCF::Message msg;
-                    EXPECT_TRUE(msg.decode(DCF::ByteStorage(reinterpret_cast<const byte *>(buffer), size, true)));
+                    EXPECT_TRUE(msg.decode(DCF::MessageBuffer::ByteStorageType(reinterpret_cast<const byte *>(buffer), size, true)));
                     DEBUG_LOG("Received " << msg);
                     EXPECT_EQ(sendMsg, msg);
                     break;

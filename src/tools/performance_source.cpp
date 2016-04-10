@@ -74,7 +74,7 @@ int main( int argc, char *argv[] )  {
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::microseconds(1000000) / rate);
         INFO_LOG("Sending a message every " << duration.count() << " us");
 
-        queue.registerEvent(duration, [&](DCF::TimerEvent *event) {
+        queue.registerEvent(duration, [&](DCF::TimerEvent *event) noexcept {
             if (id < count) {
                 sendMsg.clear();
                 sendMsg.setSubject("TEST.PERF.SOURCE");
@@ -90,7 +90,7 @@ int main( int argc, char *argv[] )  {
             }
         });
 
-        DCF::Subscriber subscriber(transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) {
+        DCF::Subscriber subscriber(transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) noexcept {
             DEBUG_LOG("Received message from sink: " << *recvMsg);
 //            std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
             uint32_t recv_id = 0;

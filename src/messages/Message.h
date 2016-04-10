@@ -8,6 +8,12 @@
 #include "BaseMessage.h"
 
 namespace DCF {
+    typedef enum {
+        CompleteMessage,
+        IncompleteMessage,
+        CorruptMessage
+    } MessageDecodeStatus;
+
     class Message final : public BaseMessage {
     public:
         static constexpr size_t max_subject_length = std::numeric_limits<uint16_t>::max();
@@ -36,10 +42,10 @@ namespace DCF {
         const uint8_t flags() const noexcept { return m_flags; }
 
         const size_t encode(MessageBuffer &buffer) const noexcept override;
-        const bool decode(const ByteStorage &buffer) override;
+        const bool decode(const MessageBuffer::ByteStorageType &buffer) override;
 
-        static const bool have_complete_message(const ByteStorage &buffer) noexcept;
-        static const bool addressing_details(const ByteStorage &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length);
+        static const MessageDecodeStatus have_complete_message(const MessageBuffer::ByteStorageType &buffer, size_t &msg_length) noexcept;
+        static const MessageDecodeStatus addressing_details(const MessageBuffer::ByteStorageType &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length);
     };
 }
 

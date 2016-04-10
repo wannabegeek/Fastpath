@@ -17,10 +17,12 @@
 #include "Field.h"
 #include "Exception.h"
 #include "utils/tfpool.h"
+#include "utils/short_alloc.h"
 #include "utils/fast_linear_allocator.h"
 #include "types.h"
 #include "ScalarField.h"
 #include "DataField.h"
+#include "DateTimeField.h"
 
 
 /*
@@ -92,9 +94,11 @@ namespace DCF {
 
         static const DataStorageType getStorageType(const StorageType type);
 
-        using field_allocator = std::allocator_traits<tf::linear_allocator<char>>::template rebind_alloc<char>;
-        using field_allocator_traits = std::allocator_traits<tf::linear_allocator<char>>::template rebind_traits<char>;
-//        field_allocator m_field_allocator;
+//        tf::linear_allocator<byte> m_a;
+
+        using field_allocator = short_alloc<byte, 512>;
+        field_allocator::arena_type m_arena;
+        field_allocator m_allocator;
 
     protected:
         /// @cond DEV
@@ -104,11 +108,17 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const;
         /// @endcond
 
+        using DataFieldType = DataField<field_allocator>;
+        using DateTimeFieldType = DateTimeField<field_allocator>;
+
     public:
         /**
          * Constructor
          */
-        BaseMessage() {}
+        BaseMessage() : m_allocator(m_arena) {
+            m_payload.reserve(64);
+            m_keys.reserve(64);
+        }
 
         /**
          * Move constructor
@@ -119,7 +129,6 @@ namespace DCF {
         BaseMessage(const BaseMessage &msg) = delete;
         BaseMessage& operator=(BaseMessage const&) = delete;
         const bool operator==(const BaseMessage &other) const;
-
         /**
          * Return the number of fields contained in the message.
          *
@@ -151,6 +160,7 @@ namespace DCF {
          * @return `true` if the field was successfully added, `false` otherwise
          */
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> bool addScalarField(const char *field, const T &value) {
+//            void *ptr = m_a.allocate(sizeof(ScalarField));
             ScalarField *e = new ScalarField();
             e->set(field, value);
             auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
@@ -231,7 +241,7 @@ namespace DCF {
             if (field != nullptr) {
                 auto index = m_keys.find(field);
                 if (index != m_keys.end()) {
-                    const DataField *element = reinterpret_cast<DataField *>(m_payload[index->second]);
+                    const DataFieldType *element = reinterpret_cast<DataFieldType *>(m_payload[index->second]);
                     length = element->get(value);
                     return true;
                 }
@@ -250,7 +260,7 @@ namespace DCF {
 
         // from Serializable
         virtual const size_t encode(MessageBuffer &buffer) const noexcept override;
-        virtual const bool decode(const ByteStorage &buffer) override;
+        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) override;
 
         // from reusable
         void prepareForReuse() override {

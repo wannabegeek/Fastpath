@@ -77,7 +77,7 @@ namespace DCF {
         std::unordered_set<set_unique_ptr<Event>> m_registeredEvents;
 
         // The default implementation returns the global event manager
-        virtual inline EventManager *eventManager() {
+        virtual inline EventManager *eventManager() noexcept {
             return Session::instance().m_eventManager.get();
         }
 
@@ -90,15 +90,15 @@ namespace DCF {
 
         Queue() noexcept {}
 
-        virtual ~Queue();
+        virtual ~Queue() noexcept;
 
-        virtual const status dispatch() = 0;
-        virtual const status dispatch(const std::chrono::milliseconds &timeout) = 0;
-        virtual const status try_dispatch() = 0;
+        virtual const status dispatch() noexcept = 0;
+        virtual const status dispatch(const std::chrono::milliseconds &timeout) noexcept = 0;
+        virtual const status try_dispatch() noexcept = 0;
         virtual const size_t eventsInQueue() const noexcept = 0;
         virtual const bool __enqueue(queue_value_type &&event) noexcept = 0;
 
-        const size_t event_count() const {
+        const size_t event_count() const noexcept {
             return m_registeredEvents.size();
         }
 
@@ -106,16 +106,16 @@ namespace DCF {
             this->eventManager()->notify();
         }
 
-        DataEvent *registerEvent(const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback);
-        TimerEvent *registerEvent(const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback);
+        DataEvent *registerEvent(const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback) noexcept;
+        TimerEvent *registerEvent(const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback) noexcept;
 
-        status updateEvent(TimerEvent *event);
+        status updateEvent(TimerEvent *event) noexcept;
 
-        status unregisterEvent(DataEvent *event);
-        status unregisterEvent(TimerEvent *event);
+        status unregisterEvent(DataEvent *event) noexcept;
+        status unregisterEvent(TimerEvent *event) noexcept;
 
-        status addSubscriber(const Subscriber &subscriber);
-        status removeSubscriber(const Subscriber &subscriber);
+        status addSubscriber(const Subscriber &subscriber) noexcept;
+        status removeSubscriber(const Subscriber &subscriber) noexcept;
     };
 }
 

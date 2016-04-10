@@ -40,7 +40,7 @@ namespace fp {
         }
     public:
 
-        subject(const char *subject) {
+        subject(const char *subject) noexcept {
             m_components.reserve(50);
             hash_elements(subject, m_components);
             m_subject_hash = hasher()(subject);
@@ -51,7 +51,7 @@ namespace fp {
             return m_is_admin;
         }
 
-        const bool operator==(const subject<H> &other) const {
+        const bool operator==(const subject<H> &other) const noexcept {
             return m_subject_hash == other.m_subject_hash;
         }
 

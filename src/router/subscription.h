@@ -25,11 +25,11 @@ namespace fp {
             typename hasher::result_type component_hash;
             component_type type;
 
-            component(const typename hasher::result_type &h, const component_type &t) : component_hash(h), type(t) {}
+            component(const typename hasher::result_type &h, const component_type &t) noexcept : component_hash(h), type(t) {}
             component(const component &other) noexcept : component_hash(other.component_hash), type(other.type) {}
             component(component &&other) noexcept : component_hash(other.component_hash), type(other.type) {}
 
-            component& operator=(const component& other) {
+            component& operator=(const component& other) noexcept {
                 component_hash = other.component_hash;
                 type = other.type;
 
@@ -75,12 +75,12 @@ namespace fp {
         static constexpr char wildcard_completion = '>';
         static constexpr char wildcard_element = '*';
 
-        subscription(const char *subject) {
+        subscription(const char *subject) noexcept {
             m_contains_wildcard = contains_wildcard(subject);
             if (m_contains_wildcard) {
                 std::vector<std::string> out;
                 this->split(subject, out);
-                std::for_each(out.begin(), out.end(), [&](const std::string &c) {
+                std::for_each(out.begin(), out.end(), [&](const std::string &c) noexcept {
                     typename hasher::result_type h = hasher()(c.c_str());
                     switch (c[0]) {
                         case wildcard_completion:
@@ -104,7 +104,7 @@ namespace fp {
 
         ~subscription() noexcept {};
 
-        subscription& operator=(const subscription& other) {
+        subscription& operator=(const subscription& other) noexcept {
             std::copy(other.m_components.begin(), other.m_components.end(), std::back_inserter(m_components));
             m_contains_wildcard = other.m_contains_wildcard;
             m_subject_hash = other.m_subject_hash;
@@ -119,7 +119,7 @@ namespace fp {
             } else {
                 if (subject.m_components.size() >= m_components.size()) {
                     size_t index = 0;
-                    auto it = std::find_if_not(m_components.begin(), m_components.end(), [&](const component &component) {
+                    auto it = std::find_if_not(m_components.begin(), m_components.end(), [&](const component &component) noexcept {
                            bool result = false;
                            switch (component.type) {
                                case STANDARD:
@@ -141,11 +141,11 @@ namespace fp {
             return matches;
         }
 
-        const bool operator==(const subscription &other) const {
+        const bool operator==(const subscription &other) const noexcept {
             return m_subject_hash == other.m_subject_hash;
         }
 
-        const bool operator==(const char *other) const {
+        const bool operator==(const char *other) const noexcept {
             return m_subject_hash == StringHash()(other);
         }
     };

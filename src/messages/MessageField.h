@@ -45,7 +45,7 @@ namespace DCF {
             return 0;
         }
 
-        const bool decode(const ByteStorage &buffer) noexcept override {
+        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
 //            assert(buffer.length() > FieldHeaderSize());
 //            const byte *data = nullptr;
 //            buffer.bytes(&data);

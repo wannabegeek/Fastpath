@@ -33,7 +33,7 @@
 
 namespace DCF {
 
-#if defined HAVE_KEVENT
+#if defined HAVE_KQUEUE
     TimerEvent::TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback)
             : Event(queue), m_timeout(timeout), m_callback(callback), m_identifier(++TimerEvent::s_identifier) {
     }
@@ -58,15 +58,15 @@ namespace DCF {
     TimerEvent::TimerEvent(TimerEvent &&other) noexcept : Event(std::move(other)), m_timeout(std::move(other.m_timeout)), m_callback(std::move(other.m_callback)), m_identifier(other.m_identifier) {
     }
 
-    void TimerEvent::dispatch(TimerEvent *event) {
+    void TimerEvent::dispatch(TimerEvent *event) noexcept {
         this->__popDispatch();
         if (tf::likely(!m_pendingRemoval)) {
             m_callback(event);
         }
     }
 
-    void TimerEvent::reset() {
-#if defined HAVE_KEVENT
+    void TimerEvent::reset() noexcept {
+#if defined HAVE_KQUEUE
         m_queue->updateEvent(this);
 #elif defined HAVE_EPOLL
         struct timespec t;
@@ -83,7 +83,7 @@ namespace DCF {
 #endif
     }
 
-    void TimerEvent::setTimeout(const std::chrono::microseconds &timeout) {
+    void TimerEvent::setTimeout(const std::chrono::microseconds &timeout) noexcept {
         m_timeout = timeout;
         this->reset();
     }
@@ -103,11 +103,11 @@ namespace DCF {
         return m_queue->__enqueue(QueueElement(this, std::bind(&TimerEvent::dispatch, this, this)));
     }
 
-    void TimerEvent::__destroy() {
+    void TimerEvent::__destroy() noexcept {
         m_queue->unregisterEvent(this);
     }
 
-#if defined HAVE_KEVENT
+#if defined HAVE_KQUEUE
     std::atomic<int> TimerEvent::s_identifier = ATOMIC_VAR_INIT(0);
 #endif
 }

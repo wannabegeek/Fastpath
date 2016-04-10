@@ -57,7 +57,7 @@ int main( int argc, char *argv[] )  {
         }
 
         DCF::Message sendMsg;
-        DCF::Subscriber subscriber(transport, "TEST.PERF.SOURCE", [&](const DCF::Subscriber *event, const DCF::Message *msg) {
+        DCF::Subscriber subscriber(transport, "TEST.PERF.SOURCE", [&](const DCF::Subscriber *event, const DCF::Message *msg) noexcept {
             auto recv_ts = std::chrono::high_resolution_clock::now();
             DEBUG_LOG("Received message: " << *msg);
             uint32_t id = 0;

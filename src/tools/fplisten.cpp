@@ -55,7 +55,7 @@ int main( int argc, char *argv[] )  {
         DCF::BlockingQueue queue;
         auto transport = fp::make_relm_connection(url.c_str(), "");
 
-        queue.addSubscriber(DCF::Subscriber(transport, subject.c_str(), [&](const DCF::Subscriber *event, const DCF::Message *msg) {
+        queue.addSubscriber(DCF::Subscriber(transport, subject.c_str(), [&](const DCF::Subscriber *event, const DCF::Message *msg) noexcept {
             INFO_LOG(*msg);
         }));
 

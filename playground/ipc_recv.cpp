@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     std::vector<tf::notifier> m_notifiers;
 
     bool shutdown = false;
-    auto notificationHandler = [&](DCF::TransportIOEvent *event, const DCF::EventType type, tf::notifier *notifier) {
+    auto notificationHandler = [&](DCF::TransportIOEvent *event, const DCF::EventType type, tf::notifier *notifier) noexcept {
         INFO_LOG("Received notification..... " << event->fileDescriptor());
         if (!notifier->reset()) {
             DEBUG_LOG("Setting shutdown flag " << strerror(errno));

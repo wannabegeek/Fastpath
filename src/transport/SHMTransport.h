@@ -23,11 +23,11 @@ namespace DCF {
         SHMTransport(const SHMTransport &) = delete;
         SHMTransport &operator=(const SHMTransport &) = delete;
 
-        ~SHMTransport();
+        ~SHMTransport() noexcept;
 
-        status sendMessage(const Message &msg) override;
-        status sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) override;
-        status sendReply(const Message &reply, const Message &request) override;
+        status sendMessage(const Message &msg) noexcept override;
+        status sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) noexcept override;
+        status sendReply(const Message &reply, const Message &request) noexcept override;
         const bool valid() const noexcept override;
 
     };

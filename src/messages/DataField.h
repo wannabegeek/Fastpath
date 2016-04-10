@@ -8,9 +8,9 @@
 #include "Field.h"
 
 namespace DCF {
-    class DataField final : public Field {
+    template <typename Allocator> class DataField final : public Field {
     private:
-        MutableByteStorage m_storage;
+        MutableByteStorage<byte, Allocator> m_storage;
         StorageType m_type;
 
     protected:
@@ -45,6 +45,8 @@ namespace DCF {
         }
 
     public:
+        DataField(const Allocator allocator = Allocator()) : m_storage(32, allocator) {}
+
         const StorageType type() const noexcept override { return m_type; }
         const size_t size() const noexcept override { return m_storage.length(); }
 
@@ -98,7 +100,7 @@ namespace DCF {
             return MsgField::size() + identifier_length + data_len;
         }
 
-        const bool decode(const ByteStorage &buffer) noexcept override {
+        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
             if (buffer.remainingReadLength() >= MsgField::size()) {
                 m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
                 buffer.advanceRead(sizeof(MsgField::type));

@@ -12,7 +12,7 @@
 namespace DCF {
 
     BaseMessage::BaseMessage(BaseMessage &&other) noexcept : m_payload(std::move(other.m_payload)),
-                                        m_keys(std::move(other.m_keys)) {
+                                        m_keys(std::move(other.m_keys)), m_allocator(std::move(other.m_allocator)) {
         m_payload.clear();
         m_keys.clear();
     }
@@ -49,7 +49,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDataField(const char *field, const byte *value, const size_t size) {
-        DataField *e = new DataField();
+        DataFieldType *e = new DataFieldType(m_allocator);
         e->set(field, value, size);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -61,7 +61,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDataField(const char *field, const char *value) {
-        DataField *e = new DataField();
+        DataFieldType *e = new DataFieldType(m_allocator);
         e->set(field, value);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -85,7 +85,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time) {
-        DateTimeField *e = new DateTimeField();
+        DateTimeFieldType *e = new DateTimeFieldType(m_allocator);
         e->set(field, time);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -137,7 +137,7 @@ namespace DCF {
         return msgLength;
     }
 
-    const bool BaseMessage::decode(const ByteStorage &buffer) {
+    const bool BaseMessage::decode(const MessageBuffer::ByteStorageType &buffer) {
         bool success = false;
         assert(buffer.length() > 0);
 
@@ -157,10 +157,10 @@ namespace DCF {
                 switch (type) {
                     case StorageType::string:
                     case StorageType::data:
-                        field = new DataField();
+                        field = new DataFieldType(m_allocator);
                         break;
                     case StorageType::date_time:
-                        field = new DateTimeField();
+                        field = new DateTimeFieldType(m_allocator);
                         break;
                     case StorageType::message:
                         field = new MessageField();

@@ -21,7 +21,7 @@ namespace DCF {
 
         virtual const bool __notify(const EventType &eventType) noexcept override;
         const bool __notify(Transport::MessageType &message) noexcept;
-        virtual void __destroy() override;
+        virtual void __destroy() noexcept override;
 
         const Subscriber *subscriber() const noexcept { return m_subscriber; }
     };

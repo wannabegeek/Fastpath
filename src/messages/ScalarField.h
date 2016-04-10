@@ -112,7 +112,7 @@ namespace DCF {
             return MsgField::size() + identifier_length + m_size;
         }
 
-        const bool decode(const ByteStorage &buffer) noexcept override {
+        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
             if (buffer.remainingReadLength() >= MsgField::size()) {
 
                 m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));

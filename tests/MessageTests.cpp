@@ -111,7 +111,7 @@ TEST(Message, Decode) {
     DEBUG_LOG(buffer);
     DEBUG_LOG(buffer.byteStorage());
     DCF::Message out;
-    const DCF::ByteStorage &b = buffer.byteStorage();
+    const DCF::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
     EXPECT_TRUE(out.decode(b));
     EXPECT_EQ(encoded_len, b.bytesRead());
 
@@ -184,7 +184,7 @@ TEST(Message, MultiPartialDecode) {
     for (size_t i = 0; i < buffer.length(); i++) {
         len += 10;
         buffer.bytes(&bytes);
-        DCF::ByteStorage storage(bytes, std::min(len, buffer.length()), true);
+        DCF::MessageBuffer::ByteStorageType storage(bytes, std::min(len, buffer.length()), true);
 
         if (out.decode(storage)) {
             buffer.erase_front(storage.bytesRead());

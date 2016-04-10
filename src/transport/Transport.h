@@ -43,16 +43,16 @@ namespace DCF {
 
     public:
         Transport(const char *description) : m_description(description), m_msg_pool(10000) {};
-        virtual ~Transport() {}
+        virtual ~Transport() noexcept {}
 
-        status sendMessage(const MessageType &msg) {
+        status sendMessage(const MessageType &msg) noexcept {
             return sendMessage(*(msg.get()));
         };
 
-        virtual status sendMessage(const Message &msg) = 0;
-        virtual status sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) = 0;
+        virtual status sendMessage(const Message &msg) noexcept = 0;
+        virtual status sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) noexcept = 0;
 
-        virtual status sendReply(const Message &reply, const Message &request) = 0;
+        virtual status sendReply(const Message &reply, const Message &request) noexcept = 0;
 
         virtual const bool valid() const noexcept = 0;
 
@@ -60,7 +60,7 @@ namespace DCF {
             return m_description.c_str();
         }
 
-        void setNotificationHandler(std::function<void(notification_type type, const char *reason)> handler) {
+        void setNotificationHandler(std::function<void(notification_type type, const char *reason)> handler) noexcept {
             m_notificationHandler = handler;
         }
     };

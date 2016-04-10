@@ -7,7 +7,7 @@
 
 namespace DCF {
 
-    void DataEvent::dispatch(DataEvent *event, const EventType &eventType) {
+    void DataEvent::dispatch(DataEvent *event, const EventType &eventType) noexcept {
         this->__popDispatch();
         if (tf::likely(!m_pendingRemoval)) {
             m_callback(event, eventType);
@@ -31,7 +31,7 @@ namespace DCF {
         return m_queue->__enqueue(QueueElement(this, std::bind(&DataEvent::dispatch, this, this, eventType)));
     }
 
-    void DataEvent::__destroy() {
+    void DataEvent::__destroy() noexcept {
         m_queue->unregisterEvent(this);
     }
 }
