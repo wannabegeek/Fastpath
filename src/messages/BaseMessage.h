@@ -23,7 +23,7 @@
 #include "ScalarField.h"
 #include "DataField.h"
 #include "DateTimeField.h"
-
+#include "MessageField.h"
 
 /*
  *
@@ -83,7 +83,8 @@ namespace DCF {
      */
     class BaseMessage : public Serializable, public tf::reusable {
     private:
-        typedef std::vector<Field *> PayloadContainer;
+        using payload_type = Field *;
+        typedef std::vector<payload_type> PayloadContainer;
         typedef std::unordered_map<const char *, const size_t, FieldIdentifierHash, FieldIdentifierComparitor> KeyMappingsContainer;
 //        typedef std::unordered_map<std::string, const size_t> KeyMappingsContainer;
 
@@ -96,9 +97,8 @@ namespace DCF {
 
 //        tf::linear_allocator<byte> m_a;
 
-        using field_allocator = short_alloc<byte, 512>;
-        field_allocator::arena_type m_arena;
-        field_allocator m_allocator;
+        using field_allocator_type = tf::linear_allocator<unsigned char>; //std::allocator<unsigned char>;
+        field_allocator_type m_field_allocator;
 
     protected:
         /// @cond DEV
@@ -108,14 +108,58 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const;
         /// @endcond
 
-        using DataFieldType = DataField<field_allocator>;
-        using DateTimeFieldType = DateTimeField<field_allocator>;
+        using DataFieldType = DataField<field_allocator_type>;
+        using DateTimeFieldType = DateTimeField<field_allocator_type>;
+
+        inline payload_type createField(StorageType type) noexcept {
+            switch (type) {
+                case StorageType::string:
+                case StorageType::data:
+                    return this->createDataField();
+                    break;
+                case StorageType::date_time:
+                    return this->createDateTimeField();
+                    break;
+                case StorageType::message:
+                    return this->createMessageField();
+                    break;
+                default:
+                    return this->createScalarField();
+                    break;
+            }
+        }
+
+        inline ScalarField *createScalarField() noexcept {
+            return createField<ScalarField>();
+        }
+
+        inline DataFieldType *createDataField() noexcept {
+            return createField<DataFieldType>();
+        }
+
+        inline DateTimeFieldType *createDateTimeField() noexcept {
+            return createField<DateTimeFieldType>();
+        }
+
+        inline MessageField *createMessageField() noexcept {
+            return createField<MessageField>();
+        }
+
+        template <typename T, class ...Args> inline T *createField(Args &&...args) noexcept {
+            void *ptr = std::allocator_traits<field_allocator_type>::allocate(m_field_allocator, sizeof(T));
+            return new(ptr) T(std::forward<Args>(args)...);
+        }
+
+        template <typename T, class ...Args> inline void destroyField(T *field) noexcept {
+            field->~T();
+            std::allocator_traits<field_allocator_type>::deallocate(m_field_allocator, reinterpret_cast<std::allocator_traits<field_allocator_type>::pointer>(field), sizeof(decltype(*field)));
+        }
 
     public:
         /**
          * Constructor
          */
-        BaseMessage() : m_allocator(m_arena) {
+        BaseMessage() {
             m_payload.reserve(64);
             m_keys.reserve(64);
         }
@@ -161,13 +205,13 @@ namespace DCF {
          */
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> bool addScalarField(const char *field, const T &value) {
 //            void *ptr = m_a.allocate(sizeof(ScalarField));
-            ScalarField *e = new ScalarField();
+            auto e = this->createScalarField();
             e->set(field, value);
             auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
             if (result.second) {
                 m_payload.emplace_back(e);
             } else {
-                delete e;
+                this->destroyField(e);
             }
             return result.second;
         }

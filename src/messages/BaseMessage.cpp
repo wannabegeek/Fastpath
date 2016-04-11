@@ -12,7 +12,7 @@
 namespace DCF {
 
     BaseMessage::BaseMessage(BaseMessage &&other) noexcept : m_payload(std::move(other.m_payload)),
-                                        m_keys(std::move(other.m_keys)), m_allocator(std::move(other.m_allocator)) {
+                                        m_keys(std::move(other.m_keys)), m_field_allocator(std::move(other.m_field_allocator)) {
         m_payload.clear();
         m_keys.clear();
     }
@@ -24,22 +24,26 @@ namespace DCF {
     void BaseMessage::clear() {
 //        size_t size = 0;
         for (Field *field : m_payload) {
-            delete field;
-//            switch (field->type()) {
-//                case StorageType::string:
-//                case StorageType::data:
+//            this->destroyField(field);
+        switch (field->type()) {
+            case StorageType::string:
+            case StorageType::data:
+                this->destroyField(reinterpret_cast<DataFieldType *>(field));
 //                    size = sizeof(DataField);
-//                    break;
-//                case StorageType::date_time:
-//                    size = sizeof(DateTimeField);
-//                    break;
-//                case StorageType::message:
-//                    size = sizeof(MessageField);
-//                    break;
-//                default:
-//                    size = sizeof(ScalarField);
-//                    break;
-//            }
+                break;
+            case StorageType::date_time:
+                this->destroyField(reinterpret_cast<DateTimeFieldType *>(field));
+//                size = sizeof(DateTimeField);
+                break;
+            case StorageType::message:
+                this->destroyField(reinterpret_cast<MessageField *>(field));
+//                size = sizeof(MessageField);
+                break;
+            default:
+//                size = sizeof(ScalarField);
+                this->destroyField(reinterpret_cast<ScalarField *>(field));
+                break;
+        }
 //
 //            field->~Field();
 //            field_allocator_traits::deallocate(m_field_allocator, reinterpret_cast<char *>(field), size);
@@ -49,49 +53,49 @@ namespace DCF {
     }
 
     bool BaseMessage::addDataField(const char *field, const byte *value, const size_t size) {
-        DataFieldType *e = new DataFieldType(m_allocator);
+        DataFieldType *e = this->createDataField();
         e->set(field, value, size);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
         } else {
-            delete e;
+            this->destroyField(e);
         }
         return result.second;
     }
 
     bool BaseMessage::addDataField(const char *field, const char *value) {
-        DataFieldType *e = new DataFieldType(m_allocator);
+        DataFieldType *e = this->createDataField();
         e->set(field, value);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
         } else {
-            delete e;
+            this->destroyField(e);
         }
         return result.second;
     }
 
     bool BaseMessage::addMessageField(const char *field, const BaseMessage *msg) {
-        MessageField *e = new MessageField();
+        MessageField *e = this->createMessageField();
         e->set(field, msg);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
         } else {
-            delete e;
+            this->destroyField(e);
         }
         return result.second;
     }
 
     bool BaseMessage::addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time) {
-        DateTimeFieldType *e = new DateTimeFieldType(m_allocator);
+        DateTimeFieldType *e = this->createDateTimeField();
         e->set(field, time);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
         } else {
-            delete e;
+            this->destroyField(e);
         }
         return result.second;
     }
@@ -153,22 +157,7 @@ namespace DCF {
 
             for (size_t i = 0; i < field_count; i++) {
                 const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
-                Field *field = nullptr;
-                switch (type) {
-                    case StorageType::string:
-                    case StorageType::data:
-                        field = new DataFieldType(m_allocator);
-                        break;
-                    case StorageType::date_time:
-                        field = new DateTimeFieldType(m_allocator);
-                        break;
-                    case StorageType::message:
-                        field = new MessageField();
-                        break;
-                    default:
-                        field = new ScalarField();
-                        break;
-                }
+                Field *field = this->createField(type);
 
                 if (field->decode(buffer)) {
                     m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));

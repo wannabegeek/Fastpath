@@ -102,7 +102,7 @@ namespace tf {
             typedef linear_allocator<U> other;
         };
 
-        linear_allocator(std::size_t initial_size = 512) : m_initial_size(initial_size) {
+        linear_allocator(std::size_t initial_size = 1024) : m_initial_size(initial_size) {
             m_root_slab = m_current_slab = new slab(initial_size);
         }
 
@@ -115,14 +115,20 @@ namespace tf {
             }
         }
 
-        linear_allocator(const linear_allocator &other) {
+        linear_allocator(const linear_allocator &other) : m_initial_size(other.m_initial_size) {
+            m_root_slab = m_current_slab = new slab(m_initial_size);
         }
 
-        pointer allocate(const std::size_t size) noexcept {
-//            INFO_LOG("Allocating " << size);
+        linear_allocator(linear_allocator &&other) : m_root_slab(other.m_root_slab), m_current_slab(other.m_current_slab), m_initial_size(other.m_initial_size) {
+            other.m_root_slab = nullptr;
+            other.m_current_slab = nullptr;
+        }
 
-            if (find_slab_with_space(m_root_slab, size) != nullptr) {
-                return m_current_slab->allocate(size);
+        inline pointer allocate(const std::size_t size) noexcept {
+//            INFO_LOG("Allocating " << size);
+            slab *s = nullptr;
+            if ((s = find_slab_with_space(m_root_slab, size)) != nullptr) {
+                return s->allocate(size);
             } else {
                 m_current_slab->m_next = new slab(std::max(size, m_initial_size));
                 m_current_slab = m_current_slab->m_next;
@@ -130,12 +136,12 @@ namespace tf {
             }
         }
 
-        void deallocate(T* p, std::size_t size) noexcept {
+        inline void deallocate(T* p, std::size_t size) noexcept {
             slab *s = find_slab_containing(m_root_slab, p);
             if (s != nullptr) {
                 s->deallocate(p, size);
             }
-            INFO_LOG("Deallocated " << size);
+//            INFO_LOG("Deallocated " << size);
         }
     };
 

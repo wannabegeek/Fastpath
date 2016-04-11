@@ -24,6 +24,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -Ofast
 find_package(Boost 1.60.0)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
+    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
 #set(BOOST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/external/boost/any/include/")
