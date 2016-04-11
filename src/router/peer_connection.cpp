@@ -139,7 +139,6 @@ namespace fp {
                         DEBUG_LOG("Removing " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
                         m_buffer.erase_front(storage.bytesRead());
                         DEBUG_LOG("Removed " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
-                        complete = true;
                         break;
                     case DCF::CorruptMessage:
                         m_socket->disconnect();

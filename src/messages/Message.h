@@ -45,7 +45,7 @@ namespace DCF {
         const bool decode(const MessageBuffer::ByteStorageType &buffer) override;
 
         static const MessageDecodeStatus have_complete_message(const MessageBuffer::ByteStorageType &buffer, size_t &msg_length) noexcept;
-        static const MessageDecodeStatus addressing_details(const MessageBuffer::ByteStorageType &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length);
+        static const MessageDecodeStatus addressing_details(const MessageBuffer::ByteStorageType &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &msg_length) noexcept;
     };
 }
 

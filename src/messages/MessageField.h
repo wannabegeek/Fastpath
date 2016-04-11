@@ -6,9 +6,10 @@
 #define TFDCF_MESSAGEFIELD_H
 
 #include "Field.h"
-#include "BaseMessage.h"
 
 namespace DCF {
+    class BaseMessage;
+    
     class MessageField final : public Field {
     private:
         const BaseMessage *m_msg;

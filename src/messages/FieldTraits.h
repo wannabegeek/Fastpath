@@ -16,7 +16,7 @@ namespace DCF {
     class BaseMessage;
     class ScalarField;
 //    class DataField;
-    class MessageField;
+//    class MessageField;
 
     template<typename T>
     struct field_traits {

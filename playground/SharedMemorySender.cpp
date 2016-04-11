@@ -10,7 +10,6 @@
 int main(int argc, char *argv[])
 {
     boost::interprocess::shared_memory_object::remove("SharedMemoryTest");
-
     SharedMemoryBuffer buffer("SharedMemoryTest");
 
     //Write all the memory to 1

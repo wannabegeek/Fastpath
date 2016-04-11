@@ -7,7 +7,9 @@
 #include <thread>
 #include <utils/logger.h>
 #include <event/InlineQueue.h>
+#include <boost/interprocess/shared_memory_object.hpp>
 #include "IPC/InterprocessNotifierServer.h"
+#include <SharedMemoryBuffer.h>
 
 int main(int argc, char *argv[]) {
 
@@ -15,15 +17,24 @@ int main(int argc, char *argv[]) {
 //    DCF::Session::initialise();
 //    DCF::InlineQueue queue;
 
+    boost::interprocess::shared_memory_object::remove("SharedMemoryTest");
+    SharedMemoryBuffer buffer("SharedMemoryTest");
+
     DCF::InlineEventManager evm;
     std::vector<tf::notifier> m_notifiers;
 
     bool shutdown = false;
     auto notificationHandler = [&](DCF::TransportIOEvent *event, const DCF::EventType type, tf::notifier *notifier) noexcept {
-        INFO_LOG("Received notification..... " << event->fileDescriptor());
+        DEBUG_LOG("Received notification..... " << event->fileDescriptor());
         if (!notifier->reset()) {
-            DEBUG_LOG("Setting shutdown flag " << strerror(errno));
-            shutdown = true;
+            INFO_LOG("Client disconnected " << event->fileDescriptor());
+//            DEBUG_LOG("Setting shutdown flag " << strerror(errno));
+//            shutdown = true;
+            evm.unregisterHandler(event);
+        } else {
+            void *ptr = buffer.retrieve();
+            INFO_LOG("Received data '" << reinterpret_cast<const char *>(ptr) << "'");
+            buffer.deallocate(ptr);
         }
     };
 

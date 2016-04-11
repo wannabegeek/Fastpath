@@ -82,7 +82,7 @@ namespace DCF {
                 return CorruptMessage;
             }
             std::advance(bytes, sizeof(MsgAddressing::addressing_start));
-            msg_length = readScalar<MsgAddressing::msg_length>(bytes);
+            msg_length = readScalar<MsgAddressing::msg_length>(bytes) + MsgAddressing::msg_length_offset();
             if (buffer.remainingReadLength() >= msg_length) {
                 return CompleteMessage;
             }
@@ -91,11 +91,8 @@ namespace DCF {
         return IncompleteMessage;
     }
 
-    const MessageDecodeStatus Message::addressing_details(const MessageBuffer::ByteStorageType &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &length) {
-        length = subject_length = 0;
-        size_t msg_length = 0;
-
-        auto status = Message::have_complete_message(buffer, msg_length);
+    const MessageDecodeStatus Message::addressing_details(const MessageBuffer::ByteStorageType &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &msg_length) noexcept {
+        const MessageDecodeStatus status = Message::have_complete_message(buffer, msg_length);
 
         if (status == CompleteMessage) {
             buffer.advanceRead(sizeof(MsgAddressing::addressing_start));
@@ -108,10 +105,8 @@ namespace DCF {
             subject_length = readScalar<MsgAddressing::subject_length>(buffer.readBytes());
             buffer.advanceRead(sizeof(MsgAddressing::subject_length));
 
-            // TODO: check we have enough length for the subject
             *subject = reinterpret_cast<const char *>(buffer.readBytes());
             buffer.advanceRead(subject_length);
-            length = msg_length + MsgAddressing::msg_length_offset();
         }
 
         return status;
