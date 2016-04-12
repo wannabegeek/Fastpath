@@ -10,12 +10,11 @@ namespace DCF {
     }
 
     const bool MessageEvent::isEqual(const Event &other) const noexcept {
-        try {
-            const MessageEvent &f = dynamic_cast<const MessageEvent &>(other);
+        if (typeid(other) == typeid(MessageEvent)) {
+            const MessageEvent &f = static_cast<const MessageEvent &>(other);
             return m_subscriber == f.m_subscriber;
-        } catch (const std::bad_cast &e) {
-            return false;
         }
+        return false;
     }
 
     const bool MessageEvent::__notify(const EventType &eventType) noexcept {

@@ -89,12 +89,11 @@ namespace DCF {
     }
 
     const bool TimerEvent::isEqual(const Event &other) const noexcept {
-        try {
-            const TimerEvent &f = dynamic_cast<const TimerEvent &>(other);
+        if (typeid(other) == typeid(TimerEvent)) {
+            const TimerEvent &f = static_cast<const TimerEvent &>(other);
             return m_timeout == f.m_timeout;
-        } catch (const std::bad_cast &e) {
-            return false;
         }
+        return false;
     }
 
     const bool TimerEvent::__notify(const EventType &eventType) noexcept {

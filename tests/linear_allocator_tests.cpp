@@ -9,7 +9,8 @@ TEST(linear_allocator, alloc) {
     using storage_alloc = std::allocator_traits<tf::linear_allocator<char>>::template rebind_alloc<char>;
     using storage_traits = std::allocator_traits<tf::linear_allocator<char>>::template rebind_traits<char>;
 
-    storage_alloc allocator;
+    storage_alloc::arena_type arena(10);
+    storage_alloc allocator(arena);
 
     char *ptr = storage_traits::allocate(allocator, 10);
     strncpy(ptr, "0123456789", 9);
@@ -38,7 +39,8 @@ TEST(linear_allocator, double_test) {
     using storage_alloc = std::allocator_traits<tf::linear_allocator<char>>::template rebind_alloc<char>;
     using storage_traits = std::allocator_traits<tf::linear_allocator<char>>::template rebind_traits<char>;
 
-    storage_alloc allocator;
+    storage_alloc::arena_type arena;
+    storage_alloc allocator(arena);
 
     double *ptr = reinterpret_cast<double *>(storage_traits::allocate(allocator, sizeof(double)));
     *ptr = 12.34567;

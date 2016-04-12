@@ -16,12 +16,11 @@ namespace DCF {
 
     protected:
         virtual const bool isEqual(const Field &other) const override {
-            try {
-                const MessageField &f = dynamic_cast<const MessageField &>(other);
+            if (typeid(other) == typeid(MessageField)) {
+                const MessageField &f = static_cast<const MessageField &>(other);
                 return m_msg == f.m_msg;
-            } catch (const std::bad_cast &e) {
-                return false;
             }
+            return false;
         }
 
         virtual std::ostream& output(std::ostream& out) const override;

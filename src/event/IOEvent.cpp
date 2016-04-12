@@ -35,11 +35,10 @@ namespace DCF {
     }
 
     const bool IOEvent::isEqual(const Event &other) const noexcept {
-        try {
-            const IOEvent &f = dynamic_cast<const IOEvent &>(other);
+        if (typeid(other) == typeid(IOEvent)) {
+            const IOEvent &f = static_cast<const IOEvent &>(other);
             return m_fd == f.m_fd && m_eventTypes == f.m_eventTypes;
-        } catch (const std::bad_cast &e) {
-            return false;
         }
+        return false;
     }
 }

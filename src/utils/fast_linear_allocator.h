@@ -11,9 +11,11 @@
 namespace tf {
 
     class arena {
+    public:
         using pointer = unsigned char*;
         using value_type = pointer;
 
+    private:
         struct slab {
             pointer m_content;
             std::size_t m_size;
@@ -40,7 +42,7 @@ namespace tf {
             }
 
             std::size_t free() const noexcept {
-                return m_size - m_allocated;
+                return m_size - std::distance(m_content, m_head);
             }
 
             pointer allocate(std::size_t size) noexcept {
@@ -54,6 +56,7 @@ namespace tf {
             void deallocate(pointer ptr, std::size_t size) noexcept {
                 assert(pointer_in_buffer(ptr));
                 m_allocated -= size;
+                assert(m_allocated >= 0);
                 if (m_allocated == 0) {
                     m_head = m_content;
                 } else if (ptr + size == m_head) {
@@ -70,7 +73,6 @@ namespace tf {
 
         inline slab *find_slab_with_space(slab *start, std::size_t size) const noexcept {
             if (start->free() >= size) {
-                DEBUG_LOG("We have " << start->free() << " and require " << size)
                 return start;
             } else if (start->m_next != nullptr) {
                 return find_slab_with_space(start->m_next, size);
@@ -80,7 +82,7 @@ namespace tf {
         }
 
         inline slab *find_slab_containing(slab *start, pointer ptr) const noexcept {
-            if (ptr > start->m_content && ptr < start->m_head) {
+            if (start->pointer_in_buffer(ptr)) {
                 return start;
             } else if (start->m_next != nullptr) {
                 return find_slab_containing(start->m_next, ptr);
@@ -102,21 +104,45 @@ namespace tf {
         arena& operator=(const arena&) = delete;
 
         arena::pointer allocate(std::size_t size) {
-//            INFO_LOG("Allocating " << size);
             slab *s = nullptr;
             if ((s = find_slab_with_space(m_root_slab, size)) != nullptr) {
                 return s->allocate(size);
             } else {
+                DEBUG_LOG("Allocating new block of size " << std::max(size, m_initial_size) << " from arena: " << *this);
                 m_current_slab->m_next = new slab(std::max(size, m_initial_size));
                 m_current_slab = m_current_slab->m_next;
                 return m_current_slab->allocate(size);
             }
         }
+
         void deallocate(arena::pointer p, std::size_t size) noexcept {
             slab *s = find_slab_containing(m_root_slab, p);
+            assert(s != nullptr);
             if (s != nullptr) {
                 s->deallocate(p, size);
             }
+        }
+
+        friend std::ostream &operator<<(std::ostream &out, const arena &a) {
+            std::size_t block_count = 0;
+            std::size_t total_free = 0;
+            std::size_t total_capacity = 0;
+            std::size_t total_allocated = 0;
+
+            std::function<void(const slab *)> totals = [&](const slab *start) {
+                block_count++;
+                total_free += start->free();
+                total_capacity += start->m_size;
+                total_allocated += start->m_allocated;
+                if (start->m_next != nullptr) {
+                    totals(start->m_next);
+                }
+            };
+
+            totals(a.m_root_slab);
+
+            out << "allocated: " << total_allocated << " capacity: " << total_capacity << " allocatable: " << total_free << " from " << block_count << " blocks";
+            return out;
         }
 
 //        static constexpr std::size_t size() noexcept {return N;}
@@ -162,7 +188,7 @@ namespace tf {
         }
 
         inline void deallocate(T* p, std::size_t size) noexcept {
-            m_arena.deallocate(reinterpret_cast<pointer>(p), size);
+            m_arena.deallocate(reinterpret_cast<arena_type::pointer>(p), size);
         }
     };
 

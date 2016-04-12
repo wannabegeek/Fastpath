@@ -22,31 +22,8 @@ namespace DCF {
     }
 
     void BaseMessage::clear() {
-//        size_t size = 0;
         for (Field *field : m_payload) {
-//            this->destroyField(field);
-            switch (field->type()) {
-                case StorageType::string:
-                case StorageType::data:
-                    this->destroyField(reinterpret_cast<DataFieldType *>(field));
-    //                    size = sizeof(DataField);
-                    break;
-                case StorageType::date_time:
-                    this->destroyField(reinterpret_cast<DateTimeFieldType *>(field));
-    //                size = sizeof(DateTimeField);
-                    break;
-                case StorageType::message:
-                    this->destroyField(reinterpret_cast<MessageField *>(field));
-    //                size = sizeof(MessageField);
-                    break;
-                default:
-    //                size = sizeof(ScalarField);
-                    this->destroyField(reinterpret_cast<ScalarField *>(field));
-                    break;
-            }
-//
-//            field->~Field();
-//            field_allocator_traits::deallocate(m_field_allocator, reinterpret_cast<char *>(field), size);
+            this->destroyField(field);
         }
         m_payload.clear();
         m_keys.clear();
@@ -105,9 +82,9 @@ namespace DCF {
             auto index = m_keys.find(field);
             if (index != m_keys.end()) {
                 m_keys.erase(field);
-                delete field;
                 auto it = m_payload.begin();
                 std::advance(it, index->second);
+                this->destroyField(*it);
                 m_payload.erase(it);
                 return true;
             }
@@ -120,7 +97,7 @@ namespace DCF {
 
     const bool BaseMessage::operator==(const BaseMessage &other) const {
         return std::equal(m_payload.begin(), m_payload.end(), other.m_payload.begin(), [](const PayloadContainer::value_type& item1, const PayloadContainer::value_type& item2) -> bool {
-                        return item1 == item2;
+                        return *item1 == *item2;
                 });
     }
 

@@ -10,14 +10,14 @@ TEST(Field, CreateString) {
 
     // set the string as a char * &
     const char *b = "fgsg";
-    DCF::DataField<std::allocator<byte>> e3;
+    DCF::LargeDataField<std::allocator<byte>> e3;
     e3.set("0", b);
     ASSERT_EQ(e3.type(), DCF::StorageType::string);
     ASSERT_STREQ(b, e3.get<const char *>());
 
     // set the string as a char * & retrive it as a char *
     const char *b4 = "test";
-    DCF::DataField<std::allocator<byte>> e4;
+    DCF::LargeDataField<std::allocator<byte>> e4;
     e4.set("0", b4);
     ASSERT_EQ(e4.type(), DCF::StorageType::string);
     const char *result4 = nullptr;
@@ -69,7 +69,7 @@ TEST(Field, CreateDateTime) {
 TEST(Field, CreateData) {
     const char *temp = "Hello world";
 
-    DCF::DataField<std::allocator<byte>> e;
+    DCF::LargeDataField<std::allocator<byte>> e;
     e.set("0", reinterpret_cast<const byte *>(temp), strlen(temp));
     ASSERT_EQ(e.type(), DCF::StorageType::data);
 
@@ -81,14 +81,14 @@ TEST(Field, CreateData) {
 
 TEST(Field, SerializeString) {
     const char *temp = "Hello world";
-    DCF::DataField<std::allocator<byte>> in;
+    DCF::LargeDataField<std::allocator<byte>> in;
     in.set("0", reinterpret_cast<const byte *>(temp), strlen(temp));
 
     DCF::MessageBuffer buffer(256);
     const size_t len_in = in.encode(buffer);
     EXPECT_EQ(len_in, buffer.length());
 
-    DCF::DataField<std::allocator<byte>> out;
+    DCF::LargeDataField<std::allocator<byte>> out;
     const DCF::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
     EXPECT_TRUE(out.decode(b));
     ASSERT_EQ(len_in, b.bytesRead());

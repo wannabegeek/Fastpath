@@ -24,6 +24,8 @@
 #include "DataField.h"
 #include "DateTimeField.h"
 #include "MessageField.h"
+#include "SmallDataField.h"
+#include "LargeDataField.h"
 
 /*
  *
@@ -109,7 +111,7 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const;
         /// @endcond
 
-        using DataFieldType = DataField<field_allocator_type>;
+        using DataFieldType = SmallDataField;
         using DateTimeFieldType = DateTimeField<field_allocator_type>;
 
         inline payload_type createField(StorageType type) noexcept {
@@ -135,7 +137,7 @@ namespace DCF {
         }
 
         inline DataFieldType *createDataField() noexcept {
-            return createField<DataFieldType>(m_field_allocator);
+            return createField<DataFieldType>();
         }
 
         inline DateTimeFieldType *createDateTimeField() noexcept {
@@ -147,20 +149,29 @@ namespace DCF {
         }
 
         template <typename T, class ...Args> inline T *createField(Args &&...args) noexcept {
-            void *ptr = std::allocator_traits<field_allocator_type>::allocate(m_field_allocator, sizeof(T));
+            std::allocator_traits<field_allocator_type>::pointer ptr = std::allocator_traits<field_allocator_type>::allocate(m_field_allocator, sizeof(T) + sizeof(std::size_t));
+            std::size_t *info = reinterpret_cast<std::size_t *>(ptr);
+
+            *info = sizeof(T);
+            std::advance(ptr, sizeof(std::size_t));
             return new(ptr) T(std::forward<Args>(args)...);
         }
 
         template <typename T, class ...Args> inline void destroyField(T *field) noexcept {
             field->~T();
-            std::allocator_traits<field_allocator_type>::deallocate(m_field_allocator, reinterpret_cast<std::allocator_traits<field_allocator_type>::pointer>(field), sizeof(decltype(*field)));
+
+            std::allocator_traits<field_allocator_type>::pointer ptr = reinterpret_cast<std::allocator_traits<field_allocator_type>::pointer>(field);
+            std::advance(ptr, -sizeof(std::size_t));
+            std::size_t *info = reinterpret_cast<std::size_t *>(ptr);
+            *info += sizeof(std::size_t);
+            std::allocator_traits<field_allocator_type>::deallocate(m_field_allocator, ptr, *info);
         }
 
     public:
         /**
          * Constructor
          */
-        BaseMessage() : m_arena(4096 * 4), m_field_allocator(m_arena) {
+        BaseMessage() : m_arena(8192), m_field_allocator(m_arena) {
             m_payload.reserve(64);
             m_keys.reserve(64);
         }

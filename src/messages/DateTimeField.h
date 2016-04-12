@@ -20,13 +20,11 @@ namespace DCF {
 
     protected:
         virtual const bool isEqual(const Field &other) const noexcept override {
-            try {
-                const DateTimeField &f = dynamic_cast<const DateTimeField &>(other);
-                return m_seconds == f.m_seconds
-                       && m_microseconds == f.m_microseconds;
-            } catch (const std::bad_cast &e) {
-                return false;
+            if (typeid(other) == typeid(DateTimeField)) {
+                const DateTimeField &f = static_cast<const DateTimeField &>(other);
+                return m_seconds == f.m_seconds && m_microseconds == f.m_microseconds;
             }
+            return false;
         }
 
         virtual std::ostream& output(std::ostream& out) const override {

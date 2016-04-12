@@ -25,14 +25,13 @@ namespace DCF {
 
     protected:
         virtual const bool isEqual(const Field &other) const noexcept override {
-            try {
-                const ScalarField &f = dynamic_cast<const ScalarField &>(other);
+            if (typeid(other) == typeid(ScalarField)) {
+                const ScalarField &f = static_cast<const ScalarField &>(other);
                 return m_type == f.m_type
                        && m_size == f.m_size
                        && std::equal(std::begin(m_raw), std::end(m_raw), std::begin(f.m_raw));
-            } catch (const std::bad_cast &e) {
-                return false;
             }
+            return false;
         }
 
         virtual std::ostream& output(std::ostream& out) const override {
