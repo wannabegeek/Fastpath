@@ -25,25 +25,25 @@ namespace DCF {
 //        size_t size = 0;
         for (Field *field : m_payload) {
 //            this->destroyField(field);
-        switch (field->type()) {
-            case StorageType::string:
-            case StorageType::data:
-                this->destroyField(reinterpret_cast<DataFieldType *>(field));
-//                    size = sizeof(DataField);
-                break;
-            case StorageType::date_time:
-                this->destroyField(reinterpret_cast<DateTimeFieldType *>(field));
-//                size = sizeof(DateTimeField);
-                break;
-            case StorageType::message:
-                this->destroyField(reinterpret_cast<MessageField *>(field));
-//                size = sizeof(MessageField);
-                break;
-            default:
-//                size = sizeof(ScalarField);
-                this->destroyField(reinterpret_cast<ScalarField *>(field));
-                break;
-        }
+            switch (field->type()) {
+                case StorageType::string:
+                case StorageType::data:
+                    this->destroyField(reinterpret_cast<DataFieldType *>(field));
+    //                    size = sizeof(DataField);
+                    break;
+                case StorageType::date_time:
+                    this->destroyField(reinterpret_cast<DateTimeFieldType *>(field));
+    //                size = sizeof(DateTimeField);
+                    break;
+                case StorageType::message:
+                    this->destroyField(reinterpret_cast<MessageField *>(field));
+    //                size = sizeof(MessageField);
+                    break;
+                default:
+    //                size = sizeof(ScalarField);
+                    this->destroyField(reinterpret_cast<ScalarField *>(field));
+                    break;
+            }
 //
 //            field->~Field();
 //            field_allocator_traits::deallocate(m_field_allocator, reinterpret_cast<char *>(field), size);

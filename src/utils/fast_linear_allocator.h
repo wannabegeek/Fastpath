@@ -9,19 +9,10 @@
 #include <utils/logger.h>
 
 namespace tf {
-    template <typename T> class linear_allocator {
-    public:
-        typedef T value_type;
-        typedef value_type* pointer;
-        typedef const value_type* const_pointer;
-        typedef value_type& reference;
-        typedef const value_type& const_reference;
-        typedef std::size_t size_type;
-        typedef std::ptrdiff_t difference_type;
 
-    private:
-
-        typedef char* storage_type;
+    class arena {
+        using pointer = unsigned char*;
+        using value_type = pointer;
 
         struct slab {
             pointer m_content;
@@ -40,7 +31,6 @@ namespace tf {
             }
 
             slab(std::size_t size) noexcept : m_size(size), m_allocated(0), m_next(nullptr) {
-                INFO_LOG("Creating new slab of size " << m_size);
                 m_content = reinterpret_cast<pointer>(::malloc(align_up(m_size)));
                 m_head = m_content;
             }
@@ -57,28 +47,30 @@ namespace tf {
                 assert(this->free() >= size);
                 pointer p = m_head;
                 std::advance(m_head, size);
-                m_allocated = std::distance(m_content, m_head);
+                m_allocated += size; //std::distance(m_content, m_head);
                 return p;
             }
 
             void deallocate(pointer ptr, std::size_t size) noexcept {
+                assert(pointer_in_buffer(ptr));
                 m_allocated -= size;
-                if (ptr + size == m_head) {
-                    m_head = ptr;
-                } else if (m_allocated == 0) {
+                if (m_allocated == 0) {
                     m_head = m_content;
+                } else if (ptr + size == m_head) {
+                    m_head = ptr;
                 }
-                m_allocated = std::distance(m_content, m_head);
+                //m_allocated = std::distance(m_content, m_head);
             }
         };
+
+        std::size_t m_initial_size;
 
         slab *m_root_slab;
         slab *m_current_slab;
 
-        std::size_t m_initial_size;
-
         inline slab *find_slab_with_space(slab *start, std::size_t size) const noexcept {
             if (start->free() >= size) {
+                DEBUG_LOG("We have " << start->free() << " and require " << size)
                 return start;
             } else if (start->m_next != nullptr) {
                 return find_slab_with_space(start->m_next, size);
@@ -87,7 +79,7 @@ namespace tf {
             return nullptr;
         }
 
-        inline slab *find_slab_containing(slab *start, T *ptr) const noexcept {
+        inline slab *find_slab_containing(slab *start, pointer ptr) const noexcept {
             if (ptr > start->m_content && ptr < start->m_head) {
                 return start;
             } else if (start->m_next != nullptr) {
@@ -98,33 +90,18 @@ namespace tf {
         }
 
     public:
-        template<typename U> struct rebind {
-            typedef linear_allocator<U> other;
-        };
-
-        linear_allocator(std::size_t initial_size = 1024) : m_initial_size(initial_size) {
-            m_root_slab = m_current_slab = new slab(initial_size);
+        ~arena() {
+            m_root_slab = nullptr;
         }
 
-        ~linear_allocator() {
-            slab *s = m_root_slab;
-            while (s != nullptr) {
-                slab *m = s;
-                s = s->m_next;
-                delete m;
-            }
+        arena(std::size_t initial_size = 1024) noexcept : m_initial_size(initial_size), m_root_slab(new slab(initial_size)) {
+            m_current_slab = m_root_slab;
         }
 
-        linear_allocator(const linear_allocator &other) : m_initial_size(other.m_initial_size) {
-            m_root_slab = m_current_slab = new slab(m_initial_size);
-        }
+        arena(const arena&) = delete;
+        arena& operator=(const arena&) = delete;
 
-        linear_allocator(linear_allocator &&other) : m_root_slab(other.m_root_slab), m_current_slab(other.m_current_slab), m_initial_size(other.m_initial_size) {
-            other.m_root_slab = nullptr;
-            other.m_current_slab = nullptr;
-        }
-
-        inline pointer allocate(const std::size_t size) noexcept {
+        arena::pointer allocate(std::size_t size) {
 //            INFO_LOG("Allocating " << size);
             slab *s = nullptr;
             if ((s = find_slab_with_space(m_root_slab, size)) != nullptr) {
@@ -135,13 +112,57 @@ namespace tf {
                 return m_current_slab->allocate(size);
             }
         }
-
-        inline void deallocate(T* p, std::size_t size) noexcept {
+        void deallocate(arena::pointer p, std::size_t size) noexcept {
             slab *s = find_slab_containing(m_root_slab, p);
             if (s != nullptr) {
                 s->deallocate(p, size);
             }
-//            INFO_LOG("Deallocated " << size);
+        }
+
+//        static constexpr std::size_t size() noexcept {return N;}
+
+//        std::size_t used() const noexcept {
+//            return static_cast<std::size_t>(ptr_ - buf_);
+//        }
+
+//        void reset() noexcept {ptr_ = buf_;}
+    };
+
+    template <typename T> class linear_allocator {
+    public:
+        typedef T value_type;
+        typedef value_type* pointer;
+        typedef const value_type* const_pointer;
+        typedef value_type& reference;
+        typedef const value_type& const_reference;
+        typedef std::size_t size_type;
+        typedef std::ptrdiff_t difference_type;
+
+        using arena_type = arena;
+
+    private:
+
+        typedef char* storage_type;
+
+        arena_type &m_arena;
+
+    public:
+        template<typename U> struct rebind {
+            typedef linear_allocator<U> other;
+        };
+
+        linear_allocator(arena_type &arena) : m_arena(arena) {}
+
+        ~linear_allocator() {}
+
+        linear_allocator(const linear_allocator &other) : m_arena(other.m_arena) {}
+
+        inline pointer allocate(const std::size_t size) noexcept {
+            return reinterpret_cast<pointer>(m_arena.allocate(size));
+        }
+
+        inline void deallocate(T* p, std::size_t size) noexcept {
+            m_arena.deallocate(reinterpret_cast<pointer>(p), size);
         }
     };
 

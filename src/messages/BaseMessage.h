@@ -98,6 +98,7 @@ namespace DCF {
 //        tf::linear_allocator<byte> m_a;
 
         using field_allocator_type = tf::linear_allocator<unsigned char>; //std::allocator<unsigned char>;
+        field_allocator_type::arena_type m_arena;
         field_allocator_type m_field_allocator;
 
     protected:
@@ -134,11 +135,11 @@ namespace DCF {
         }
 
         inline DataFieldType *createDataField() noexcept {
-            return createField<DataFieldType>();
+            return createField<DataFieldType>(m_field_allocator);
         }
 
         inline DateTimeFieldType *createDateTimeField() noexcept {
-            return createField<DateTimeFieldType>();
+            return createField<DateTimeFieldType>(m_field_allocator);
         }
 
         inline MessageField *createMessageField() noexcept {
@@ -159,7 +160,7 @@ namespace DCF {
         /**
          * Constructor
          */
-        BaseMessage() {
+        BaseMessage() : m_arena(4096 * 4), m_field_allocator(m_arena) {
             m_payload.reserve(64);
             m_keys.reserve(64);
         }
