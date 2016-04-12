@@ -12,6 +12,6 @@ set(SOURCE_FILES
         ScalarField.h
         Serializable.h
         StorageTypes.h
-        )
+        SmallDataField.h LargeDataField.h)
 
 add_library(messages OBJECT ${SOURCE_FILES})
