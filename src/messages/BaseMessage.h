@@ -111,9 +111,6 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const;
         /// @endcond
 
-        using DataField = DataField;
-        using DateTimeFieldType = DateTimeField<field_allocator_type>;
-
         inline payload_type createField(StorageType type, const std::size_t size) noexcept {
             switch (type) {
                 case StorageType::string:
@@ -144,8 +141,8 @@ namespace DCF {
             }
         }
 
-        inline DateTimeFieldType *createDateTimeField() noexcept {
-            return createField<DateTimeFieldType>(m_field_allocator);
+        inline DateTimeField *createDateTimeField() noexcept {
+            return createField<DateTimeField>();
         }
 
         inline MessageField *createMessageField() noexcept {

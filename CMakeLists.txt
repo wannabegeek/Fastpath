@@ -1,15 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(TFDCF)
 
-INCLUDE(CheckIncludeFiles)
-INCLUDE(CheckFunctionExists)
-
-CHECK_INCLUDE_FILES(pthread.h HAVE_PTHREAD_H)
-
-CHECK_FUNCTION_EXISTS(pthread_setaffinity_np HAVE_PTHREAD_SETAFFINITY_NP)
-CHECK_FUNCTION_EXISTS(pthread_setname_np HAVE_PTHREAD_SETNAME_NP)
-CHECK_FUNCTION_EXISTS(pthread_getname_np HAVE_PTHREAD_GETNAME_NP)
-
 set(GENERIC_COMPILER_FLAGS "-Wall -pedantic -std=c++14 -fPIC -mtune=native")
 IF (CMAKE_COMPILER_IS_GNUCXX)
     set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wold-style-cast -Woverloaded-virtual -flto")

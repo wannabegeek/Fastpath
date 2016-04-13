@@ -74,22 +74,10 @@ namespace DCF {
 
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() const noexcept {
             return DataField::get<T>();
-        };
+        }
 
         const size_t encode(MessageBuffer &buffer) const noexcept override {
-            byte *b = buffer.allocate(MsgField::size());
-
-            b = writeScalar(b, static_cast<MsgField::type>(m_type));
-
-            const size_t identifier_length = strlen(m_identifier);
-            b = writeScalar(b, static_cast<MsgField::identifier_length >(identifier_length));
-
-            b = writeScalar(b, static_cast<MsgField::data_length>(m_length));
-
-            buffer.append(reinterpret_cast<const byte *>(m_identifier), identifier_length);
-            buffer.append(m_storage, m_length);
-
-            return MsgField::size() + identifier_length + m_length;
+            return Field::encode(buffer, m_storage, m_length);
         }
 
         const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {

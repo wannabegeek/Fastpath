@@ -66,7 +66,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time) {
-        DateTimeFieldType *e = this->createDateTimeField();
+        DateTimeField *e = this->createDateTimeField();
         e->set(field, time);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -133,12 +133,12 @@ namespace DCF {
             buffer.advanceRead(sizeof(MsgHeader::field_count));
 
             for (size_t i = 0; i < field_count; i++) {
-                const byte *bytes = buffer.readBytes();
-                const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(bytes));
-                std::advance(bytes, sizeof(MsgField::identifier_length));
-                std::size_t data_size = static_cast<std::size_t>(readScalar<MsgField::data_length>(bytes));
+                MsgField::type type = unknown;
+                MsgField::identifier_length identifier_size = 0;
+                MsgField::data_length data_size = 0;
+                Field::peek_field_header(buffer, type, identifier_size, data_size);
 
-                Field *field = this->createField(type, data_size);
+                Field *field = this->createField(static_cast<StorageType>(type), data_size);
 
                 if (field->decode(buffer)) {
                     m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));

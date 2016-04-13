@@ -96,6 +96,7 @@ TEST(Message, Encode) {
 }
 
 TEST(Message, Decode) {
+    LOG_LEVEL(tf::logger::info);
     DCF::Message in;
     in.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;

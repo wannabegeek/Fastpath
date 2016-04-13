@@ -98,17 +98,7 @@ namespace DCF {
         }
 
         const size_t encode(MessageBuffer &buffer) const noexcept override {
-            byte *b = buffer.allocate(MsgField::size());
-
-            b = writeScalar(b, static_cast<MsgField::type>(m_type));
-
-            const size_t identifier_length = strlen(m_identifier);
-            b = writeScalar(b, static_cast<MsgField::identifier_length >(identifier_length));
-            b = writeScalar(b, static_cast<MsgField::data_length>(m_size));
-
-            buffer.append(reinterpret_cast<const byte *>(m_identifier), identifier_length);
-            buffer.append(reinterpret_cast<const byte *>(m_raw), m_size);
-            return MsgField::size() + identifier_length + m_size;
+            return Field::encode(buffer, reinterpret_cast<const byte *>(m_raw), m_size);
         }
 
         const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {

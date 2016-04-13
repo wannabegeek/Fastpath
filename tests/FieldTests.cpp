@@ -77,7 +77,7 @@ TEST(Field, CreateFloat64) {
 }
 
 TEST(Field, CreateDateTime) {
-    DCF::DateTimeField<std::allocator<byte>> e;
+    DCF::DateTimeField e;
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     e.set("time", time);
     ASSERT_EQ(e.type(), DCF::StorageType::date_time);
@@ -163,14 +163,14 @@ TEST(Field, SerializeScalar) {
 
 TEST(Field, SerializeDateTime) {
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-    DCF::DateTimeField<std::allocator<byte>> in;
+    DCF::DateTimeField in;
     in.set("0", time);
 
     DCF::MessageBuffer buffer(256);
     const size_t len_in = in.encode(buffer);
     EXPECT_EQ(len_in, buffer.length());
 
-    DCF::DateTimeField<std::allocator<byte>> out;
+    DCF::DateTimeField out;
     const DCF::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
     EXPECT_TRUE(out.decode(b));
     EXPECT_EQ(len_in, b.bytesRead());

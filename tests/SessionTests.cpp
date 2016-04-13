@@ -242,6 +242,9 @@ TEST(Session, ReadTimerBusySpin) {
             EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
         }
         timerCounter++;
+        if (timerCounter >= 100) {
+            shutdown = true;
+        }
     });
 
     std::thread signal([&]() {
@@ -287,6 +290,9 @@ TEST(Session, ReadTimerBlocking) {
             EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
         }
         timerCounter++;
+        if (timerCounter >= 100) {
+            shutdown = true;
+        }
     });
 
     std::thread signal([&]() {
