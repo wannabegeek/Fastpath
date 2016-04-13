@@ -53,16 +53,11 @@ namespace DCF {
             std::strncpy(reinterpret_cast<char *>(m_storage), value, m_length);
         }
 
-        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> void set(const char *identifier, const T *value, const size_t length) {
+        void set(const char *identifier, const void *value, const size_t length) noexcept override {
             setIdentifier(identifier);
-            m_type = field_traits<T *>::type;
+            m_type = field_traits<byte *>::type;
             m_length = length;
-            std::memcpy(m_storage, reinterpret_cast<const byte *>(value), m_length);
-        }
-
-        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() const noexcept {
-            assert(m_type == field_traits<T>::type);
-            return reinterpret_cast<T>(m_storage);
+            std::memcpy(m_storage, value, m_length);
         }
 
         const size_t get(const byte **data) const noexcept override {
@@ -76,6 +71,10 @@ namespace DCF {
             *data = reinterpret_cast<const char *>(m_storage);
             return m_length;
         }
+
+        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() const noexcept {
+            return DataField::get<T>();
+        };
 
         const size_t encode(MessageBuffer &buffer) const noexcept override {
             byte *b = buffer.allocate(MsgField::size());

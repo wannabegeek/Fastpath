@@ -22,8 +22,17 @@ namespace DCF {
         virtual const size_t size() const noexcept override = 0;
 
         virtual void set(const char *identifier, const char *value) = 0;
+        virtual void set(const char *identifier, const void *value, const size_t length) noexcept = 0;
+
         virtual const size_t get(const byte **data) const noexcept = 0;
         virtual const size_t get(const char **data) const noexcept = 0;
+
+        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() const noexcept {
+            assert(m_type == field_traits<T>::type);
+            typename std::remove_const<T>::type bytes = nullptr;
+            this->get(&bytes);
+            return bytes;
+        }
 
         virtual const size_t encode(MessageBuffer &buffer) const noexcept override = 0;
         virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override = 0;

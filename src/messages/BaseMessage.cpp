@@ -30,7 +30,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDataField(const char *field, const byte *value, const size_t size) {
-        DataFieldType *e = this->createDataField();
+        DataField *e = this->createDataField(size);
         e->set(field, value, size);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -42,7 +42,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDataField(const char *field, const char *value) {
-        DataFieldType *e = this->createDataField();
+        DataField *e = this->createDataField(strlen(value) + 1);
         e->set(field, value);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
@@ -109,7 +109,7 @@ namespace DCF {
 
         b = writeScalar(b, static_cast<MsgHeader::header_start>(body_flag));
         b = writeScalar(b, static_cast<MsgHeader::field_count>(this->size()));
-//        b += sizeof(MsgHeader::field_count);
+
 
         for (const Field *field : m_payload) {
             msgLength += field->encode(buffer);
@@ -133,8 +133,12 @@ namespace DCF {
             buffer.advanceRead(sizeof(MsgHeader::field_count));
 
             for (size_t i = 0; i < field_count; i++) {
-                const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
-                Field *field = this->createField(type);
+                const byte *bytes = buffer.readBytes();
+                const StorageType type = static_cast<StorageType>(readScalar<MsgField::type>(bytes));
+                std::advance(bytes, sizeof(MsgField::identifier_length));
+                std::size_t data_size = static_cast<std::size_t>(readScalar<MsgField::data_length>(bytes));
+
+                Field *field = this->createField(type, data_size);
 
                 if (field->decode(buffer)) {
                     m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));

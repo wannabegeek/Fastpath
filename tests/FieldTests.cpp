@@ -6,7 +6,7 @@
 #include <messages/Message.h>
 #include <messages/DateTimeField.h>
 
-TEST(Field, CreateString) {
+TEST(Field, CreateString_Large) {
 
     // set the string as a char * &
     const char *b = "fgsg";
@@ -18,6 +18,25 @@ TEST(Field, CreateString) {
     // set the string as a char * & retrive it as a char *
     const char *b4 = "test";
     DCF::LargeDataField<std::allocator<byte>> e4;
+    e4.set("0", b4);
+    ASSERT_EQ(e4.type(), DCF::StorageType::string);
+    const char *result4 = nullptr;
+    ASSERT_EQ(5u, e4.get(&result4));
+    ASSERT_STREQ(b4, result4);
+}
+
+TEST(Field, CreateString_Small) {
+
+    // set the string as a char * &
+    const char *b = "fgsg";
+    DCF::SmallDataField e3;
+    e3.set("0", b);
+    ASSERT_EQ(e3.type(), DCF::StorageType::string);
+    ASSERT_STREQ(b, e3.get<const char *>());
+
+    // set the string as a char * & retrive it as a char *
+    const char *b4 = "test";
+    DCF::SmallDataField e4;
     e4.set("0", b4);
     ASSERT_EQ(e4.type(), DCF::StorageType::string);
     const char *result4 = nullptr;
@@ -66,7 +85,7 @@ TEST(Field, CreateDateTime) {
 }
 
 
-TEST(Field, CreateData) {
+TEST(Field, CreateData_Large) {
     const char *temp = "Hello world";
 
     DCF::LargeDataField<std::allocator<byte>> e;
@@ -79,7 +98,20 @@ TEST(Field, CreateData) {
     ASSERT_EQ(0, strncmp(reinterpret_cast<const char *>(result), temp, strlen(temp)));
 }
 
-TEST(Field, SerializeString) {
+TEST(Field, CreateData_Small) {
+    const char *temp = "Hello world";
+
+    DCF::SmallDataField e;
+    e.set("0", reinterpret_cast<const byte *>(temp), strlen(temp));
+    ASSERT_EQ(e.type(), DCF::StorageType::data);
+
+    const byte *result = nullptr;
+    ASSERT_EQ(strlen(temp), e.get(&result));
+    ASSERT_NE(reinterpret_cast<const char *>(result), temp);  // Pointers can't be the same, data should have been copied
+    ASSERT_EQ(0, strncmp(reinterpret_cast<const char *>(result), temp, strlen(temp)));
+}
+
+TEST(Field, SerializeString_Large) {
     const char *temp = "Hello world";
     DCF::LargeDataField<std::allocator<byte>> in;
     in.set("0", reinterpret_cast<const byte *>(temp), strlen(temp));
@@ -96,6 +128,22 @@ TEST(Field, SerializeString) {
     EXPECT_EQ(in, out);
 }
 
+TEST(Field, SerializeString_Small) {
+    const char *temp = "Hello world";
+    DCF::SmallDataField in;
+    in.set("0", reinterpret_cast<const byte *>(temp), strlen(temp));
+
+    DCF::MessageBuffer buffer(256);
+    const size_t len_in = in.encode(buffer);
+    EXPECT_EQ(len_in, buffer.length());
+
+    DCF::SmallDataField out;
+    const DCF::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
+    EXPECT_TRUE(out.decode(b));
+    ASSERT_EQ(len_in, b.bytesRead());
+
+    EXPECT_EQ(in, out);
+}
 TEST(Field, SerializeScalar) {
     const uint32_t temp = 1234567890u;
     DCF::ScalarField in;

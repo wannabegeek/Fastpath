@@ -52,17 +52,10 @@ namespace DCF {
             m_storage.setData(reinterpret_cast<const byte *>(value), strlen(value) + 1); // +1 for the NULL byte
         }
 
-        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> void set(const char *identifier, const T *value, const size_t length) noexcept {
+        void set(const char *identifier, const void *value, const size_t length) noexcept override {
             setIdentifier(identifier);
-            m_type = field_traits<T *>::type;
+            m_type = field_traits<byte *>::type;
             m_storage.setData(reinterpret_cast<const byte *>(value), length);
-        }
-
-        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() const noexcept {
-            assert(m_type == field_traits<T>::type);
-            const byte *bytes = nullptr;
-            m_storage.bytes(&bytes);
-            return reinterpret_cast<T>(bytes);
         }
 
         const size_t get(const byte **data) const noexcept override {
@@ -78,10 +71,14 @@ namespace DCF {
             return r;
         }
 
+        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() const noexcept {
+            return DataField::get<T>();
+        };
+
         const size_t encode(MessageBuffer &buffer) const noexcept override {
             byte *b = buffer.allocate(MsgField::size());
 
-            b = writeScalar(b, static_cast<MsgField::type>(m_type));
+            b = writeScalar(b, static_cast<MsgField::type>(this->type()));
 
             const size_t identifier_length = strlen(m_identifier);
             b = writeScalar(b, static_cast<MsgField::identifier_length >(identifier_length));

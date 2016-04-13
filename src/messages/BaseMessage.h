@@ -111,14 +111,14 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const;
         /// @endcond
 
-        using DataFieldType = SmallDataField;
+        using DataField = DataField;
         using DateTimeFieldType = DateTimeField<field_allocator_type>;
 
-        inline payload_type createField(StorageType type) noexcept {
+        inline payload_type createField(StorageType type, const std::size_t size) noexcept {
             switch (type) {
                 case StorageType::string:
                 case StorageType::data:
-                    return this->createDataField();
+                    return this->createDataField(size);
                     break;
                 case StorageType::date_time:
                     return this->createDateTimeField();
@@ -136,8 +136,12 @@ namespace DCF {
             return createField<ScalarField>();
         }
 
-        inline DataFieldType *createDataField() noexcept {
-            return createField<DataFieldType>();
+        inline DataField *createDataField(std::size_t size) noexcept {
+            if (tf::likely(size <= SmallDataField::max_size)) {
+                return createField<SmallDataField>();
+            } else {
+                return createField<LargeDataField<field_allocator_type>>(m_field_allocator);
+            }
         }
 
         inline DateTimeFieldType *createDateTimeField() noexcept {
@@ -297,7 +301,7 @@ namespace DCF {
             if (field != nullptr) {
                 auto index = m_keys.find(field);
                 if (index != m_keys.end()) {
-                    const DataFieldType *element = reinterpret_cast<DataFieldType *>(m_payload[index->second]);
+                    const DataField *element = reinterpret_cast<DataField *>(m_payload[index->second]);
                     length = element->get(value);
                     return true;
                 }
