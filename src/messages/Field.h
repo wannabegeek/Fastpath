@@ -9,6 +9,8 @@
 #include <string>
 #include <type_traits>
 #include <iostream>
+#include <Exception.h>
+#include <utils/optimize.h>
 #include "StorageTypes.h"
 #include "FieldTraits.h"
 #include "MessageBuffer.h"
@@ -28,23 +30,60 @@ namespace DCF {
     class Field : public Serializable {
     protected:
         char m_identifier[256];
+        StorageType m_type;
+        std::size_t m_data_length;
         virtual std::ostream& output(std::ostream& out) const = 0;
         virtual const bool isEqual(const Field &other) const = 0;
     public:
-        const char *identifier() const { return m_identifier; }
-
-        virtual const StorageType type() const noexcept = 0;
-        virtual const size_t size() const noexcept = 0;
-
-        virtual const size_t encode(MessageBuffer &buffer) const noexcept override = 0;
-        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override = 0;
-
-        void setIdentifier(const char *identifier) {
+        Field(const char *identifier, const StorageType type, const std::size_t data_length) noexcept : m_type(type), m_data_length(data_length) {
             strcpy(m_identifier, identifier);
         }
 
+        Field(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) {
+            if (tf::likely(buffer.remainingReadLength() >= MsgField::size())) {
+                m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
+                buffer.advanceRead(sizeof(MsgField::type));
+
+                const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgField::identifier_length));
+
+                m_data_length = readScalar<MsgField::data_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgField::data_length));
+
+                if (tf::likely(buffer.remainingReadLength() >= identifier_length)) {
+                    std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);
+                    m_identifier[identifier_length] = '\0';
+                    buffer.advanceRead(identifier_length);
+
+                    if (tf::likely(buffer.length() >= MsgField::size() + identifier_length + m_data_length)) {
+                        return;
+                    } else {
+                        ERROR_LOG("Not enough data available to read body [have: " << buffer.length() << " require: " << MsgField::size() + identifier_length + m_data_length);
+                    }
+                }
+            } else {
+                ERROR_LOG("Not enough data available to read header [have: " << buffer.remainingReadLength() << " require: " << MsgField::size());
+            };
+
+            throw fp::exception("Decode failed");
+        }
+
+        const char *identifier() const { return m_identifier; }
+
+        const StorageType type() const noexcept {
+            return m_type;
+        }
+
+        const size_t size() const noexcept {
+            return m_data_length;
+        };
+
+        virtual const size_t encode(MessageBuffer &buffer) const noexcept override = 0;
+
         virtual const bool operator==(const Field &other) const {
             return strcmp(m_identifier, other.m_identifier) == 0
+                   && m_type == other.m_type
+                   && m_data_length == other.m_data_length
                     && this->isEqual(other);
         }
 
@@ -74,6 +113,11 @@ namespace DCF {
             buffer.append(reinterpret_cast<const byte *>(m_identifier), identifier_length);
             buffer.append(data, data_length);
             return MsgField::size() + identifier_length + data_length;
+        }
+
+        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
+            // no-op - we reconstruct this via the constructor
+            return false;
         }
     };
 }

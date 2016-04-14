@@ -10,21 +10,12 @@
 namespace DCF {
     class DataField : public Field {
 
-    protected:
-        StorageType m_type;
-
-        virtual const bool isEqual(const Field &other) const noexcept override {
-            return m_type == other.type();
-        }
-
     public:
-        DataField() noexcept {}
-        DataField(const StorageType &type) noexcept : m_type(type) {}
+//        DataField(const char *identifier) noexcept : Field(identifier) {}
+        DataField(const char *identifier, const StorageType &type, const std::size_t data_length) noexcept : Field(identifier, type, data_length) {}
+        DataField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {}
 
         virtual ~DataField() {}
-
-        const StorageType type() const noexcept override { return m_type; }
-        virtual const size_t size() const noexcept override = 0;
 
         virtual const size_t get(const byte **data) const noexcept = 0;
         virtual const size_t get(const char **data) const noexcept = 0;
@@ -37,7 +28,6 @@ namespace DCF {
         }
 
         virtual const size_t encode(MessageBuffer &buffer) const noexcept override = 0;
-        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override = 0;
     };
 }
 

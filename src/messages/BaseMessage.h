@@ -114,7 +114,12 @@ namespace DCF {
 
             *info = sizeof(T);
             std::advance(ptr, sizeof(std::size_t));
-            return new(ptr) T(std::forward<Args>(args)...);
+            try {
+                return new(ptr) T(std::forward<Args>(args)...);
+            } catch (const fp::exception &e) {
+                ERROR_LOG(e.what());
+            }
+            return nullptr;
         }
 
         template <typename T, class ...Args> inline void destroyField(T *field) noexcept {

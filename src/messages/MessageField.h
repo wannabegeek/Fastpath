@@ -27,17 +27,11 @@ namespace DCF {
     public:
 //        MessageField(const char *identifier, const BaseMessage message) noexcept;
         MessageField(const char *identifier, BaseMessage &&message) noexcept;
-        MessageField(const MessageBuffer::ByteStorageType &buffer) noexcept;
+        MessageField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception);
 
-        const StorageType type() const noexcept override { return StorageType::message; }
-        const size_t size() const noexcept override { return 0; }
-
-        void set(const char *identifier, const BaseMessage msg);
-        void set(const char *identifier, BaseMessage &&msg);
         const BaseMessage *get() const;
 
         const size_t encode(MessageBuffer &buffer) const noexcept override;
-        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override;
     };
 }
 #endif //TFDCF_MESSAGEFIELD_H

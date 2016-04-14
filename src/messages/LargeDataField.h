@@ -42,43 +42,18 @@ namespace DCF {
         }
 
     public:
-        LargeDataField(const char *identifier, const char *value, const Allocator allocator = Allocator()) noexcept : DataField(StorageType::string), m_storage(512, allocator) {
-            setIdentifier(identifier);
-            m_storage.setData(reinterpret_cast<const byte *>(value), strlen(value) + 1); // +1 for the NULL byte
+        LargeDataField(const char *identifier, const char *value, const Allocator allocator = Allocator()) noexcept : DataField(identifier, StorageType::string, strlen(value) + 1), m_storage(512, allocator) {
+            m_storage.setData(reinterpret_cast<const byte *>(value), m_data_length);
         }
 
-        LargeDataField(const char *identifier, const byte *value, const std::size_t length, const Allocator allocator = Allocator()) noexcept : DataField(StorageType::data), m_storage(512, allocator) {
-            setIdentifier(identifier);
+        LargeDataField(const char *identifier, const byte *value, const std::size_t length, const Allocator allocator = Allocator()) noexcept : DataField(identifier, StorageType::data, length), m_storage(length, allocator) {
             m_storage.setData(reinterpret_cast<const byte *>(value), length);
         }
 
-        LargeDataField(const MessageBuffer::ByteStorageType &buffer, const Allocator allocator = Allocator()) noexcept : m_storage(512, allocator) {
-            if (buffer.remainingReadLength() >= MsgField::size()) {
-                m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
-                buffer.advanceRead(sizeof(MsgField::type));
-
-                const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgField::identifier_length));
-
-                const size_t size = readScalar<MsgField::data_length>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgField::data_length));
-
-                if (buffer.remainingReadLength() >= identifier_length) {
-                    std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);
-                    m_identifier[identifier_length] = '\0';
-                    buffer.advanceRead(identifier_length);
-                    if (buffer.remainingReadLength() >= size) {
-                        m_storage.setData(buffer.readBytes(), size);
-                        buffer.advanceRead(size);
-                        return; // true;
-                    }
-                }
-            }
-
-            return; // false;
+        LargeDataField(const MessageBuffer::ByteStorageType &buffer, const Allocator allocator = Allocator()) throw(fp::exception) : DataField(buffer), m_storage(512, allocator) {
+            m_storage.setData(buffer.readBytes(), m_data_length);
+            buffer.advanceRead(m_data_length);
         }
-
-        const size_t size() const noexcept override { return m_storage.length(); }
 
         const size_t get(const byte **data) const noexcept override {
             assert(m_type == StorageType::data);
@@ -104,28 +79,6 @@ namespace DCF {
         }
 
         const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
-            if (buffer.remainingReadLength() >= MsgField::size()) {
-                m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
-                buffer.advanceRead(sizeof(MsgField::type));
-
-                const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgField::identifier_length));
-
-                const size_t size = readScalar<MsgField::data_length>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgField::data_length));
-
-                if (buffer.remainingReadLength() >= identifier_length) {
-                    std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);
-                    m_identifier[identifier_length] = '\0';
-                    buffer.advanceRead(identifier_length);
-                    if (buffer.remainingReadLength() >= size) {
-                        m_storage.setData(buffer.readBytes(), size);
-                        buffer.advanceRead(size);
-                        return true;
-                    }
-                }
-            }
-
             return false;
         }
     };
