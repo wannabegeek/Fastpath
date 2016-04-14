@@ -17,37 +17,17 @@
 #include "Field.h"
 #include "Exception.h"
 #include "utils/tfpool.h"
-#include "utils/short_alloc.h"
 #include "utils/fast_linear_allocator.h"
 #include "types.h"
 #include "ScalarField.h"
 #include "DataField.h"
 #include "DateTimeField.h"
-#include "MessageField.h"
 #include "SmallDataField.h"
 #include "LargeDataField.h"
 
-/*
- *
- * Header
- * | Msg Length | Flags | Reserverd | Subject Length | Subject |
- * |   8 bytes  |  1 b  |  16 bytes |   4 bytes      |  Var    |
- *
- * Field Map Repeating Block
- * | Num Fields |
- * |  4 bytes   |
- *
- *      | Identifier | Offset  | Name Length | Name |
- *      |  4 bytes   | 8 bytes |  4 bytes    |  Var |
- *
- * Data Segment Repeating Block
- *      | Data Type | Field Length | Data |
- *      |   1 byte  |  8 bytes     |  Var |
- *
- */
-
-
 namespace DCF {
+    class MessageField;
+
     /// @cond DEV
     typedef enum {
         scalar_t,
@@ -88,7 +68,6 @@ namespace DCF {
         using payload_type = Field *;
         typedef std::vector<payload_type> PayloadContainer;
         typedef std::unordered_map<const char *, const size_t, FieldIdentifierHash, FieldIdentifierComparitor> KeyMappingsContainer;
-//        typedef std::unordered_map<std::string, const size_t> KeyMappingsContainer;
 
         static constexpr const uint8_t body_flag = 2;
 
@@ -96,8 +75,6 @@ namespace DCF {
         KeyMappingsContainer m_keys;
 
         static const DataStorageType getStorageType(const StorageType type);
-
-//        tf::linear_allocator<byte> m_a;
 
         using field_allocator_type = tf::linear_allocator<unsigned char>; //std::allocator<unsigned char>;
         field_allocator_type::arena_type m_arena;
@@ -111,42 +88,24 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const;
         /// @endcond
 
-        inline payload_type createField(StorageType type, const std::size_t size) noexcept {
-            switch (type) {
-                case StorageType::string:
-                case StorageType::data:
-                    return this->createDataField(size);
-                    break;
-                case StorageType::date_time:
-                    return this->createDateTimeField();
-                    break;
-                case StorageType::message:
-                    return this->createMessageField();
-                    break;
-                default:
-                    return this->createScalarField();
-                    break;
-            }
+        template <class ...Args> inline ScalarField *createScalarField(Args &&...args) noexcept {
+            return createField<ScalarField>(std::forward<Args>(args)...);
         }
 
-        inline ScalarField *createScalarField() noexcept {
-            return createField<ScalarField>();
-        }
-
-        inline DataField *createDataField(std::size_t size) noexcept {
+        template <class ...Args> inline DataField *createDataField(std::size_t size, Args &&...args) noexcept {
             if (tf::likely(size <= SmallDataField::max_size)) {
-                return createField<SmallDataField>();
+                return createField<SmallDataField>(std::forward<Args>(args)...);
             } else {
-                return createField<LargeDataField<field_allocator_type>>(m_field_allocator);
+                return createField<LargeDataField<field_allocator_type>>(std::forward<Args>(args)..., m_field_allocator);
             }
         }
 
-        inline DateTimeField *createDateTimeField() noexcept {
-            return createField<DateTimeField>();
+        template <class ...Args> inline DateTimeField *createDateTimeField(Args &&...args) noexcept {
+            return createField<DateTimeField>(std::forward<Args>(args)...);
         }
 
-        inline MessageField *createMessageField() noexcept {
-            return createField<MessageField>();
+        template <class ...Args> inline MessageField *createMessageField(Args &&...args) noexcept {
+            return createField<MessageField>(std::forward<Args>(args)...);
         }
 
         template <typename T, class ...Args> inline T *createField(Args &&...args) noexcept {
@@ -218,8 +177,7 @@ namespace DCF {
          */
         template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> bool addScalarField(const char *field, const T &value) {
 //            void *ptr = m_a.allocate(sizeof(ScalarField));
-            auto e = this->createScalarField();
-            e->set(field, value);
+            auto e = this->createScalarField(field, value);
             auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
             if (result.second) {
                 m_payload.emplace_back(e);
@@ -257,7 +215,7 @@ namespace DCF {
          * @param msg Sets the field value to this message.
          * @return `true` if the field was successfully added, `false` otherwise
          */
-        bool addMessageField(const char *field, const BaseMessage *msg);
+        bool addMessageField(const char *field, BaseMessage &&msg);
 
         /**
          * Adds a date-time field to the message.

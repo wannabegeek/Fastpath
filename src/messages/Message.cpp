@@ -8,19 +8,17 @@
 namespace DCF {
 
     Message::Message() : m_flags(-1), m_hasAddressing(true) {
-        m_subject = new char[max_subject_length];
         m_subject[0] = '\0';
     }
 
-    Message::Message(Message &&other) noexcept : BaseMessage(std::move(*this)),
+    Message::Message(Message &&other) noexcept : BaseMessage(std::move(other)),
                                                              m_flags(other.m_flags),
                                                              m_hasAddressing(other.m_hasAddressing) {
-        std::swap(m_subject, other.m_subject);
+        std::strcpy(m_subject, other.m_subject);
         other.m_subject[0] = '\0';
     }
 
     Message::~Message() {
-        delete [] m_subject;
     }
 
     const bool Message::operator==(const Message &other) const {

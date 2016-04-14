@@ -44,21 +44,46 @@ namespace DCF {
         }
 
     public:
-        const size_t size() const noexcept override { return m_length; }
-
-        void set(const char *identifier, const char *value) override {
+        SmallDataField(const char *identifier, const char *value) noexcept : DataField(StorageType::string) {
             setIdentifier(identifier);
-            m_type = field_traits<const char *>::type;
             m_length = strlen(value) + 1;
             std::strncpy(reinterpret_cast<char *>(m_storage), value, m_length);
         }
 
-        void set(const char *identifier, const void *value, const size_t length) noexcept override {
+        SmallDataField(const char *identifier, const byte *value, const std::size_t length) : DataField(StorageType::data) {
             setIdentifier(identifier);
-            m_type = field_traits<byte *>::type;
             m_length = length;
             std::memcpy(m_storage, value, m_length);
         }
+
+        SmallDataField(const MessageBuffer::ByteStorageType &buffer) noexcept {
+            if (buffer.remainingReadLength() >= MsgField::size()) {
+                m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
+                buffer.advanceRead(sizeof(MsgField::type));
+
+                const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgField::identifier_length));
+
+                const size_t size = readScalar<MsgField::data_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgField::data_length));
+
+                if (buffer.remainingReadLength() >= identifier_length) {
+                    std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);
+                    m_identifier[identifier_length] = '\0';
+                    buffer.advanceRead(identifier_length);
+                    if (buffer.remainingReadLength() >= size) {
+                        m_length = size;
+                        std::memcpy(m_storage, buffer.readBytes(), size);
+                        buffer.advanceRead(size);
+                        return; // true;
+                    }
+                }
+            }
+
+            return; // false;
+        }
+
+        const size_t size() const noexcept override { return m_length; }
 
         const size_t get(const byte **data) const noexcept override {
             assert(m_type == StorageType::data);

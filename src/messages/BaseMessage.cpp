@@ -13,12 +13,10 @@ namespace DCF {
 
     BaseMessage::BaseMessage(BaseMessage &&other) noexcept : m_payload(std::move(other.m_payload)),
                                         m_keys(std::move(other.m_keys)), m_field_allocator(std::move(other.m_field_allocator)) {
-        m_payload.clear();
-        m_keys.clear();
     }
 
     BaseMessage::~BaseMessage() {
-        this->clear();
+//        this->clear();
     }
 
     void BaseMessage::clear() {
@@ -30,8 +28,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDataField(const char *field, const byte *value, const size_t size) {
-        DataField *e = this->createDataField(size);
-        e->set(field, value, size);
+        DataField *e = this->createDataField(size, field, value, size);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
@@ -42,8 +39,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDataField(const char *field, const char *value) {
-        DataField *e = this->createDataField(strlen(value) + 1);
-        e->set(field, value);
+        DataField *e = this->createDataField(strlen(value) + 1, field, value);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
@@ -53,9 +49,8 @@ namespace DCF {
         return result.second;
     }
 
-    bool BaseMessage::addMessageField(const char *field, const BaseMessage *msg) {
-        MessageField *e = this->createMessageField();
-        e->set(field, msg);
+    bool BaseMessage::addMessageField(const char *field, BaseMessage &&msg) {
+        MessageField *e = this->createMessageField(field, std::forward<BaseMessage>(msg));
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
@@ -66,8 +61,7 @@ namespace DCF {
     }
 
     bool BaseMessage::addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time) {
-        DateTimeField *e = this->createDateTimeField();
-        e->set(field, time);
+        DateTimeField *e = this->createDateTimeField(field, time);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);
@@ -138,16 +132,26 @@ namespace DCF {
                 MsgField::data_length data_size = 0;
                 Field::peek_field_header(buffer, type, identifier_size, data_size);
 
-                Field *field = this->createField(static_cast<StorageType>(type), data_size);
-
-                if (field->decode(buffer)) {
-                    m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));
-                    m_payload.emplace_back(field);
-                    success = true;
-                } else {
-                    success = false;
-                    break;
+                Field *field = nullptr;
+                switch (static_cast<StorageType>(type)) {
+                    case StorageType::string:
+                    case StorageType::data:
+                        field = this->createDataField(data_size, buffer);
+                        break;
+                    case StorageType::date_time:
+                        field = this->createDateTimeField(buffer);
+                        break;
+                    case StorageType::message:
+                        field = this->createMessageField(buffer);
+                        break;
+                    default:
+                        field = this->createScalarField(buffer);
+                        break;
                 }
+
+                m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));
+                m_payload.emplace_back(field);
+                success = true;
             }
         }
         return success;
@@ -175,7 +179,7 @@ namespace DCF {
             if (!first) {
                 out << ", ";
             }
-            out << "{" << field << "}";
+            out << "{" << *field << "}";
             first = false;
         }
 

@@ -18,11 +18,13 @@ namespace DCF {
         }
 
     public:
+        DataField() noexcept {}
+        DataField(const StorageType &type) noexcept : m_type(type) {}
+
+        virtual ~DataField() {}
+
         const StorageType type() const noexcept override { return m_type; }
         virtual const size_t size() const noexcept override = 0;
-
-        virtual void set(const char *identifier, const char *value) = 0;
-        virtual void set(const char *identifier, const void *value, const size_t length) noexcept = 0;
 
         virtual const size_t get(const byte **data) const noexcept = 0;
         virtual const size_t get(const char **data) const noexcept = 0;

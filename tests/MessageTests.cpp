@@ -59,10 +59,10 @@ TEST(Message, AddMessageField) {
     DCF::Message msg;
     msg.addScalarField("TEST", static_cast<float32_t>(1.4));
 
-    DCF::MessageType m = std::make_shared<DCF::Message>();
-    m->addDataField("TEST2", "TOMTOMTOM");
+    DCF::Message m;
+    m.addDataField("TEST2", "TOMTOMTOM");
 
-    msg.addMessageField("MSG_TEST", m.get());
+    msg.addMessageField("MSG_TEST", std::move(m));
 
     DEBUG_LOG("Embedded msg: " << msg);
 }
@@ -193,4 +193,28 @@ TEST(Message, MultiPartialDecode) {
             out.clear();
         }
     }
+}
+
+TEST(Message, MoveConstructor) {
+    LOG_LEVEL(tf::logger::info);
+
+    DCF::Message in1;
+    in1.setSubject("SAMPLE.MSG.1");
+    float32_t t = 22.0;
+    in1.addScalarField("TEST", t);
+    in1.addScalarField("TEST", true);
+    in1.addDataField("Name", "Tom");
+    in1.addDataField("Name", "Zac");
+
+    DCF::MessageBuffer buffer1(1024);
+    in1.encode(buffer1);
+
+    DEBUG_LOG("Original: " << in1);
+    DCF::Message in2 = std::move(in1);
+    DEBUG_LOG("Moved:    " << in2);
+
+    DCF::MessageBuffer buffer2(1024);
+    in2.encode(buffer2);
+
+    EXPECT_EQ(buffer1.byteStorage(), buffer2.byteStorage());
 }

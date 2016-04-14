@@ -22,7 +22,7 @@ namespace DCF {
 
         uint8_t m_flags;
         bool m_hasAddressing;
-        char *m_subject;
+        char m_subject[max_subject_length];
 
         virtual std::ostream& output(std::ostream& out) const override;
         const void encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) const noexcept;

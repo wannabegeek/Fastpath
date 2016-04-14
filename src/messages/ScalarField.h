@@ -78,18 +78,50 @@ namespace DCF {
         }
 
     public:
-
-        const StorageType type() const noexcept override { return m_type; }
-
-        const size_t size() const noexcept override { return m_size; }
-
-        template<typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>>
-        void set(const char *identifier, const T &value) {
+        template<typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> ScalarField(const char *identifier, const T &value) noexcept {
             setIdentifier(identifier);
             m_type = field_traits<T>::type;
             m_size = field_traits<T>::size;
             writeScalar(m_raw, value);
         }
+
+        ScalarField(const MessageBuffer::ByteStorageType &buffer) {
+            if (buffer.remainingReadLength() >= MsgField::size()) {
+
+                m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
+                buffer.advanceRead(sizeof(MsgField::type));
+
+                const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgField::identifier_length));
+
+                m_size = readScalar<MsgField::data_length>(buffer.readBytes());
+                buffer.advanceRead(sizeof(MsgField::data_length));
+
+                if (buffer.length() >= MsgField::size() + identifier_length) {
+                    std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);
+                    m_identifier[identifier_length] = '\0';
+                    buffer.advanceRead(identifier_length);
+                    if (buffer.length() >= MsgField::size() + identifier_length + m_size) {
+                        std::copy(buffer.readBytes(), &buffer.readBytes()[m_size], m_raw);
+                        buffer.advanceRead(m_size);
+                        return;// true;
+                    }
+                }
+            }
+            return;// false;
+        }
+
+        const StorageType type() const noexcept override { return m_type; }
+
+        const size_t size() const noexcept override { return m_size; }
+
+//        template<typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>>
+//        void set(const char *identifier, const T &value) {
+//            setIdentifier(identifier);
+//            m_type = field_traits<T>::type;
+//            m_size = field_traits<T>::size;
+//            writeScalar(m_raw, value);
+//        }
 
         template<typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>>
         const T get() const noexcept {
