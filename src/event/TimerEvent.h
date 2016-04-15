@@ -1,10 +1,9 @@
 /***************************************************************************
-                          Timer.h
+                          __FILE__
                           -------------------
-    copyright            : (C) 2004 by Tom Fewster
+    copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    version              : $Revision: 1.14 $
-    date                 : $Date: 2004/02/10 14:24:36 $
+    date                 : 04/03/2016
 
  ***************************************************************************/
 
@@ -27,10 +26,8 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-class TimerCallback;
-class DCQueue;
-
 #include <chrono>
+
 #include "Event.h"
 #include "status.h"
 

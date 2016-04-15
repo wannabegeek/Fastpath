@@ -1,10 +1,9 @@
 /***************************************************************************
-                          SigIO.cpp
+                          IOEvent.cpp
                           -------------------
-    copyright            : (C) 2004 by Tom Fewster
+    copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    version              : $Revision: 1.17 $
-    date                 : $Date: 2004/03/04 08:44:13 $
+    date                 : 04/03/2016
 
  ***************************************************************************/
 

@@ -1,25 +1,34 @@
-//
-//  TFSessionEventManager.cpp
-//  TFFIXEngine
-//
-//  Created by Tom Fewster on 13/04/2013.
-//  Copyright (c) 2013 Tom Fewster. All rights reserved.
-//
+/***************************************************************************
+                          __FILE__
+                          -------------------
+    copyright            : Copyright (c) 2004-2016 Tom Fewster
+    email                : tom@wannabegeek.com
+    date                 : 04/03/2016
+
+ ***************************************************************************/
+
+/***************************************************************************
+ * This library is free software; you can redistribute it and/or           *
+ * modify it under the terms of the GNU Lesser General Public              *
+ * License as published by the Free Software Foundation; either            *
+ * version 2.1 of the License, or (at your option) any later version.      *
+ *                                                                         *
+ * This library is distributed in the hope that it will be useful,         *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *
+ * Lesser General Public License for more details.                         *
+ *                                                                         *
+ * You should have received a copy of the GNU Lesser General Public        *
+ * License along with this library; if not, write to the Free Software     *
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
+ ***************************************************************************/
 
 #include "EventManager.h"
-#include "utils/logger.h"
 
-#ifdef HAVE_CONFIG_H
-#	include <config.h>
-#endif
-
-#include "PollManager.h"
+#	include "../config.h"
 
 #include <thread>
-#include <unistd.h>
 #include <iostream>
-#include <sys/time.h>
-#include <sys/fcntl.h>
 #include <chrono>
 #include <algorithm>
 #include <cstring>
@@ -28,16 +37,21 @@
 #include <thread>
 #include <condition_variable>
 #include <mutex>
-#include <utils/optimize.h>
-
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/fcntl.h>
 
 #ifdef HAVE_SYS_EVENTFD_H
 #	include <sys/eventfd.h>
 #endif
 
+
+#include "PollManager.h"
+#include "utils/optimize.h"
 #include "EventType.h"
 #include "TimerEvent.h"
 #include "IOEvent.h"
+#include "utils/logger.h"
 
 namespace DCF {
     EventManager::EventManager() : m_ioCallback(std::bind(&EventManager::serviceIOEvent, this, std::placeholders::_1)), m_timerCallback(std::bind(&EventManager::serviceTimerEvent, this, std::placeholders::_1)) {}

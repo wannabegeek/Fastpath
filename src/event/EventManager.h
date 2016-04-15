@@ -1,26 +1,35 @@
-//
-//  TFSessionEventManager.h
-//  TFFIXEngine
-//
-//  Created by Tom Fewster on 13/04/2013.
-//  Copyright (c) 2013 Tom Fewster. All rights reserved.
-//
+/***************************************************************************
+                          __FILE__
+                          -------------------
+    copyright            : Copyright (c) 2004-2016 Tom Fewster
+    email                : tom@wannabegeek.com
+    date                 : 04/03/2016
+
+ ***************************************************************************/
+
+/***************************************************************************
+ * This library is free software; you can redistribute it and/or           *
+ * modify it under the terms of the GNU Lesser General Public              *
+ * License as published by the Free Software Foundation; either            *
+ * version 2.1 of the License, or (at your option) any later version.      *
+ *                                                                         *
+ * This library is distributed in the hope that it will be useful,         *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *
+ * Lesser General Public License for more details.                         *
+ *                                                                         *
+ * You should have received a copy of the GNU Lesser General Public        *
+ * License along with this library; if not, write to the Free Software     *
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
+ ***************************************************************************/
 
 #ifndef __TFFIXEngine__TFSessionEventManager__
 #define __TFFIXEngine__TFSessionEventManager__
 
 #include "PollManager.h"
-#include "ActionNotifier.h"
 
-#include <vector>
+#include <limits>
 #include <functional>
-#include <thread>
-#include <mutex>
-#include <array>
-#include <unistd.h>
-#include <atomic>
-
-#include <type_traits>
 
 namespace DCF {
     class TimerEvent;

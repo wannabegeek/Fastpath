@@ -68,7 +68,8 @@ set(SOURCE_FILES
         MessageBuffer.h
         types.h
         status.h
-        event/MessageEvent.cpp event/MessageEvent.h)
+        fastpath.h
+)
 
 add_library(TFDCF SHARED ${SOURCE_FILES} $<TARGET_OBJECTS:utils>
         $<TARGET_OBJECTS:event>
@@ -81,3 +82,6 @@ add_subdirectory(messages)
 add_subdirectory(transport)
 add_subdirectory(router)
 add_subdirectory(tools)
+
+INSTALL(TARGETS TFDCF DESTINATION lib/fastpath)
+INSTALL(FILES ${SOURCE_FILES} DESTINATION include/fastpath)
