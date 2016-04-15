@@ -88,11 +88,11 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const;
         /// @endcond
 
-        template <class ...Args> inline ScalarField *createScalarField(Args &&...args) noexcept {
+        template <class ...Args> inline ScalarField *createScalarField(Args &&...args) {
             return createField<ScalarField>(std::forward<Args>(args)...);
         }
 
-        template <class ...Args> inline DataField *createDataField(std::size_t size, Args &&...args) noexcept {
+        template <class ...Args> inline DataField *createDataField(std::size_t size, Args &&...args) {
             if (tf::likely(size <= SmallDataField::max_size)) {
                 return createField<SmallDataField>(std::forward<Args>(args)...);
             } else {
@@ -100,26 +100,21 @@ namespace DCF {
             }
         }
 
-        template <class ...Args> inline DateTimeField *createDateTimeField(Args &&...args) noexcept {
+        template <class ...Args> inline DateTimeField *createDateTimeField(Args &&...args) {
             return createField<DateTimeField>(std::forward<Args>(args)...);
         }
 
-        template <class ...Args> inline MessageField *createMessageField(Args &&...args) noexcept {
+        template <class ...Args> inline MessageField *createMessageField(Args &&...args) {
             return createField<MessageField>(std::forward<Args>(args)...);
         }
 
-        template <typename T, class ...Args> inline T *createField(Args &&...args) noexcept {
+        template <typename T, class ...Args> inline T *createField(Args &&...args) {
             std::allocator_traits<field_allocator_type>::pointer ptr = std::allocator_traits<field_allocator_type>::allocate(m_field_allocator, sizeof(T) + sizeof(std::size_t));
             std::size_t *info = reinterpret_cast<std::size_t *>(ptr);
 
             *info = sizeof(T);
             std::advance(ptr, sizeof(std::size_t));
-            try {
-                return new(ptr) T(std::forward<Args>(args)...);
-            } catch (const fp::exception &e) {
-                ERROR_LOG(e.what());
-            }
-            return nullptr;
+            return new(ptr) T(std::forward<Args>(args)...);
         }
 
         template <typename T, class ...Args> inline void destroyField(T *field) noexcept {
@@ -280,7 +275,7 @@ namespace DCF {
 
         // from Serializable
         virtual const size_t encode(MessageBuffer &buffer) const noexcept override;
-        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) override;
+        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) override;
 
         // from reusable
         void prepareForReuse() override {

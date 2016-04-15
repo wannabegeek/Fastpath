@@ -25,13 +25,14 @@ namespace DCF {
         }
 
         virtual std::ostream& output(std::ostream& out) const override {
+            out << m_identifier << ":" << StorageTypeDescription[m_type] << "=";
             switch (m_type) {
                 case StorageType::string: {
-                    out << m_identifier << ":string=" << std::string(reinterpret_cast<const char *>(m_storage), m_data_length - 1); // -1 for NULL
+                    out << std::string(reinterpret_cast<const char *>(m_storage), m_data_length - 1); // -1 for NULL
                     break;
                 }
                 case StorageType::data: {
-                    out << m_identifier << ":opaque=" << "[data of " << m_data_length << " bytes]";
+                    out << "[data of " << m_data_length << " bytes]";
                     break;
                 }
                 default:
@@ -74,10 +75,6 @@ namespace DCF {
 
         const size_t encode(MessageBuffer &buffer) const noexcept override {
             return Field::encode(buffer, m_storage, m_data_length);
-        }
-
-        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
-            return false;
         }
     };
 }

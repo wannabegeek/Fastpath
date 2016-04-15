@@ -10,6 +10,8 @@
 namespace DCF {
     class DataField : public Field {
 
+    protected:
+        virtual const bool isEqual(const Field &other) const noexcept override = 0;
     public:
 //        DataField(const char *identifier) noexcept : Field(identifier) {}
         DataField(const char *identifier, const StorageType &type, const std::size_t data_length) noexcept : Field(identifier, type, data_length) {}

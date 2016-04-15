@@ -160,20 +160,24 @@ TEST(Message, MultiDecode) {
 
 
 TEST(Message, MultiPartialDecode) {
+    LOG_LEVEL(tf::logger::debug);
     DCF::Message in1;
     float32_t t = 22.0;
-    in1.addScalarField("TEST", t);
-    in1.addScalarField("TEST", true);
-    in1.addDataField("Name", "Tom");
-    in1.addDataField("Name", "Zac");
-
+//    in1.addScalarField("TEST_float", t);
+//    in1.addScalarField("TEST_bool", true);
+//    in1.addDataField("TEST_string", "Tom is great");
+//
     DCF::MessageBuffer buffer(1024);
     char subject[256];
     for (int i = 0; i < 10; i++) {
         sprintf(subject, "SAMPLE.MSG.%i", i);
         in1.setSubject(subject);
+        in1.addScalarField("TEST_float", t);
+        in1.addScalarField("TEST_bool", true);
+        in1.addDataField("TEST_string", "Tom is great");
         EXPECT_TRUE(in1.addScalarField("id", i));
         in1.encode(buffer);
+        DEBUG_LOG("Encoded buffer is now: " << buffer.length())
         in1.clear();
     }
 
@@ -187,7 +191,10 @@ TEST(Message, MultiPartialDecode) {
         buffer.bytes(&bytes);
         DCF::MessageBuffer::ByteStorageType storage(bytes, std::min(len, buffer.length()), true);
 
-        if (out.decode(storage)) {
+//        DCF::Message::logMessageBufferDetails(storage);
+        bool result = false;
+        result = out.decode(storage);
+        if (result) {
             buffer.erase_front(storage.bytesRead());
             DEBUG_LOG("Msg decoded: " << out);
             out.clear();

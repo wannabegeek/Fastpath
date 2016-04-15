@@ -111,7 +111,7 @@ namespace DCF {
         return status;
     }
 
-    const bool Message::decode(const MessageBuffer::ByteStorageType &buffer) {
+    const bool Message::decode(const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) {
         this->clear();
         size_t subject_length = 0;
         size_t msg_length = 0;
@@ -140,4 +140,56 @@ namespace DCF {
         }
         return BaseMessage::output(out);
     }
+
+#ifdef DEBUG
+    void Message::logMessageBufferDetails(const MessageBuffer::ByteStorageType &buffer) noexcept {
+        std::stringstream s;
+        s << "Buffer reports there are " << buffer.remainingReadLength() << " bytes remaining to read from a buffer of " << buffer.length() << " bytes" << std::endl;
+
+        size_t subject_length = 0;
+        size_t msg_length = 0;
+        uint8_t flags = 0;
+        const char *subject = nullptr;
+        buffer.mark();
+        auto status = Message::addressing_details(buffer, &subject, subject_length, flags, msg_length);
+        buffer.resetRead();
+        if (status == CompleteMessage) {
+            MessageBuffer::ByteStorageType msg_buffer(buffer.readBytes(), msg_length, false);
+            s << "We have a complete message, consisting of;" << std::endl;
+            s << "\t Msg Length: " << msg_length << " bytes" << std::endl;
+            s << "\tSubject: " << std::string(subject, subject_length) << std::endl;
+            s << "Buffer content: " << msg_buffer << std::endl;
+            msg_buffer.advanceRead(MsgAddressing::size());
+            msg_buffer.advanceRead(subject_length);
+
+            MsgHeader::header_start chk = readScalar<MsgHeader::header_start>(msg_buffer.readBytes());
+            msg_buffer.advanceRead(sizeof(MsgHeader::header_start));
+            if (chk != 2) {
+                s << "*** Missing body flag ***";
+            } else {
+                const MsgHeader::field_count field_count = readScalar<MsgHeader::field_count>(msg_buffer.readBytes());
+                msg_buffer.advanceRead(sizeof(MsgHeader::field_count));
+                s << "Field count: " << field_count << std::endl;
+                for (size_t i = 0; i < field_count; i++) {
+                    MsgField::type type = unknown;
+                    MsgField::identifier_length identifier_size = 0;
+                    MsgField::data_length data_size = 0;
+                    Field::peek_field_header(msg_buffer, type, identifier_size, data_size);
+                    msg_buffer.advanceRead(MsgField::size());
+                    msg_buffer.advanceRead(identifier_size);
+                    msg_buffer.advanceRead(data_size);
+                    s << "\tField is type:    " << StorageTypeDescription[static_cast<int>(type)] << std::endl;
+                    s << "\tIdentifier Length: " << static_cast<int>(identifier_size) << std::endl;
+                    s << "\tData Length        : " << data_size << std::endl;
+                }
+            }
+        } else if (status == IncompleteMessage) {
+            s << "We have an incomplete message, we require " << msg_length << " bytes but have " << buffer.remainingReadLength() << " bytes" << std::endl;
+        } else if (status == CorruptMessage) {
+            s << "**** Received corrupt message ****";
+        }
+
+        INFO_LOG(s.str());
+    }
+#endif
 }

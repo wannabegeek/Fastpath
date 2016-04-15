@@ -33,7 +33,7 @@ namespace DCF {
         StorageType m_type;
         std::size_t m_data_length;
         virtual std::ostream& output(std::ostream& out) const = 0;
-        virtual const bool isEqual(const Field &other) const = 0;
+        virtual const bool isEqual(const Field &other) const noexcept = 0;
     public:
         Field(const char *identifier, const StorageType type, const std::size_t data_length) noexcept : m_type(type), m_data_length(data_length) {
             strcpy(m_identifier, identifier);
@@ -55,10 +55,10 @@ namespace DCF {
                     m_identifier[identifier_length] = '\0';
                     buffer.advanceRead(identifier_length);
 
-                    if (tf::likely(buffer.length() >= MsgField::size() + identifier_length + m_data_length)) {
+                    if (tf::likely(buffer.remainingReadLength() >= m_data_length)) {
                         return;
                     } else {
-                        ERROR_LOG("Not enough data available to read body [have: " << buffer.length() << " require: " << MsgField::size() + identifier_length + m_data_length);
+                        ERROR_LOG("Not enough data available to read body [have: " << buffer.remainingReadLength() << " require: " << MsgField::size() + identifier_length + m_data_length);
                     }
                 }
             } else {
@@ -115,7 +115,7 @@ namespace DCF {
             return MsgField::size() + identifier_length + data_length;
         }
 
-        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
+        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override final {
             // no-op - we reconstruct this via the constructor
             return false;
         }

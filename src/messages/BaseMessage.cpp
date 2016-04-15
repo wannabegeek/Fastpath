@@ -112,7 +112,7 @@ namespace DCF {
         return msgLength;
     }
 
-    const bool BaseMessage::decode(const MessageBuffer::ByteStorageType &buffer) {
+    const bool BaseMessage::decode(const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) {
         bool success = false;
         assert(buffer.length() > 0);
 

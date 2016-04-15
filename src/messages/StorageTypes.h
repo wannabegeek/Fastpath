@@ -29,6 +29,26 @@ namespace DCF {
         message
     } StorageType;
 
+    static constexpr const char *StorageTypeDescription[16] = {
+            "unknown",
+            "string",
+            "date_time",
+            "boolean",
+            "uint8",
+            "uint16",
+            "uint32",
+            "uint64",
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+//        float16,
+            "float32",
+            "float64",
+            "data",
+            "message"
+    };
+
     typedef enum {
         Default = 0,
         Administration = 1 << 0,

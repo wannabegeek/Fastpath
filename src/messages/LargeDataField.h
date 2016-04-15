@@ -77,10 +77,6 @@ namespace DCF {
             const size_t data_len = m_storage.bytes(&data);
             return Field::encode(buffer, data, data_len);
         }
-
-        const bool decode(const MessageBuffer::ByteStorageType &buffer) noexcept override {
-            return false;
-        }
     };
 }
 

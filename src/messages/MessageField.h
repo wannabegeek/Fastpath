@@ -14,7 +14,7 @@ namespace DCF {
         BaseMessage m_msg;
 
     protected:
-        virtual const bool isEqual(const Field &other) const override {
+        virtual const bool isEqual(const Field &other) const noexcept override {
             if (typeid(other) == typeid(MessageField)) {
                 const MessageField &f = static_cast<const MessageField &>(other);
                 return m_msg == f.m_msg;

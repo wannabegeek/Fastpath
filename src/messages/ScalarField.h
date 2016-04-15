@@ -31,39 +31,40 @@ namespace DCF {
         }
 
         virtual std::ostream& output(std::ostream& out) const override {
+            out << m_identifier << ":" << StorageTypeDescription[m_type] << "=";
             switch (m_type) {
                 case StorageType::boolean:
-                    out << m_identifier << ":boolean=" << std::boolalpha << get<bool>();
+                    out << std::boolalpha << get<bool>();
                     break;
                 case StorageType::uint8:
-                    out << m_identifier << ":uint8=" << get<uint8_t>();
+                    out << get<uint8_t>();
                     break;
                 case StorageType::uint16:
-                    out << m_identifier << ":uint16=" << get<uint16_t>();
+                    out << get<uint16_t>();
                     break;
                 case StorageType::uint32:
-                    out << m_identifier << ":uint32=" << get<uint32_t>();
+                    out << get<uint32_t>();
                     break;
                 case StorageType::uint64:
-                    out << m_identifier << ":uint64=" << get<uint64_t>();
+                    out << get<uint64_t>();
                     break;
                 case StorageType::int8:
-                    out << m_identifier << ":int8=" << get<int8_t>();
+                    out << get<int8_t>();
                     break;
                 case StorageType::int16:
-                    out << m_identifier << ":int16=" << get<int16_t>();
+                    out << get<int16_t>();
                     break;
                 case StorageType::int32:
-                    out << m_identifier << ":int32=" << get<int32_t>();
+                    out << get<int32_t>();
                     break;
                 case StorageType::int64:
-                    out << m_identifier << ":int64=" << get<int64_t>();
+                    out << get<int64_t>();
                     break;
                 case StorageType::float32:
-                    out << m_identifier << ":float32=" << get<float32_t>();
+                    out << get<float32_t>();
                     break;
                 case StorageType::float64:
-                    out << m_identifier << ":float64=" << get<float64_t>();
+                    out << get<float64_t>();
                     break;
                 default:
                     // we can't handle any other message type
