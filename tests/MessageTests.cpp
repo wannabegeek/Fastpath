@@ -160,7 +160,7 @@ TEST(Message, MultiDecode) {
 
 
 TEST(Message, MultiPartialDecode) {
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
     DCF::Message in1;
     float32_t t = 22.0;
 //    in1.addScalarField("TEST_float", t);

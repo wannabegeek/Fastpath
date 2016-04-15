@@ -168,7 +168,7 @@ TEST(Field, SerializeDateTime) {
 
 TEST(Field, SerializeSubMessage) {
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     DCF::Message msg;
     float32_t t = 22.0;
@@ -177,7 +177,7 @@ TEST(Field, SerializeSubMessage) {
     EXPECT_TRUE(msg.addDataField("Name1", "Tom"));
     EXPECT_TRUE(msg.addDataField("Name2", "Zac"));
 
-    INFO_LOG("Passing in " << msg);
+    DEBUG_LOG("Passing in " << msg);
 
     DCF::MessageField in("msg", std::move(msg));
 
@@ -185,7 +185,7 @@ TEST(Field, SerializeSubMessage) {
     const size_t len_in = in.encode(buffer);
     EXPECT_EQ(len_in, buffer.length());
 
-    INFO_LOG("Buffer is: " << buffer);
+    DEBUG_LOG("Buffer is: " << buffer);
     DCF::MessageField out(buffer.byteStorage());
 
 //    EXPECT_EQ(len_in, b.bytesRead());

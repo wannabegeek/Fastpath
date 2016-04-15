@@ -82,7 +82,6 @@ namespace DCF {
             std::advance(bytes, sizeof(MsgAddressing::addressing_start));
             msg_length = readScalar<MsgAddressing::msg_length>(bytes) + MsgAddressing::msg_length_offset();
             if (buffer.remainingReadLength() >= msg_length) {
-                INFO_LOG("Message is: " << msg_length << " buffer has " << buffer.remainingReadLength())
                 return CompleteMessage;
             }
         }

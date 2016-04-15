@@ -34,7 +34,7 @@ namespace DCF {
     }
 
     TCPTransport::TCPTransport(const url &url, const char *description) : Transport(description), m_url(url), m_shouldDisconnect(false), m_sendBuffer(1024), m_readBuffer(1500) {
-        INFO_LOG("Connecting to: " << m_url);
+        DEBUG_LOG("Connecting to: " << m_url);
         m_peer = std::make_unique<TCPSocketClient>(m_url.host(), m_url.port());
 
         if (!m_peer->connect()) {

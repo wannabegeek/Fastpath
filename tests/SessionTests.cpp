@@ -91,7 +91,7 @@ TEST(Session, SimpleReadInline) {
 }
 
 TEST(Session, SimpleReadBusySpin) {
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
     EXPECT_EQ(DCF::OK, DCF::Session::initialise());
 
     bool callbackFired = false;
@@ -189,7 +189,7 @@ TEST(Session, ReadTimerInline) {
 
     unsigned long timerCounter = 0;
     DCF::TimerEvent *timer = queue.registerEvent(std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
-        INFO_LOG("Still waiting for data");
+        DEBUG_LOG("Still waiting for data");
         if (timerCounter == 0) {
             EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
         }
@@ -237,7 +237,7 @@ TEST(Session, ReadTimerBusySpin) {
 
     unsigned long timerCounter = 0;
     queue.registerEvent(std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
-        INFO_LOG("Still waiting for data");
+        DEBUG_LOG("Still waiting for data");
         if (timerCounter == 0) {
             EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
         }
@@ -285,7 +285,7 @@ TEST(Session, ReadTimerBlocking) {
 
     unsigned long timerCounter = 0;
     queue.registerEvent(std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
-        INFO_LOG("Still waiting for data");
+        DEBUG_LOG("Still waiting for data");
         if (timerCounter == 0) {
             EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
         }
