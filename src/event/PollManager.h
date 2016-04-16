@@ -28,7 +28,7 @@
 
 #include <chrono>
 
-#include "../config.h"
+#include "config.h"
 
 namespace DCF {
 	using DistantFutureType = std::chrono::microseconds;

@@ -1,37 +1,41 @@
-set(SOURCE_FILES
+SET(HEADER_FILES
         Event.h
         MessageListener.h
         Queue.h
         EventManager.h
-        EventManager.cpp
         PollManager.h
         EventType.h
         arch/linux/PollManager.h
         arch/mac/PollManager.h
         PollManager_select.h
         TimerEvent.h
-        TimerEvent.cpp
         IOEvent.h
-        IOEvent.cpp
         BusySpinQueue.h
         BlockingQueue.h
         InlineQueue.h
         Session.h
-        ActionNotifier.cpp
         ActionNotifier.h
-        GlobalEventManager.cpp
         GlobalEventManager.h
-        InlineEventManager.cpp
         InlineEventManager.h
-        Queue.cpp
         SharedQueue.h
-        Subscriber.cpp
         Subscriber.h
-        MessageListener.cpp
         DataEvent.h
+        MessageEvent.h
+        )
+
+SET(SOURCE_FILES
+        Subscriber.cpp
+        MessageListener.cpp
         DataEvent.cpp
         MessageEvent.cpp
-        MessageEvent.h
-)
+        Queue.cpp
+        EventManager.cpp
+        TimerEvent.cpp
+        IOEvent.cpp
+        ActionNotifier.cpp
+        GlobalEventManager.cpp
+        InlineEventManager.cpp
+        )
 
-add_library(event OBJECT ${SOURCE_FILES})
+add_library(event OBJECT ${SOURCE_FILES} ${HEADER_FILES})
+INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath/event)

@@ -1,17 +1,23 @@
-set(SOURCE_FILES
+set(HEADER_FILES
         DataField.h
         DateTimeField.h
         Field.h
         FieldTraits.h
-        BaseMessage.cpp
         BaseMessage.h
-        Message.cpp
         Message.h
-        MessageField.cpp
         MessageField.h
         ScalarField.h
         Serializable.h
         StorageTypes.h
-        SmallDataField.h LargeDataField.h)
+        SmallDataField.h
+        LargeDataField.h
+)
 
-add_library(messages OBJECT ${SOURCE_FILES})
+set(SOURCE_FILES
+        BaseMessage.cpp
+        Message.cpp
+        MessageField.cpp
+)
+
+add_library(messages OBJECT ${SOURCE_FILES} ${HEADER_FILES})
+INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath/messages)

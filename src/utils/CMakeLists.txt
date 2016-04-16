@@ -1,7 +1,6 @@
-set(SOURCE_FILES
+set(HEADER_FILES
         blocking_ringbuffer.h
         console_colors.h
-        daemon_process.cpp
         daemon_process.h
         logger.h
         optimize.h
@@ -16,4 +15,9 @@ set(SOURCE_FILES
         short_alloc.h
         )
 
-add_library(utils OBJECT ${SOURCE_FILES})
+set(SOURCE_FILES
+        daemon_process.cpp
+        )
+
+add_library(utils OBJECT ${SOURCE_FILES} ${HEADER_FILES})
+INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath/utils)

@@ -59,7 +59,7 @@ set(CMAKE_MACOSX_RPATH 1)
 
 include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-set(SOURCE_FILES
+set(HEADER_FILES
         Exception.h
         MessageBuffer.h
         MutableByteStorage.h
@@ -71,7 +71,7 @@ set(SOURCE_FILES
         fastpath.h
 )
 
-add_library(TFDCF SHARED ${SOURCE_FILES} $<TARGET_OBJECTS:utils>
+add_library(TFDCF SHARED ${HEADER_FILES} $<TARGET_OBJECTS:utils>
         $<TARGET_OBJECTS:event>
         $<TARGET_OBJECTS:messages>
         $<TARGET_OBJECTS:transport>)
@@ -84,4 +84,4 @@ add_subdirectory(router)
 add_subdirectory(tools)
 
 INSTALL(TARGETS TFDCF DESTINATION lib/fastpath)
-INSTALL(FILES ${SOURCE_FILES} DESTINATION include/fastpath)
+INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath)

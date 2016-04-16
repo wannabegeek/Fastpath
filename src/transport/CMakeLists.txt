@@ -1,27 +1,32 @@
-set(SOURCE_FILES
-        Socket.cpp
+set(HEADER_FILES
         Socket.h
-        UnixSocket.cpp
         UnixSocket.h
-        TCPSocketClient.cpp
         TCPSocketClient.h
-        UnixSocketClient.cpp
         UnixSocketClient.h
-        TCPSocketServer.cpp
         TCPSocketServer.h
-        UnixSocketServer.cpp
         UnixSocketServer.h
-        TCPTransport.cpp
         TCPTransport.h
         Transport.h
-        URL.cpp
         URL.h
-        realm_transport.cpp
         realm_transport.h
-        TransportIOEvent.cpp
         TransportIOEvent.h
-        SHMTransport.cpp
         SHMTransport.h
-        TCPSocket.cpp TCPSocket.h)
+        TCPSocket.h
+)
 
-add_library(transport OBJECT ${SOURCE_FILES})
+set(SOURCE_FILES
+        Socket.cpp
+        UnixSocket.cpp
+        TCPSocketClient.cpp
+        UnixSocketClient.cpp
+        TCPSocketServer.cpp
+        UnixSocketServer.cpp
+        TCPTransport.cpp
+        URL.cpp
+        realm_transport.cpp
+        TransportIOEvent.cpp
+        SHMTransport.cpp
+        TCPSocket.cpp
+)
+
+add_library(transport OBJECT ${SOURCE_FILES} ${HEADER_FILES})

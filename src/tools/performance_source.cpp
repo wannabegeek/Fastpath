@@ -24,12 +24,8 @@
  ***************************************************************************/
 
 #include <iostream>
-#include <utils/logger.h>
-#include <utils/tfoptions.h>
-#include <event/Session.h>
-#include <transport/realm_transport.h>
-#include <messages/Message.h>
-#include <event/BlockingQueue.h>
+#include "utils/tfoptions.h"
+#include <fastpath.h>
 
 int main( int argc, char *argv[] )  {
     tf::options o;

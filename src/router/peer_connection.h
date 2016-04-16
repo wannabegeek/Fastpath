@@ -29,8 +29,9 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <event/IOEvent.h>
-#include <MessageBuffer.h>
+#include "event/IOEvent.h"
+#include "messages/Message.h"
+#include "MessageBuffer.h"
 #include "subscription.h"
 
 namespace DCF {

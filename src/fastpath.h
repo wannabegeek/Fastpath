@@ -29,13 +29,13 @@
 #include "status.h"
 #include "Exception.h"
 #include "event/Session.h"
-#include "transport/relm_transport.h"
+#include "transport/realm_transport.h"
 #include "transport/TCPTransport.h"
 #include "transport/SHMTransport.h"
 #include "event/BusySpinQueue.h"
 #include "event/BlockingQueue.h"
 #include "event/EventManager.h"
 #include "event/Subscriber.h"
-#include "event/Message.h"
+#include "messages/Message.h"
 
 #endif //FASTPATH_H

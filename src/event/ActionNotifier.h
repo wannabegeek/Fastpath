@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <atomic>
 
-#	include "../config.h"
+#include "config.h"
 
 #ifdef HAVE_EVENTFD
 #include <sys/eventfd.h>
