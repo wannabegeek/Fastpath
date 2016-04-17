@@ -5,8 +5,8 @@
 #ifndef TFDCF_INTERPROCESSNOTIFIERSERVER_H
 #define TFDCF_INTERPROCESSNOTIFIERSERVER_H
 
-#include <event/EventType.h>
-#include <transport/TransportIOEvent.h>
+#include <fastpath/event/EventType.h>
+#include <fastpath/transport/TransportIOEvent.h>
 #include "InterprocessNotifier.h"
 #include "notifier.h"
 

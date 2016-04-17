@@ -3,16 +3,16 @@
 //
 
 #include <gtest/gtest.h>
-#include <transport/TCPTransport.h>
+#include <fastpath/transport/TCPTransport.h>
 #include <thread>
 #include <memory>
-#include <utils/logger.h>
-#include <transport/TCPSocketServer.h>
-#include <event/InlineQueue.h>
-#include <event/BlockingQueue.h>
-#include <event/IOEvent.h>
-#include <event/EventManager.h>
-#include <messages/Message.h>
+#include <fastpath/utils/logger.h>
+#include <fastpath/transport/TCPSocketServer.h>
+#include <fastpath/event/InlineQueue.h>
+#include <fastpath/event/BlockingQueue.h>
+#include <fastpath/event/IOEvent.h>
+#include <fastpath/event/EventManager.h>
+#include <fastpath/messages/Message.h>
 //#include <utils/ByteStorage.h>
 
 

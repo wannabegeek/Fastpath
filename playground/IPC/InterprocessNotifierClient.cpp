@@ -2,8 +2,8 @@
 // Created by Tom Fewster on 03/04/2016.
 //
 
-#include <transport/UnixSocketClient.h>
-#include <utils/logger.h>
+#include <fastpath/transport/UnixSocketClient.h>
+#include <fastpath/utils/logger.h>
 #include "InterprocessNotifierClient.h"
 
 namespace DCF {

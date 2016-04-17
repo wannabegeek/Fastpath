@@ -24,9 +24,9 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include <messages/Message.h>
-#include <messages/DateTimeField.h>
-#include <messages/MessageField.h>
+#include "fastpath/messages/Message.h"
+#include "fastpath/messages/DateTimeField.h"
+#include "fastpath/messages/MessageField.h"
 
 TEST(Field, CreateString_Large) {
 

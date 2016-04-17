@@ -6,7 +6,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include "SharedMemoryBuffer.h"
+#include "fastpath/SharedMemoryBuffer.h"
 
 int main(int argc, char *argv[])
 {

@@ -2,9 +2,9 @@
 // Created by Tom Fewster on 03/04/2016.
 //
 
-#include <transport/UnixSocketServer.h>
-#include <utils/logger.h>
-#include <Exception.h>
+#include <fastpath/transport/UnixSocketServer.h>
+#include <fastpath/utils/logger.h>
+#include <fastpath/Exception.h>
 #include <cassert>
 #include "InterprocessNotifierServer.h"
 

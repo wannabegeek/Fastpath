@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "../../../../src/config.h"
-#include <Exception.h>
+#include "fastpath/config.h"
+#include <fastpath/Exception.h>
 
 namespace tf {
     class notifier {

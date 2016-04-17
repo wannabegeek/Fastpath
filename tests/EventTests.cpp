@@ -25,16 +25,16 @@
 
 #include <gtest/gtest.h>
 
-#include <event/EventManager.h>
+#include "fastpath/event/EventManager.h"
 
 #include <chrono>
 #include <unistd.h>
-#include <event/EventType.h>
-#include <event/IOEvent.h>
-#include <event/TimerEvent.h>
-#include <event/InlineQueue.h>
+#include "fastpath/event/EventType.h"
+#include "fastpath/event/IOEvent.h"
+#include "fastpath/event/TimerEvent.h"
+#include "fastpath/event/InlineQueue.h"
 
-#include <utils/logger.h>
+#include "fastpath/utils/logger.h"
 
 //TEST(EventManager, SimpleTimeout) {
 //

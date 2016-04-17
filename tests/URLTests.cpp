@@ -3,7 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include <transport/URL.h>
+#include <fastpath/transport/URL.h>
 
 TEST(URL, ParseCommon) {
     DCF::url url("dcf://localhost:1234");

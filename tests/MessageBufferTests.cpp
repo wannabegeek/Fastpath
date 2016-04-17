@@ -25,7 +25,7 @@
 
 #include <gtest/gtest.h>
 
-#include "MessageBuffer.h"
+#include "fastpath/MessageBuffer.h"
 
 TEST(MessageBuffer, SimpleAllocation) {
     DCF::MessageBuffer buffer(10);

@@ -5,11 +5,11 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include <utils/logger.h>
-#include <event/InlineQueue.h>
+#include "fastpath/utils/logger.h"
+#include "fastpath/event/InlineQueue.h"
 #include <boost/interprocess/shared_memory_object.hpp>
 #include "IPC/InterprocessNotifierServer.h"
-#include <SharedMemoryBuffer.h>
+#include "fastpath/SharedMemoryBuffer.h"
 
 int main(int argc, char *argv[]) {
 

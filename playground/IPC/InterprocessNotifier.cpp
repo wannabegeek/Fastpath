@@ -4,7 +4,7 @@
 #ifdef HAVE_EVENTFD
 #   include <sys/eventfd.h>
 #endif
-#include <Exception.h>
+#include <fastpath/Exception.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -13,8 +13,8 @@
 #include <iostream>
 #include <cassert>
 #include "InterprocessNotifier.h"
-#include "transport/UnixSocket.h"
-#include "utils/logger.h"
+#include "fastpath/transport/UnixSocket.h"
+#include "fastpath/utils/logger.h"
 
 #define MAX_FDS 960
 

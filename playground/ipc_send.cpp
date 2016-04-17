@@ -3,10 +3,10 @@
 //
 
 #include <iostream>
-#include "transport/UnixSocketClient.h"
+#include "fastpath/transport/UnixSocketClient.h"
 #include <thread>
-#include <utils/logger.h>
-#include <SharedMemoryBuffer.h>
+#include "fastpath/utils/logger.h"
+#include "fastpath/SharedMemoryBuffer.h"
 #include "IPC/InterprocessNotifierClient.h"
 
 int main(int argc, char *argv[]) {

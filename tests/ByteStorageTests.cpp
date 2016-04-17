@@ -24,8 +24,8 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include <ByteStorage.h>
-#include <types.h>
+#include "fastpath/ByteStorage.h"
+#include "fastpath/types.h"
 
 TEST(ByteStorage, StoreCopy) {
     const char *data = "Hello World";

@@ -24,8 +24,8 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include <messages/Message.h>
-#include <utils/logger.h>
+#include "fastpath/messages/Message.h"
+#include "fastpath/utils/logger.h"
 
 TEST(Message, SetSubject) {
     DCF::Message msg;

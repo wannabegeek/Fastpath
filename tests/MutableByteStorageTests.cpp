@@ -24,8 +24,8 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include <MutableByteStorage.h>
-#include <types.h>
+#include "fastpath/MutableByteStorage.h"
+#include "fastpath/types.h"
 
 TEST(MutableByteStorage, StoreCopyReplace) {
     const char *data = "Hello World";

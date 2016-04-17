@@ -24,11 +24,11 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include <event/Session.h>
-#include <event/IOEvent.h>
-#include <event/TimerEvent.h>
-#include <event/BusySpinQueue.h>
-#include <event/BlockingQueue.h>
+#include "fastpath/event/Session.h"
+#include "fastpath/event/IOEvent.h"
+#include "fastpath/event/TimerEvent.h"
+#include "fastpath/event/BusySpinQueue.h"
+#include "fastpath/event/BlockingQueue.h"
 
 TEST(BusySpinQueue, Timeout) {
 

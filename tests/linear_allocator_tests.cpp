@@ -24,7 +24,7 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include <utils/fast_linear_allocator.h>
+#include "fastpath/utils/fast_linear_allocator.h"
 
 TEST(linear_allocator, alloc) {
     using storage_alloc = std::allocator_traits<tf::linear_allocator<char>>::template rebind_alloc<char>;

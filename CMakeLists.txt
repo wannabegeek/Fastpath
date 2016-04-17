@@ -20,9 +20,9 @@ endif()
 
 #set(BOOST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/external/boost/any/include/")
 
-include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/src)
+include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-add_subdirectory(src)
+add_subdirectory(fastpath)
 add_subdirectory(tests)
 add_subdirectory(playground)
 

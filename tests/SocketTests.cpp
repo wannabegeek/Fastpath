@@ -25,18 +25,18 @@
 
 #include <gtest/gtest.h>
 
-#include <event/EventManager.h>
-#include <event/IOEvent.h>
-#include <event/InlineQueue.h>
-#include <transport/TCPSocketServer.h>
-#include <transport/TCPSocketClient.h>
+#include <fastpath/event/EventManager.h>
+#include <fastpath/event/IOEvent.h>
+#include <fastpath/event/InlineQueue.h>
+#include <fastpath/transport/TCPSocketServer.h>
+#include <fastpath/transport/TCPSocketClient.h>
 
 #include <chrono>
 #include <memory>
 #include <thread>
 #include <unistd.h>
-#include <utils/logger.h>
-#include <event/BusySpinQueue.h>
+#include <fastpath/utils/logger.h>
+#include <fastpath/event/BusySpinQueue.h>
 
 TEST(Socket, SimpleReadWrite) {
 

@@ -5,7 +5,7 @@
 #include <string>
 #include <thread>
 #include <iostream>
-#include "SharedMemoryBuffer.h"
+#include "fastpath/SharedMemoryBuffer.h"
 
 int main(int argc, char *argv[])
 {

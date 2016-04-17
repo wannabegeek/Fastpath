@@ -5,7 +5,7 @@
 #ifndef TFDCF_NOTIFIER_H_H
 #define TFDCF_NOTIFIER_H_H
 
-#include "../../src/config.h"
+#include "fastpath/config.h"
 
 #ifdef HAVE_EVENTFD
     #include "arch/linux/notifier.h"

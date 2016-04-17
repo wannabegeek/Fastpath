@@ -5,7 +5,7 @@
 #ifndef TFDCF_INTERPROCESSNOTIFIER_H
 #define TFDCF_INTERPROCESSNOTIFIER_H
 
-#include <transport/UnixSocket.h>
+#include <fastpath/transport/UnixSocket.h>
 
 #define READ_FD 0
 #define WRITE_FD 1
