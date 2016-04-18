@@ -24,6 +24,7 @@
  ***************************************************************************/
 
 #include <iostream>
+#include <future>
 
 #include "fastpath/utils/tfoptions.h"
 #include "fastpath/fastpath.h"

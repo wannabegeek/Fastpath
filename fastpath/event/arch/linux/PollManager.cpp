@@ -23,9 +23,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFFIXEngine_TFEventPollManager_epoll_h
-#define TFFIXEngine_TFEventPollManager_epoll_h
-
 #include "fastpath/event/PollManager.h"
 #include "fastpath/event/EventType.h"
 #include "fastpath/utils/logger.h"
@@ -40,8 +37,8 @@ namespace fp {
     static const uint64_t TimerIdentifier = 1l << 33;
 
     EventPoll::EventPoll() {
-        m_epollfd = epoll_create1(0);
-        if (m_epollfd == -1) {
+        m_fd = epoll_create1(0);
+        if (m_fd == -1) {
             ERROR_LOG("Failed to create epoll fd: " << strerror(errno));
             return;
         }
@@ -58,7 +55,7 @@ namespace fp {
         ev.events = EPOLLIN;
         ev.data.u64 = event.identifier | TimerIdentifier;
 
-        if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
+        if (epoll_ctl(m_fd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
             ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
             return false;
         }
@@ -71,7 +68,7 @@ namespace fp {
         return true;
     }
 
-    bool remove(const EventPollTimerElement &event) noexcept {
+    bool EventPoll::remove(const EventPollTimerElement &event) noexcept {
         struct epoll_event ev;
         memset(&ev, 0, sizeof(struct epoll_event));
         --m_events;
@@ -79,7 +76,7 @@ namespace fp {
         ev.events = EPOLLIN;
         ev.data.fd = event.identifier;
 
-        if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
+        if (epoll_ctl(m_fd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
             ERROR_LOG("Failed to remove event with epoll_ctl: " << strerror(errno));
             return false;
         }
@@ -103,7 +100,7 @@ namespace fp {
         ev.events = filter;
         ev.data.fd = event.identifier;
 
-        if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
+        if (epoll_ctl(m_fd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
             ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
             return false;
         }
@@ -127,7 +124,7 @@ namespace fp {
         ev.events = filter;
         ev.data.fd = event.identifier;
 
-        if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
+        if (epoll_ctl(m_fd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
             if (errno != EBADF) { // probably the fd is already closed (& epoll with automatically remove it)
                 ERROR_LOG("Failed to remove event with epoll_ctl: " << strerror(errno));
                 return false;
@@ -142,9 +139,9 @@ namespace fp {
 
         if (m_events != 0) {
             struct epoll_event _events[maxDispatchSize];
-            result = epoll_wait(m_epollfd, _events, m_events, 0);
+            result = epoll_wait(m_fd, _events, m_events, 0);
             if (result == -1) {
-                if (errno == EINTR && err_count < 10) {
+                if (errno == EINTR && m_err_count < 10) {
                     ++m_err_count;
                     return 0;
                 }
@@ -173,4 +170,3 @@ namespace fp {
     }
 }
 
-#endif

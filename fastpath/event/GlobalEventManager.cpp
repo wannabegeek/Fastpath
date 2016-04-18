@@ -26,6 +26,7 @@
 #include "fastpath/event/GlobalEventManager.h"
 
 #include <functional>
+#include <algorithm>
 #include <utility>
 #include <vector>
 #include <shared_mutex>

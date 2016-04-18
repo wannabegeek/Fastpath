@@ -26,6 +26,7 @@
 #include "fastpath/event/InlineEventManager.h"
 
 #include <cassert>
+#include <algorithm>
 
 #include "fastpath/utils/logger.h"
 #include "fastpath/event/IOEvent.h"

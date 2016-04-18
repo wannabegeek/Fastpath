@@ -7,7 +7,10 @@
 #include <thread>
 #include "fastpath/utils/logger.h"
 #include "fastpath/event/InlineQueue.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 #include <boost/interprocess/shared_memory_object.hpp>
+#pragma GCC diagnostic pop
 #include "IPC/InterprocessNotifierServer.h"
 #include "fastpath/SharedMemoryBuffer.h"
 

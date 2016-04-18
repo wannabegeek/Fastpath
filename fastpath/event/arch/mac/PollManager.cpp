@@ -23,9 +23,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFFIXEngine_TFEventPollManager_kqueue_h
-#define TFFIXEngine_TFEventPollManager_kqueue_h
-
 #include "fastpath/event/PollManager.h"
 #include "fastpath/event/EventType.h"
 #include "fastpath/utils/logger.h"
@@ -173,5 +170,3 @@ namespace fp {
         return 0;
     }
 }
-
-#endif

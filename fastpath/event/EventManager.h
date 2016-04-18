@@ -28,6 +28,7 @@
 
 #include "fastpath/event/PollManager.h"
 
+#include <atomic>
 #include <limits>
 #include <functional>
 

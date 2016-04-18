@@ -27,6 +27,7 @@
 #define FASTPATH_SIMPLESTRINGHASHER_H
 
 #include <cstddef>
+#include <cstring>
 
 namespace tf {
     struct string_comparator {

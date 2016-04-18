@@ -29,6 +29,8 @@
 
 #include <stddef.h>
 #include <atomic>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -37,6 +39,7 @@
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/named_upgradable_mutex.hpp>
 #include <boost/interprocess/sync/sharable_lock.hpp>
+#pragma GCC diagnostic pop
 
 class SharedMemoryBuffer {
 private:

@@ -28,13 +28,13 @@
 
 #include <unistd.h>
 #include <atomic>
+#include <fcntl.h>
+#include <cstring>
 
 #include "fastpath/config.h"
 
 #ifdef HAVE_EVENTFD
 #include <sys/eventfd.h>
-#else
-#include <fcntl.h>
 #endif
 
 #include "fastpath/Exception.h"
