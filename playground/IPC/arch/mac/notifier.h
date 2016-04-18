@@ -2,8 +2,8 @@
 // Created by Tom Fewster on 05/04/2016.
 //
 
-#ifndef TFDCF_NOTIFIER_H
-#define TFDCF_NOTIFIER_H
+#ifndef FASTPATH_NOTIFIER_H
+#define FASTPATH_NOTIFIER_H
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -74,4 +74,4 @@ namespace tf {
     };
 }
 
-#endif //TFDCF_NOTIFIER_H
+#endif //FASTPATH_NOTIFIER_H

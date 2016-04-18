@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SEMAPHORE_LIGHT_H
-#define TFDCF_SEMAPHORE_LIGHT_H
+#ifndef FASTPATH_SEMAPHORE_LIGHT_H
+#define FASTPATH_SEMAPHORE_LIGHT_H
 
 #if defined(_WIN32)
 // Avoid including windows.h in a header; we only need a handful of
@@ -352,4 +352,4 @@ namespace tf {
     };
 }
 
-#endif //TFDCF_SEMAPHORE_LIGHT_H
+#endif //FASTPATH_SEMAPHORE_LIGHT_H

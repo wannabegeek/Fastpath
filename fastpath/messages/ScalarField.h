@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SCALARFIELD_H
-#define TFDCF_SCALARFIELD_H
+#ifndef FASTPATH_SCALARFIELD_H
+#define FASTPATH_SCALARFIELD_H
 
 #include <stddef.h>
 #include <string>
@@ -37,7 +37,7 @@
 #include "fastpath/messages/FieldTraits.h"
 #include "fastpath/messages/Field.h"
 
-namespace DCF {
+namespace fp {
 
     class ScalarField final : public Field {
 
@@ -56,37 +56,37 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const override {
             out << m_identifier << ":" << StorageTypeDescription[m_type] << "=";
             switch (m_type) {
-                case StorageType::boolean:
+                case storage_type::boolean:
                     out << std::boolalpha << get<bool>();
                     break;
-                case StorageType::uint8:
+                case storage_type::uint8:
                     out << get<uint8_t>();
                     break;
-                case StorageType::uint16:
+                case storage_type::uint16:
                     out << get<uint16_t>();
                     break;
-                case StorageType::uint32:
+                case storage_type::uint32:
                     out << get<uint32_t>();
                     break;
-                case StorageType::uint64:
+                case storage_type::uint64:
                     out << get<uint64_t>();
                     break;
-                case StorageType::int8:
+                case storage_type::int8:
                     out << get<int8_t>();
                     break;
-                case StorageType::int16:
+                case storage_type::int16:
                     out << get<int16_t>();
                     break;
-                case StorageType::int32:
+                case storage_type::int32:
                     out << get<int32_t>();
                     break;
-                case StorageType::int64:
+                case storage_type::int64:
                     out << get<int64_t>();
                     break;
-                case StorageType::float32:
+                case storage_type::float32:
                     out << get<float32_t>();
                     break;
-                case StorageType::float64:
+                case storage_type::float64:
                     out << get<float64_t>();
                     break;
                 default:
@@ -119,4 +119,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_SCALARFIELD_H
+#endif //FASTPATH_SCALARFIELD_H

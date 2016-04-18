@@ -21,7 +21,13 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -Ofast
 
 #################################
 
-add_executable(fprouter fprouter.cpp bootstrap.cpp bootstrap.h peer_connection.cpp peer_connection.h subscription.h subject.h ../utils/stringhash.h)
+add_executable(fprouter
+        fprouter.cpp
+        bootstrap.cpp
+        bootstrap.h
+        peer_connection.cpp
+        peer_connection.h
+        )
 
-target_link_libraries(fprouter TFDCF ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(fprouter fastpath ${CMAKE_THREAD_LIBS_INIT})
 

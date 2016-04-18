@@ -23,12 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_STORAGETYPES_H
-#define TFDCF_STORAGETYPES_H
+#ifndef FASTPATH_STORAGETYPES_H
+#define FASTPATH_STORAGETYPES_H
 
 #include <cstdint>
 
-namespace DCF {
+namespace fp {
     typedef enum {
         unknown,
         string,
@@ -47,7 +47,7 @@ namespace DCF {
         float64,
         data,
         message
-    } StorageType;
+    } storage_type;
 
     static constexpr const char *StorageTypeDescription[16] = {
             "unknown",
@@ -70,12 +70,12 @@ namespace DCF {
     };
 
     typedef enum {
-        Default = 0,
-        Administration = 1 << 0,
-        Garuanted = 1 << 1
-    } MessageFlags;
+        standard = 0,
+        administration = 1 << 0,
+        guaranteed = 1 << 1
+    } message_flags;
 
     class Message;
 }
 
-#endif //TFDCF_STORAGETYPES_H
+#endif //FASTPATH_STORAGETYPES_H

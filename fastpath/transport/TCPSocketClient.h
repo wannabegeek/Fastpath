@@ -28,7 +28,7 @@
 
 #include "fastpath/transport/TCPSocket.h"
 
-namespace DCF {
+namespace fp {
     class TCPSocketClient final : public TCPSocket {
     public:
         TCPSocketClient(const std::string &host, const std::string &service) throw(socket_error)

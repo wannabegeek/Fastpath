@@ -30,7 +30,7 @@
 #include "fastpath/Exception.h"
 #include "fastpath/transport/UnixSocketServer.h"
 
-namespace DCF {
+namespace fp {
     UnixSocketServer::UnixSocketServer(const std::string &path) : UnixSocket(path) {
         if (::unlink(path.c_str()) == -1 && errno != ENOENT) {
             ThrowException(socket_error, "Failed to remove path " << strerror(errno));

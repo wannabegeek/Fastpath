@@ -23,15 +23,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SUBSCRIBER_H
-#define TFDCF_SUBSCRIBER_H
+#ifndef FASTPATH_SUBSCRIBER_H
+#define FASTPATH_SUBSCRIBER_H
 
 #include <functional>
 
-#include "fastpath/router/subscription.h"
+#include "fastpath/messages/subscription.h"
 #include "fastpath/transport/Transport.h"
 
-namespace DCF {
+namespace fp {
     class Transport;
     class Message;
 
@@ -40,7 +40,7 @@ namespace DCF {
         Transport *m_transport;
         std::unique_ptr<char[]> m_subject;
         const std::function<void(const Subscriber *, Message *)> m_callback;
-        fp::subscription<> m_subscription;
+        subscription<> m_subscription;
 
     public:
         Subscriber(std::unique_ptr<Transport> &transport, const char *subject, const std::function<void(const Subscriber *, Message *)> &callback) : Subscriber(transport.get(), subject, callback) { }
@@ -57,10 +57,10 @@ namespace DCF {
         Transport *transport() const noexcept { return m_transport; }
         const char *subject() const noexcept { return m_subject.get(); }
 
-        bool is_interested(const fp::subject<> subject) const;
+        bool is_interested(const ::fp::subject<> subject) const;
 
         void __dispatch(Transport::MessageType &message) const;
     };
 }
 
-#endif //TFDCF_SUBSCRIBER_H
+#endif //FASTPATH_SUBSCRIBER_H

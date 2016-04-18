@@ -4,8 +4,8 @@
 
 #include <iostream>
 #include "performance.h"
-#include "fastpath/router/subscription.h"
-#include "fastpath/router/subject.h"
+#include "fastpath/messages/subscription.h"
+#include "fastpath/messages/subject.h"
 
 int main(int argc, char *argv[])
 {

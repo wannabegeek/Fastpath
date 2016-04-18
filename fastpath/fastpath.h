@@ -30,11 +30,9 @@
 #include "fastpath/Exception.h"
 #include "fastpath/event/Session.h"
 #include "fastpath/transport/realm_transport.h"
-#include "fastpath/transport/TCPTransport.h"
-#include "fastpath/transport/SHMTransport.h"
+#include "fastpath/transport/Transport.h"
 #include "fastpath/event/BusySpinQueue.h"
 #include "fastpath/event/BlockingQueue.h"
-#include "fastpath/event/EventManager.h"
 #include "fastpath/event/Subscriber.h"
 #include "fastpath/messages/Message.h"
 

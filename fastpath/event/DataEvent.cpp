@@ -29,7 +29,7 @@
 
 #include <cassert>
 
-namespace DCF {
+namespace fp {
 
     void DataEvent::dispatch(DataEvent *event, const EventType &eventType) noexcept {
         this->__popDispatch();

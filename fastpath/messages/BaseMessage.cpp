@@ -32,7 +32,7 @@
 
 #include <iostream>
 
-namespace DCF {
+namespace fp {
 
     BaseMessage::BaseMessage(BaseMessage &&other) noexcept : m_payload(std::move(other.m_payload)),
                                         m_keys(std::move(other.m_keys)), m_field_allocator(std::move(other.m_field_allocator)) {
@@ -156,15 +156,15 @@ namespace DCF {
                 Field::peek_field_header(buffer, type, identifier_size, data_size);
 
                 Field *field = nullptr;
-                switch (static_cast<StorageType>(type)) {
-                    case StorageType::string:
-                    case StorageType::data:
+                switch (static_cast<storage_type>(type)) {
+                    case storage_type::string:
+                    case storage_type::data:
                         field = this->createDataField(data_size, buffer);
                         break;
-                    case StorageType::date_time:
+                    case storage_type::date_time:
                         field = this->createDateTimeField(buffer);
                         break;
-                    case StorageType::message:
+                    case storage_type::message:
                         field = this->createMessageField(buffer);
                         break;
                     default:
@@ -180,20 +180,36 @@ namespace DCF {
         return success;
     }
 
-    const DataStorageType BaseMessage::getStorageType(const StorageType type) {
+    const DataStorageType BaseMessage::getStorageType(const storage_type type) {
         DataStorageType r = scalar_t;
         switch (type) {
-            case StorageType::data:
-            case StorageType::string:
+            case storage_type::data:
+            case storage_type::string:
                 r = data_t;
                 break;
-            case StorageType::message:
+            case storage_type::message:
                 r = message_t;
                 break;
             default:
                 break;
         }
         return r;
+    }
+
+    bool BaseMessage::getDataField(const char *field, const char **value, size_t &length) const {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const DataField *element = reinterpret_cast<DataField *>(m_payload[index->second]);
+                length = element->get(value);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void BaseMessage::prepareForReuse() {
+        this->clear();
     }
 
     std::ostream &BaseMessage::output(std::ostream &out) const {

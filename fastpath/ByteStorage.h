@@ -23,13 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_BYTESTORAGE_H
-#define TFDCF_BYTESTORAGE_H
+#ifndef FASTPATH_BYTESTORAGE_H
+#define FASTPATH_BYTESTORAGE_H
 
 #include <ostream>
 #include <memory>
 
-namespace DCF {
+namespace fp {
     template <typename T, typename Allocator = std::allocator<T>> class ByteStorage {
         static_assert(sizeof(T) == 1, "Can'y create byte buffer for sizes != 1");
     protected:
@@ -208,4 +208,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_BYTESTORAGE_H
+#endif //FASTPATH_BYTESTORAGE_H

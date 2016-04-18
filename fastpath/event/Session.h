@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SESSION_H
-#define TFDCF_SESSION_H
+#ifndef FASTPATH_SESSION_H
+#define FASTPATH_SESSION_H
 
 #include <thread>
 #include <atomic>
@@ -35,7 +35,7 @@
 #include "fastpath/event/GlobalEventManager.h"
 #include "fastpath/utils/logger.h"
 
-namespace DCF {
+namespace fp {
     class Session {
     private:
         bool m_started;
@@ -113,4 +113,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_SESSION_H
+#endif //FASTPATH_SESSION_H

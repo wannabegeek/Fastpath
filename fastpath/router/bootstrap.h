@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_BOOTSTRAP_H
-#define TFDCF_BOOTSTRAP_H
+#ifndef FASTPATH_BOOTSTRAP_H
+#define FASTPATH_BOOTSTRAP_H
 
 #include <iosfwd>
 #include <memory>
@@ -36,14 +36,14 @@
 namespace fp{
     class bootstrap {
     private:
-        DCF::InlineQueue m_dispatchQueue;
+        fp::InlineQueue m_dispatchQueue;
 
-        DCF::TCPSocketServer m_server;
+        fp::TCPSocketServer m_server;
         bool m_shutdown = false;
 
         std::vector<std::unique_ptr<peer_connection>> m_connections;
 
-        void message_handler(peer_connection *source, const subject<> &subject, const DCF::MessageBuffer::ByteStorageType &msgData) noexcept;
+        void message_handler(peer_connection *source, const subject<> &subject, const fp::MessageBuffer::ByteStorageType &msgData) noexcept;
         void disconnection_handler(peer_connection *connection) noexcept;
     public:
         bootstrap(const std::string &interface, const std::string &service);
@@ -53,4 +53,4 @@ namespace fp{
     };
 }
 
-#endif //TFDCF_BOOTSTRAP_H
+#endif //FASTPATH_BOOTSTRAP_H

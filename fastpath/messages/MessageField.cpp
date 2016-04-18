@@ -26,9 +26,9 @@
 #include "fastpath/messages/MessageField.h"
 #include "fastpath/messages/Message.h"
 
-namespace DCF {
+namespace fp {
 
-    MessageField::MessageField(const char *identifier, BaseMessage &&message) noexcept : Field(identifier, StorageType::message, 0),  m_msg(std::move(message)) {
+    MessageField::MessageField(const char *identifier, BaseMessage &&message) noexcept : Field(identifier, storage_type::message, 0),  m_msg(std::move(message)) {
     }
 
     MessageField::MessageField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {

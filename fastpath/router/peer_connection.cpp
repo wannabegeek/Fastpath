@@ -26,14 +26,14 @@
 #include "fastpath/event/Queue.h"
 #include "fastpath/messages/Message.h"
 #include "fastpath/router/peer_connection.h"
-#include "fastpath/router/subject.h"
+#include "fastpath/messages/subject.h"
 #include "fastpath/transport/Socket.h"
 
 namespace fp {
-    peer_connection::peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const DCF::MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
+    peer_connection::peer_connection(fp::Queue *queue, std::unique_ptr<fp::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const fp::MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
             : m_queue(queue), m_socket(std::move(socket)), m_buffer(4500), m_messageHandler(messageHandler), m_disconnectionHandler(disconnectionHandler) {
 
-        m_socketEvent = queue->registerEvent(m_socket->getSocket(), DCF::EventType::READ,
+        m_socketEvent = queue->registerEvent(m_socket->getSocket(), fp::EventType::READ,
                              std::bind(&peer_connection::data_handler, this, std::placeholders::_1,
                                        std::placeholders::_2));
     }
@@ -73,7 +73,7 @@ namespace fp {
         return (it != m_subscriptions.end());
     }
 
-    void peer_connection::handle_admin_message(const subject<> subject, DCF::Message &message) noexcept {
+    void peer_connection::handle_admin_message(const subject<> subject, fp::Message &message) noexcept {
         DEBUG_LOG("Received admin msg: " << message);
 
         if (subject == RegisterObserver()) {
@@ -95,29 +95,29 @@ namespace fp {
         }
     }
 
-    DCF::MessageDecodeStatus peer_connection::process_buffer(const DCF::MessageBuffer::ByteStorageType &buffer) noexcept {
+    fp::MessageDecodeStatus peer_connection::process_buffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept {
         const char *subject_ptr = nullptr;
         size_t subject_length = 0;
         uint8_t flags = 0;
         size_t msg_length = 0;
 
         buffer.mark();
-        auto status = DCF::Message::addressing_details(buffer, &subject_ptr, subject_length, flags, msg_length);
-        if (status == DCF::CompleteMessage) {
+        auto status = fp::Message::addressing_details(buffer, &subject_ptr, subject_length, flags, msg_length);
+        if (status == fp::CompleteMessage) {
             buffer.resetRead();
             if (subject_ptr != nullptr && subject_length > 0) {
                 DEBUG_LOG(
                         "Received message [" << subject_ptr << "] of length " << msg_length << ": read " <<
                         buffer.bytesRead() << " of a total " << m_buffer.length());
                 subject<> subject(subject_ptr);
-                const DCF::MessageBuffer::ByteStorageType &msgData = buffer.segment(msg_length);
+                const fp::MessageBuffer::ByteStorageType &msgData = buffer.segment(msg_length);
                 if (tf::unlikely(subject.is_admin())) {
-                    DCF::Message message;
+                    fp::Message message;
                     if (message.decode(msgData)) {
                         this->handle_admin_message(subject, message);
                     } else {
                         ERROR_LOG("Failed to decode message: " << msgData);
-                        status = DCF::CorruptMessage;
+                        status = fp::CorruptMessage;
                     }
                 } else {
                     // otherwise pass it to our handler
@@ -126,7 +126,7 @@ namespace fp {
                 buffer.mark();
             } else {
                 ERROR_LOG("Message has null or zero length subject");
-                status = DCF::CorruptMessage;
+                status = fp::CorruptMessage;
             }
         } else {
             buffer.resetRead();
@@ -135,7 +135,7 @@ namespace fp {
         return status;
     }
 
-    void peer_connection::data_handler(DCF::DataEvent *event, const DCF::EventType eventType) noexcept {
+    void peer_connection::data_handler(fp::DataEvent *event, const fp::EventType eventType) noexcept {
 
         static const size_t MTU_SIZE = 1500;
 
@@ -143,34 +143,34 @@ namespace fp {
         bool complete = false;
         while (!complete) {
             DEBUG_LOG(this << " ------------");
-            DCF::Socket::ReadResult result = m_socket->read(reinterpret_cast<const char *>(m_buffer.allocate(MTU_SIZE)), MTU_SIZE, size);
+            fp::Socket::ReadResult result = m_socket->read(reinterpret_cast<const char *>(m_buffer.allocate(MTU_SIZE)), MTU_SIZE, size);
             DEBUG_LOG("Read " << size << " bytes [total buffer size: " << m_buffer.length() << "]");
             m_buffer.erase_back(MTU_SIZE - size);
             DEBUG_LOG("Removed trailing " << MTU_SIZE - size << " bytes [total buffer size: " << m_buffer.length() << "]");
-            if (result == DCF::Socket::MoreData) {
-                const DCF::MessageBuffer::ByteStorageType &storage = m_buffer.byteStorage();
+            if (result == fp::Socket::MoreData) {
+                const fp::MessageBuffer::ByteStorageType &storage = m_buffer.byteStorage();
 
-                DCF::MessageDecodeStatus status;
-                while ((status = this->process_buffer(storage)) == DCF::CompleteMessage);
+                fp::MessageDecodeStatus status;
+                while ((status = this->process_buffer(storage)) == fp::CompleteMessage);
 
                 switch (status) {
-                    case DCF::CompleteMessage:
+                    case fp::CompleteMessage:
                         break;
-                    case DCF::IncompleteMessage:
+                    case fp::IncompleteMessage:
                         DEBUG_LOG("Removing " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
                         m_buffer.erase_front(storage.bytesRead());
                         DEBUG_LOG("Removed " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
                         break;
-                    case DCF::CorruptMessage:
+                    case fp::CorruptMessage:
                         m_socket->disconnect();
                         m_disconnectionHandler(this);
                         complete = true;
                         break;
                 }
 
-            } else if (result == DCF::Socket::NoData) {
+            } else if (result == fp::Socket::NoData) {
                 complete = true;
-            } else if (result == DCF::Socket::Closed) {
+            } else if (result == fp::Socket::Closed) {
                 DEBUG_LOG("Client Socket closed");
                 m_disconnectionHandler(this);
                 complete = true;
@@ -178,7 +178,7 @@ namespace fp {
         }
     }
 
-    bool peer_connection::sendBuffer(const DCF::MessageBuffer::ByteStorageType &buffer) noexcept {
+    bool peer_connection::sendBuffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept {
         DEBUG_LOG("Sending " << buffer.length() << " bytes to client");
         const byte *data;
         const size_t len = buffer.bytes(&data);

@@ -23,14 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SUBSCRIPTION_H
-#define TFDCF_SUBSCRIPTION_H
+#ifndef FASTPATH_SUBSCRIPTION_H
+#define FASTPATH_SUBSCRIPTION_H
 
 #include <string>
 #include <vector>
 
 #include "fastpath/utils/stringhash.h"
-#include "fastpath/router/subject.h"
+#include "subject.h"
 
 namespace fp {
     template <typename H = tf::string_hash> class subscription {
@@ -173,4 +173,4 @@ namespace fp {
     };
 }
 
-#endif //TFDCF_SUBSCRIPTION_H
+#endif //FASTPATH_SUBSCRIPTION_H

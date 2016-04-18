@@ -23,14 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_INLINEQUEUE_H
-#define TFDCF_INLINEQUEUE_H
+#ifndef FASTPATH_INLINEQUEUE_H
+#define FASTPATH_INLINEQUEUE_H
 
 #include "fastpath/event/Queue.h"
 #include "fastpath/event/InlineEventManager.h"
 #include "fastpath/event/TimerEvent.h"
 
-namespace DCF {
+namespace fp {
     /**
      * Queue for dispatching events to the registered callbacks.
      * This is a restricted dispatch mechanism only to be used for very
@@ -119,4 +119,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_INLINEQUEUE_H
+#endif //FASTPATH_INLINEQUEUE_H

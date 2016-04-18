@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_TFMULTIRINGBUFFER_H
-#define TFDCF_TFMULTIRINGBUFFER_H
+#ifndef FASTPATH_TFMULTIRINGBUFFER_H
+#define FASTPATH_TFMULTIRINGBUFFER_H
 
 #include <stddef.h>
 #include <atomic>
@@ -127,4 +127,4 @@ namespace tf {
     };
 }
 
-#endif //TFDCF_TFMULTIRINGBUFFER_H
+#endif //FASTPATH_TFMULTIRINGBUFFER_H

@@ -31,7 +31,7 @@
 #include "fastpath/event/IOEvent.h"
 #include "fastpath/event/TimerEvent.h"
 
-namespace DCF {
+namespace fp {
 
     InlineEventManager::InlineEventManager() noexcept : m_servicingEvents(false) {
     }

@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_ELEMENT_H
-#define TFDCF_ELEMENT_H
+#ifndef FASTPATH_ELEMENT_H
+#define FASTPATH_ELEMENT_H
 
 #include <cstddef>
 #include <string>
@@ -45,25 +45,25 @@
  * |    16 Bytes    | 32 Bytes  |   8 Bytes   | Variable |
  */
 
-namespace DCF {
+namespace fp {
 
     class Message;
 
     class Field : public Serializable {
     protected:
         char m_identifier[256];
-        StorageType m_type;
+        storage_type m_type;
         std::size_t m_data_length;
         virtual std::ostream& output(std::ostream& out) const = 0;
         virtual const bool isEqual(const Field &other) const noexcept = 0;
     public:
-        Field(const char *identifier, const StorageType type, const std::size_t data_length) noexcept : m_type(type), m_data_length(data_length) {
+        Field(const char *identifier, const storage_type type, const std::size_t data_length) noexcept : m_type(type), m_data_length(data_length) {
             strcpy(m_identifier, identifier);
         }
 
         Field(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) {
             if (tf::likely(buffer.remainingReadLength() >= MsgField::size())) {
-                m_type = static_cast<StorageType>(readScalar<MsgField::type>(buffer.readBytes()));
+                m_type = static_cast<storage_type>(readScalar<MsgField::type>(buffer.readBytes()));
                 buffer.advanceRead(sizeof(MsgField::type));
 
                 const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
@@ -92,7 +92,7 @@ namespace DCF {
 
         const char *identifier() const { return m_identifier; }
 
-        const StorageType type() const noexcept {
+        const storage_type type() const noexcept {
             return m_type;
         }
 
@@ -115,7 +115,7 @@ namespace DCF {
 
         static inline bool peek_field_header(const MessageBuffer::ByteStorageType &buffer, MsgField::type &type, MsgField::identifier_length &identifier_length, MsgField::data_length &data_size) noexcept {
             const byte *bytes = buffer.readBytes();
-            type = static_cast<StorageType>(readScalar<MsgField::type>(bytes));
+            type = static_cast<storage_type>(readScalar<MsgField::type>(bytes));
             std::advance(bytes, sizeof(MsgField::type));
             identifier_length = readScalar<MsgField::identifier_length >(bytes);
             std::advance(bytes, sizeof(MsgField::identifier_length));
@@ -144,4 +144,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_ELEMENT_H
+#endif //FASTPATH_ELEMENT_H

@@ -29,13 +29,13 @@
 
 namespace fp {
 
-    std::unique_ptr<DCF::Transport> make_relm_connection(const char *connection_url, const char *description) throw(fp::exception) {
-        DCF::url url(connection_url);
+    std::unique_ptr<fp::Transport> make_relm_connection(const char *connection_url, const char *description) throw(fp::exception) {
+        fp::url url(connection_url);
 
         if (url.protocol() == "tcp") {
-            return std::make_unique<DCF::TCPTransport>(url, description);
+            return std::make_unique<fp::TCPTransport>(url, description);
         } else if (url.protocol() == "shm") {
-            return std::make_unique<DCF::SHMTransport>(url, description);
+            return std::make_unique<fp::SHMTransport>(url, description);
         } else {
             throw fp::exception("Unsupported protocol");
         }
@@ -45,10 +45,10 @@ namespace fp {
 
 //
 //    realm_transport::realm_transport(const char *url, const char *description) {
-//        DCF::url u(url);
+//        fp::url u(url);
 //
 //        if (u.protocol() == "tcp") {
-//            m_transport = std::make_unique<DCF::TCPTransport>(u, description);
+//            m_transport = std::make_unique<fp::TCPTransport>(u, description);
 //        } else if (u.protocol() == "ipc") {
 //
 //        } else if (u.protocol() == "shm") {
@@ -61,7 +61,7 @@ namespace fp {
 //        // add transport to the global event manager
 //    }
 //
-//    bool realm_transport::set_queue(const DCF::Queue *queue) {
+//    bool realm_transport::set_queue(const fp::Queue *queue) {
 //        if (queue == nullptr) {
 //            if (m_associatedQueue != nullptr) {
 //                // we need to detach from the event manager
@@ -77,9 +77,9 @@ namespace fp {
 //    }
 //
 //    void realm_transport::broadcastConnectionStateChange(bool connected) {
-////        auto msg = std::make_shared<DCF::Message>();
+////        auto msg = std::make_shared<fp::Message>();
 ////        msg->setSubject(connected ? subject::daemon_connected : subject::daemon_disconnected);
-////        std::for_each(m_subscribers.begin(), m_subscribers.end(), [&](DCF::MessageListener *msgEvent) {
+////        std::for_each(m_subscribers.begin(), m_subscribers.end(), [&](fp::MessageListener *msgEvent) {
 ////            // TODO: check if the handler is interested in this message
 ////            msgEvent->__notify(msg);
 ////        });

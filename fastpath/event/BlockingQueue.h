@@ -23,14 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_BLOCKINGQUEUE_H
-#define TFDCF_BLOCKINGQUEUE_H
+#ifndef FASTPATH_BLOCKINGQUEUE_H
+#define FASTPATH_BLOCKINGQUEUE_H
 
 #include "fastpath/utils/blocking_ringbuffer.h"
 #include "fastpath/event/Queue.h"
 #include "fastpath/event/SharedQueue.h"
 
-namespace DCF {
+namespace fp {
     /**
      * Queue for dispatching events to the registered callbacks.
      * This queue will wait for an event to be placed on the queue,
@@ -98,4 +98,4 @@ namespace DCF {
 
     };
 }
-#endif //TFDCF_BLOCKINGQUEUE_H
+#endif //FASTPATH_BLOCKINGQUEUE_H

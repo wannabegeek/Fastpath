@@ -23,12 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_DATAEVENT_H
-#define TFDCF_DATAEVENT_H
+#ifndef FASTPATH_DATAEVENT_H
+#define FASTPATH_DATAEVENT_H
 
 #include "fastpath/event/IOEvent.h"
 
-namespace DCF {
+namespace fp {
     class DataEvent final : public IOEvent {
     private:
         std::function<void(DataEvent *, const EventType)> m_callback;
@@ -45,4 +45,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_DATAEVENT_H
+#endif //FASTPATH_DATAEVENT_H

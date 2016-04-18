@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_ELEMENTTRAITS_H
-#define TFDCF_ELEMENTTRAITS_H
+#ifndef FASTPATH_ELEMENTTRAITS_H
+#define FASTPATH_ELEMENTTRAITS_H
 
 #include <cstdint>
 #include <iosfwd>
@@ -32,7 +32,7 @@
 #include "fastpath/messages/StorageTypes.h"
 #include "fastpath/types.h"
 
-namespace DCF {
+namespace fp {
 
     class BaseMessage;
     class ScalarField;
@@ -42,7 +42,7 @@ namespace DCF {
     template<typename T>
     struct field_traits {
         static const bool value = false;
-        static const StorageType type = StorageType::unknown;
+        static const storage_type type = storage_type::unknown;
         static const size_t size = 0;
         const constexpr char *description() { return "unknown"; }
     };
@@ -50,7 +50,7 @@ namespace DCF {
     template<>
     struct field_traits<bool> {
         static const bool value = true;
-        static const StorageType type = StorageType::boolean;
+        static const storage_type type = storage_type::boolean;
         static const size_t size = sizeof(bool);
         const constexpr char *description() { return "boolean"; }
     };
@@ -58,7 +58,7 @@ namespace DCF {
     template<>
     struct field_traits<uint8_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::uint8;
+        static const storage_type type = storage_type::uint8;
         static const size_t size = sizeof(uint8_t);
         const constexpr char *description() { return "uint8"; }
     };
@@ -66,7 +66,7 @@ namespace DCF {
     template<>
     struct field_traits<uint16_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::uint16;
+        static const storage_type type = storage_type::uint16;
         static const size_t size = sizeof(uint16_t);
         const constexpr char *description() { return "uint16"; }
     };
@@ -74,7 +74,7 @@ namespace DCF {
     template<>
     struct field_traits<uint32_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::uint32;
+        static const storage_type type = storage_type::uint32;
         static const size_t size = sizeof(uint32_t);
         const constexpr char *description() { return "uint32"; }
     };
@@ -82,7 +82,7 @@ namespace DCF {
     template<>
     struct field_traits<uint64_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::uint64;
+        static const storage_type type = storage_type::uint64;
         static const size_t size = sizeof(uint64_t);
         const constexpr char *description() { return "uint64"; }
     };
@@ -90,7 +90,7 @@ namespace DCF {
     template<>
     struct field_traits<int8_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::int8;
+        static const storage_type type = storage_type::int8;
         static const size_t size = sizeof(int8_t);
         const constexpr char *description() { return "int8"; }
     };
@@ -98,7 +98,7 @@ namespace DCF {
     template<>
     struct field_traits<int16_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::int16;
+        static const storage_type type = storage_type::int16;
         static const size_t size = sizeof(int16_t);
         const constexpr char *description() { return "int16"; }
     };
@@ -106,7 +106,7 @@ namespace DCF {
     template<>
     struct field_traits<int32_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::int32;
+        static const storage_type type = storage_type::int32;
         static const size_t size = sizeof(int32_t);
         const constexpr char *description() { return "int32"; }
     };
@@ -114,7 +114,7 @@ namespace DCF {
     template<>
     struct field_traits<int64_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::int64;
+        static const storage_type type = storage_type::int64;
         static const size_t size = sizeof(int64_t);
         const constexpr char *description() { return "int64"; }
     };
@@ -127,7 +127,7 @@ namespace DCF {
     template<>
     struct field_traits<float32_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::float32;
+        static const storage_type type = storage_type::float32;
         static const size_t size = sizeof(float32_t);
         const constexpr char *description() { return "float32"; }
     };
@@ -135,7 +135,7 @@ namespace DCF {
     template<>
     struct field_traits<float64_t> {
         static const bool value = true;
-        static const StorageType type = StorageType::float64;
+        static const storage_type type = storage_type::float64;
         static const size_t size = sizeof(float64_t);
         const constexpr char *description() { return "float64"; }
     };
@@ -143,28 +143,28 @@ namespace DCF {
     template<>
     struct field_traits<const char *> {
         static const bool value = true;
-        static const StorageType type = StorageType::string;
+        static const storage_type type = storage_type::string;
         const constexpr char *description() { return "string"; }
     };
 
     template<>
     struct field_traits<std::string> {
         static const bool value = true;
-        static const StorageType type = StorageType::string;
+        static const storage_type type = storage_type::string;
         const constexpr char *description() { return "string"; }
     };
 
     template<>
     struct field_traits<BaseMessage> {
         static const bool value = true;
-        static const StorageType type = StorageType::message;
+        static const storage_type type = storage_type::message;
         const constexpr char *description() { return "message"; }
     };
 
     template<>
     struct field_traits<byte *> {
         static const bool value = true;
-        static const StorageType type = StorageType::data;
+        static const storage_type type = storage_type::data;
         const constexpr char *description() { return "data"; }
     };
 
@@ -262,4 +262,4 @@ namespace DCF {
 }
 
 
-#endif //TFDCF_ELEMENTTRAITS_H
+#endif //FASTPATH_ELEMENTTRAITS_H

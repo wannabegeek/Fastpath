@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_ACTIONNOTIFIER_H
-#define TFDCF_ACTIONNOTIFIER_H
+#ifndef FASTPATH_ACTIONNOTIFIER_H
+#define FASTPATH_ACTIONNOTIFIER_H
 
 #include <unistd.h>
 #include <atomic>
@@ -41,7 +41,7 @@
 #include "fastpath/event/PollManager.h"
 #include "fastpath/event/EventType.h"
 
-namespace DCF {
+namespace fp {
 #ifdef HAVE_EVENTFD
     class ActionNotifier {
     private:
@@ -146,4 +146,4 @@ namespace DCF {
 #endif
 }
 
-#endif //TFDCF_ACTIONNOTIFIER_H
+#endif //FASTPATH_ACTIONNOTIFIER_H

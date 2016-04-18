@@ -26,7 +26,7 @@
 #include "fastpath/messages/Message.h"
 #include "fastpath/transport/TransportIOEvent.h"
 
-namespace DCF {
+namespace fp {
     TransportIOEvent::TransportIOEvent(const int fd, const EventType &eventType, const std::function<void(TransportIOEvent *event, const EventType type)> &callback) : IOEvent(nullptr, fd, eventType), m_callback(callback) {
     }
 

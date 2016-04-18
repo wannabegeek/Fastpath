@@ -32,8 +32,8 @@
 
 TEST(BusySpinQueue, Timeout) {
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
-    DCF::BusySpinQueue queue;
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
+    fp::BusySpinQueue queue;
 
     const auto startTime = std::chrono::steady_clock::now();
     queue.dispatch(std::chrono::milliseconds(100));
@@ -42,13 +42,13 @@ TEST(BusySpinQueue, Timeout) {
     EXPECT_GE(actual.count(), 100);
     EXPECT_LT(actual.count(), 200);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }
 
 TEST(BlockingQueue, Timeout) {
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
-    DCF::BlockingQueue queue;
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
+    fp::BlockingQueue queue;
 
     const auto startTime = std::chrono::steady_clock::now();
     queue.dispatch(std::chrono::milliseconds(100));
@@ -57,5 +57,5 @@ TEST(BlockingQueue, Timeout) {
     EXPECT_GE(actual.count(), 100);
     EXPECT_LT(actual.count(), 200);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }

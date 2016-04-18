@@ -31,7 +31,7 @@
 #include "fastpath/event/Event.h"
 #include "fastpath/status.h"
 
-namespace  DCF {
+namespace fp {
 
     class Queue;
 

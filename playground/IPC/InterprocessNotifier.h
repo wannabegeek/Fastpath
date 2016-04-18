@@ -2,15 +2,15 @@
 // Created by fewstert on 01/04/16.
 //
 
-#ifndef TFDCF_INTERPROCESSNOTIFIER_H
-#define TFDCF_INTERPROCESSNOTIFIER_H
+#ifndef FASTPATH_INTERPROCESSNOTIFIER_H
+#define FASTPATH_INTERPROCESSNOTIFIER_H
 
 #include <fastpath/transport/UnixSocket.h>
 
 #define READ_FD 0
 #define WRITE_FD 1
 
-namespace DCF {
+namespace fp {
     class UnixSocket;
 
     class InterprocessNotifier {
@@ -26,4 +26,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_INTERPROCESSNOTIFIER_H
+#endif //FASTPATH_INTERPROCESSNOTIFIER_H

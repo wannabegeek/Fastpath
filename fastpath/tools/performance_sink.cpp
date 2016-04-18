@@ -61,11 +61,11 @@ int main( int argc, char *argv[] )  {
     }
 
     try {
-        DCF::Session::initialise();
+        fp::Session::initialise();
 
         const std::string url = o.getWithDefault("url", "");
 
-        DCF::BlockingQueue queue;
+        fp::BlockingQueue queue;
 
         auto transport = fp::make_relm_connection(url.c_str(), "");
 
@@ -74,8 +74,8 @@ int main( int argc, char *argv[] )  {
             return 1;
         }
 
-        DCF::Message sendMsg;
-        DCF::Subscriber subscriber(transport, "TEST.PERF.SOURCE", [&](const DCF::Subscriber *event, const DCF::Message *msg) noexcept {
+        fp::Message sendMsg;
+        fp::Subscriber subscriber(transport, "TEST.PERF.SOURCE", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
             auto recv_ts = std::chrono::high_resolution_clock::now();
             DEBUG_LOG("Received message: " << *msg);
             uint32_t id = 0;
@@ -86,7 +86,7 @@ int main( int argc, char *argv[] )  {
                 sendMsg.addScalarField("id", id);
                 const uint64_t ts = std::chrono::duration_cast<std::chrono::microseconds>(recv_ts.time_since_epoch()).count();
                 sendMsg.addScalarField("timestamp", ts);
-                if (transport->sendMessage(sendMsg) == DCF::OK) {
+                if (transport->sendMessage(sendMsg) == fp::OK) {
                     DEBUG_LOG("Message send successfully: " << sendMsg);
                 } else {
                     ERROR_LOG("Failed to send message");

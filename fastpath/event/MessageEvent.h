@@ -23,13 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_MESSAGEEVENT_H
-#define TFDCF_MESSAGEEVENT_H
+#ifndef FASTPATH_MESSAGEEVENT_H
+#define FASTPATH_MESSAGEEVENT_H
 
 #include "fastpath/event/Event.h"
 #include "fastpath/transport/Transport.h"
 
-namespace DCF {
+namespace fp {
     class Subscriber;
 
     class MessageEvent : public Event {
@@ -48,4 +48,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_MESSAGEEVENT_H
+#endif //FASTPATH_MESSAGEEVENT_H

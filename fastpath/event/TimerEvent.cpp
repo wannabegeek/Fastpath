@@ -32,7 +32,7 @@
 #   include <sys/timerfd.h>
 #endif
 
-namespace DCF {
+namespace fp {
 
 #if defined HAVE_KQUEUE
     TimerEvent::TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback)

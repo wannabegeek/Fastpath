@@ -26,7 +26,7 @@
 #include "fastpath/transport/UnixSocketClient.h"
 #include "fastpath/utils/logger.h"
 
-namespace DCF {
+namespace fp {
     UnixSocketClient::UnixSocketClient(const std::string &path) : UnixSocket(path) {
     }
 

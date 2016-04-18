@@ -23,13 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_URL_H
-#define TFDCF_URL_H
+#ifndef FASTPATH_URL_H
+#define FASTPATH_URL_H
 
 #include <string>
 #include <unordered_map>
 
-namespace DCF {
+namespace fp {
     class url {
     public:
         using query_type = std::unordered_map<std::string, std::string>;
@@ -57,4 +57,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_URL_H
+#endif //FASTPATH_URL_H

@@ -23,15 +23,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_BUSYSPINQUEUE_H_H
-#define TFDCF_BUSYSPINQUEUE_H_H
+#ifndef FASTPATH_BUSYSPINQUEUE_H_H
+#define FASTPATH_BUSYSPINQUEUE_H_H
 
 #include "fastpath/utils/tfringbuffer.h"
 #include "fastpath/event/Queue.h"
 #include "fastpath/event/TimerEvent.h"
 #include "fastpath/event/SharedQueue.h"
 
-namespace DCF {
+namespace fp {
     /**
      * Queue using busy spin wait for dispatching to registered callbacks.
      * This queue will spin in a loop using up CPU cycles waiting
@@ -106,4 +106,4 @@ namespace DCF {
         }
     };
 }
-#endif //TFDCF_BUSYSPINQUEUE_H_H
+#endif //FASTPATH_BUSYSPINQUEUE_H_H

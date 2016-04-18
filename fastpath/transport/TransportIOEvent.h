@@ -23,14 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_TRANSPORTIOEVENT_H
-#define TFDCF_TRANSPORTIOEVENT_H
+#ifndef FASTPATH_TRANSPORTIOEVENT_H
+#define FASTPATH_TRANSPORTIOEVENT_H
 
 #include <functional>
 
 #include "fastpath/event/IOEvent.h"
 
-namespace DCF {
+namespace fp {
     class TransportIOEvent final : public IOEvent {
     private:
         const std::function<void(TransportIOEvent *event, const EventType type)> m_callback;
@@ -43,4 +43,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_TRANSPORTIOEVENT_H
+#endif //FASTPATH_TRANSPORTIOEVENT_H

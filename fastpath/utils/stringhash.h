@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SIMPLESTRINGHASHER_H
-#define TFDCF_SIMPLESTRINGHASHER_H
+#ifndef FASTPATH_SIMPLESTRINGHASHER_H
+#define FASTPATH_SIMPLESTRINGHASHER_H
 
 #include <cstddef>
 
@@ -66,4 +66,4 @@ namespace tf {
     };
 }
 
-#endif //TFDCF_SIMPLESTRINGHASHER_H
+#endif //FASTPATH_SIMPLESTRINGHASHER_H

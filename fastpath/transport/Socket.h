@@ -38,7 +38,7 @@
 
 //#include "TFException.h"
 
-namespace DCF {
+namespace fp {
     enum {
         SocketOptionsNone = 1 << 0,
         SocketOptionsNonBlocking = 1 << 1,

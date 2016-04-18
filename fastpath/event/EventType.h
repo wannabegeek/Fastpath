@@ -28,7 +28,7 @@
 
 #include <string>
 
-namespace DCF {
+namespace fp {
     typedef enum {
         NONE = 0,
         READ = 1 << 0,

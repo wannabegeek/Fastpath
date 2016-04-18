@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_QUEUE_H
-#define TFDCF_QUEUE_H
+#ifndef FASTPATH_QUEUE_H
+#define FASTPATH_QUEUE_H
 
 #include <unordered_set>
 #include <memory>
@@ -34,7 +34,7 @@
 #include "fastpath/event/Session.h"
 #include "fastpath/event/EventManager.h"
 
-namespace DCF {
+namespace fp {
     class Event;
     class DataEvent;
     class Message;
@@ -140,4 +140,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_QUEUE_H
+#endif //FASTPATH_QUEUE_H

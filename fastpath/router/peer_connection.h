@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_PEER_CONNECTION_H
-#define TFDCF_PEER_CONNECTION_H
+#ifndef FASTPATH_PEER_CONNECTION_H
+#define FASTPATH_PEER_CONNECTION_H
 
 #include <string>
 #include <vector>
@@ -33,9 +33,9 @@
 #include "fastpath/event/IOEvent.h"
 #include "fastpath/messages/Message.h"
 #include "fastpath/MessageBuffer.h"
-#include "fastpath/router/subscription.h"
+#include "fastpath/messages/subscription.h"
 
-namespace DCF {
+namespace fp {
     class Socket;
     class Queue;
 }
@@ -48,20 +48,20 @@ namespace fp {
         static subject<> UnregisterObserver() { return subject<>("_FP.UNREGISTER.OBSERVER"); }
 
         std::vector<subscription<>> m_subscriptions;
-        DCF::Queue *m_queue;
-        std::unique_ptr<DCF::Socket> m_socket;
-        DCF::DataEvent *m_socketEvent;
+        fp::Queue *m_queue;
+        std::unique_ptr<fp::Socket> m_socket;
+        fp::DataEvent *m_socketEvent;
 
-        DCF::MessageBuffer m_buffer;
-        const std::function<void(peer_connection *, const subject<> &, const DCF::MessageBuffer::ByteStorageType &)> m_messageHandler;
+        fp::MessageBuffer m_buffer;
+        const std::function<void(peer_connection *, const subject<> &, const fp::MessageBuffer::ByteStorageType &)> m_messageHandler;
         const std::function<void(peer_connection *)> m_disconnectionHandler;
 
-        void data_handler(DCF::DataEvent *event, const DCF::EventType eventType) noexcept;
-        DCF::MessageDecodeStatus process_buffer(const DCF::MessageBuffer::ByteStorageType &buffer) noexcept;
+        void data_handler(fp::DataEvent *event, const fp::EventType eventType) noexcept;
+        fp::MessageDecodeStatus process_buffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept;
 
-        void handle_admin_message(const subject<> subject, DCF::Message &message) noexcept;
+        void handle_admin_message(const subject<> subject, fp::Message &message) noexcept;
     public:
-        peer_connection(DCF::Queue *queue, std::unique_ptr<DCF::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const DCF::MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
+        peer_connection(fp::Queue *queue, std::unique_ptr<fp::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const fp::MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
         peer_connection(peer_connection &&other) noexcept;
         ~peer_connection() noexcept;
 
@@ -69,8 +69,8 @@ namespace fp {
         void remove_subscription(const char *subject) noexcept;
         bool is_interested(const subject<> &subject) const noexcept;
 
-        bool sendBuffer(const DCF::MessageBuffer::ByteStorageType &buffer) noexcept;
+        bool sendBuffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept;
     };
 }
 
-#endif //TFDCF_PEER_CONNECTION_H
+#endif //FASTPATH_PEER_CONNECTION_H

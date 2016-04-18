@@ -23,12 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_TYPES_H_H
-#define TFDCF_TYPES_H_H
+#ifndef FASTPATH_TYPES_H_H
+#define FASTPATH_TYPES_H_H
 
 typedef float float32_t;
 typedef double float64_t;
 
 typedef unsigned char byte;
 
-#endif //TFDCF_TYPES_H_H
+#endif //FASTPATH_TYPES_H_H

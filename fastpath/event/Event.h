@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_EVENT_H
-#define TFDCF_EVENT_H
+#ifndef FASTPATH_EVENT_H
+#define FASTPATH_EVENT_H
 
 #include <functional>
 #include <atomic>
@@ -32,7 +32,7 @@
 #include "fastpath/event/EventType.h"
 #include "fastpath/event/Session.h"
 
-namespace DCF {
+namespace fp {
     class Queue;
 
     class Event {
@@ -87,4 +87,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_EVENT_H
+#endif //FASTPATH_EVENT_H

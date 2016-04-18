@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_GLOBALEVENTMANAGER_H
-#define TFDCF_GLOBALEVENTMANAGER_H
+#ifndef FASTPATH_GLOBALEVENTMANAGER_H
+#define FASTPATH_GLOBALEVENTMANAGER_H
 
 #include <unordered_map>
 #include <vector>
@@ -34,7 +34,7 @@
 #include "fastpath/event/EventManager.h"
 #include "fastpath/event/ActionNotifier.h"
 
-namespace DCF {
+namespace fp {
     class Event;
 
     class GlobalEventManager final : public EventManager {
@@ -67,4 +67,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_GLOBALEVENTMANAGER_H
+#endif //FASTPATH_GLOBALEVENTMANAGER_H

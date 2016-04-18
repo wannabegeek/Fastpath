@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_OPTIMIZE_H
-#define TFDCF_OPTIMIZE_H
+#ifndef FASTPATH_OPTIMIZE_H
+#define FASTPATH_OPTIMIZE_H
 
 namespace tf {
 #if defined(__GNUC__)
@@ -36,4 +36,4 @@ namespace tf {
 #endif
 }
 
-#endif //TFDCF_OPTIMIZE_H
+#endif //FASTPATH_OPTIMIZE_H

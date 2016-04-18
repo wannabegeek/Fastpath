@@ -23,12 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_LARGEDATAFIELD_H
-#define TFDCF_LARGEDATAFIELD_H
+#ifndef FASTPATH_LARGEDATAFIELD_H
+#define FASTPATH_LARGEDATAFIELD_H
 
 #include "fastpath/messages/DataField.h"
 
-namespace DCF {
+namespace fp {
     template <typename Allocator> class LargeDataField final : public DataField {
     private:
         MutableByteStorage<byte, Allocator> m_storage;
@@ -44,13 +44,13 @@ namespace DCF {
 
         virtual std::ostream& output(std::ostream& out) const override {
             switch (m_type) {
-                case StorageType::string: {
+                case storage_type::string: {
                     const byte *data;
                     const size_t size = m_storage.bytes(&data);
                     out << m_identifier << ":string=" << std::string(reinterpret_cast<const char *>(data), size - 1); // -1 for NULL
                     break;
                 }
-                case StorageType::data: {
+                case storage_type::data: {
                     out << m_identifier << ":opaque=" << "[data of " << m_storage.length() << " bytes]";
                     break;
                 }
@@ -63,11 +63,11 @@ namespace DCF {
         }
 
     public:
-        LargeDataField(const char *identifier, const char *value, const Allocator allocator = Allocator()) noexcept : DataField(identifier, StorageType::string, strlen(value) + 1), m_storage(512, allocator) {
+        LargeDataField(const char *identifier, const char *value, const Allocator allocator = Allocator()) noexcept : DataField(identifier, storage_type::string, strlen(value) + 1), m_storage(512, allocator) {
             m_storage.setData(reinterpret_cast<const byte *>(value), m_data_length);
         }
 
-        LargeDataField(const char *identifier, const byte *value, const std::size_t length, const Allocator allocator = Allocator()) noexcept : DataField(identifier, StorageType::data, length), m_storage(length, allocator) {
+        LargeDataField(const char *identifier, const byte *value, const std::size_t length, const Allocator allocator = Allocator()) noexcept : DataField(identifier, storage_type::data, length), m_storage(length, allocator) {
             m_storage.setData(reinterpret_cast<const byte *>(value), length);
         }
 
@@ -77,12 +77,12 @@ namespace DCF {
         }
 
         const size_t get(const byte **data) const noexcept override {
-            assert(m_type == StorageType::data);
+            assert(m_type == storage_type::data);
             return m_storage.bytes(data);
         }
 
         const size_t get(const char **data) const noexcept override {
-            assert(m_type == StorageType::string);
+            assert(m_type == storage_type::string);
             const byte *bytes = nullptr;
             const size_t r =m_storage.bytes(&bytes);
             *data = reinterpret_cast<const char *>(bytes);
@@ -101,4 +101,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_LARGEDATAFIELD_H
+#endif //FASTPATH_LARGEDATAFIELD_H

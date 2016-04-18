@@ -23,13 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_MESSAGEFIELD_H
-#define TFDCF_MESSAGEFIELD_H
+#ifndef FASTPATH_MESSAGEFIELD_H
+#define FASTPATH_MESSAGEFIELD_H
 
 #include "fastpath/messages/Field.h"
 #include "fastpath/messages/BaseMessage.h"
 
-namespace DCF {
+namespace fp {
     class MessageField final : public Field {
     private:
         BaseMessage m_msg;
@@ -55,4 +55,4 @@ namespace DCF {
         const size_t encode(MessageBuffer &buffer) const noexcept override;
     };
 }
-#endif //TFDCF_MESSAGEFIELD_H
+#endif //FASTPATH_MESSAGEFIELD_H

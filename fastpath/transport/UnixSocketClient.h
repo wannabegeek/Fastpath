@@ -23,13 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_UNIXSOCKETCLIENT_H
-#define TFDCF_UNIXSOCKETCLIENT_H
+#ifndef FASTPATH_UNIXSOCKETCLIENT_H
+#define FASTPATH_UNIXSOCKETCLIENT_H
 
 
 #include "fastpath/transport/UnixSocket.h"
 
-namespace DCF {
+namespace fp {
     class UnixSocketClient final : public UnixSocket {
     public:
         UnixSocketClient(const std::string &path);
@@ -40,4 +40,4 @@ namespace DCF {
 }
 
 
-#endif //TFDCF_UNIXSOCKETCLIENT_H
+#endif //FASTPATH_UNIXSOCKETCLIENT_H

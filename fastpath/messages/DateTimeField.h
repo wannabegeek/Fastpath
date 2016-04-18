@@ -23,13 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_DATETIMEFIELD_H
-#define TFDCF_DATETIMEFIELD_H
+#ifndef FASTPATH_DATETIMEFIELD_H
+#define FASTPATH_DATETIMEFIELD_H
 
 #include <chrono>
 #include "fastpath/messages/Field.h"
 
-namespace DCF {
+namespace fp {
     class DateTimeField final : public Field {
     private:
         static constexpr int seconds = 0;
@@ -56,7 +56,7 @@ namespace DCF {
         }
 
     public:
-        DateTimeField(const char *identifier, const std::chrono::time_point<std::chrono::system_clock> &value) noexcept : Field(identifier, StorageType::date_time, data_size) {
+        DateTimeField(const char *identifier, const std::chrono::time_point<std::chrono::system_clock> &value) noexcept : Field(identifier, storage_type::date_time, data_size) {
             m_time_point = value;
             auto time = std::chrono::duration_cast<std::chrono::microseconds>(value.time_since_epoch());
             m_time[seconds] = std::chrono::duration_cast<std::chrono::seconds>(time).count();
@@ -84,4 +84,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_DATETIMEFIELD_H
+#endif //FASTPATH_DATETIMEFIELD_H

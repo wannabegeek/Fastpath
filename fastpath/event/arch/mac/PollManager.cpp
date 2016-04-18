@@ -35,7 +35,7 @@
 #include <array>
 #include <sys/event.h>
 
-namespace DCF {
+namespace fp {
     EventPoll::EventPoll() : m_err_count(0) {
         m_fd = kqueue();
         if (m_fd == -1) {

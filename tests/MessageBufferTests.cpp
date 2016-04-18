@@ -28,7 +28,7 @@
 #include "fastpath/MessageBuffer.h"
 
 TEST(MessageBuffer, SimpleAllocation) {
-    DCF::MessageBuffer buffer(10);
+    fp::MessageBuffer buffer(10);
 
     const char *test = "Hello";
     for (int i = 0; i < 2; i++) {
@@ -51,7 +51,7 @@ TEST(MessageBuffer, SimpleAllocation) {
 }
 
 TEST(MessageBuffer, SingleAllocation) {
-    DCF::MessageBuffer buffer(16);
+    fp::MessageBuffer buffer(16);
 
     const char *test = "Hello";
     for (int i = 0; i < 4; i++) {
@@ -74,7 +74,7 @@ TEST(MessageBuffer, SingleAllocation) {
 }
 
 TEST(MessageBuffer, DoubleAllocation) {
-    DCF::MessageBuffer buffer(16);
+    fp::MessageBuffer buffer(16);
 
     const char *test = "Hello";
     for (int i = 0; i < 8; i++) {
@@ -97,8 +97,8 @@ TEST(MessageBuffer, DoubleAllocation) {
 }
 
 TEST(MessageBuffer, Append) {
-    DCF::MessageBuffer buffer1(16);
-    DCF::MessageBuffer buffer2(16);
+    fp::MessageBuffer buffer1(16);
+    fp::MessageBuffer buffer2(16);
 
     const char *test = "Hello";
     for (int i = 0; i < 4; i++) {
@@ -120,7 +120,7 @@ TEST(MessageBuffer, Append) {
 }
 
 TEST(MessageBuffer, Clear) {
-    DCF::MessageBuffer buffer(16);
+    fp::MessageBuffer buffer(16);
 
     const char *test = "Hello";
     for (int i = 0; i < 4; i++) {
@@ -134,7 +134,7 @@ TEST(MessageBuffer, Clear) {
 }
 
 TEST(MessageBuffer, EraseBackAll) {
-    DCF::MessageBuffer buffer(16);
+    fp::MessageBuffer buffer(16);
 
     const char *test = "01234567890123456789";
     buffer.append(reinterpret_cast<const byte *>(test), 20);
@@ -153,7 +153,7 @@ TEST(MessageBuffer, EraseBackAll) {
 }
 
 TEST(MessageBuffer, EraseBackPartial) {
-    DCF::MessageBuffer buffer(16);
+    fp::MessageBuffer buffer(16);
 
     const char *test = "01234567890123456789";
     buffer.append(reinterpret_cast<const byte *>(test), 20);
@@ -170,7 +170,7 @@ TEST(MessageBuffer, EraseBackPartial) {
 }
 
 TEST(MessageBuffer, EraseFrontPartial) {
-    DCF::MessageBuffer buffer(16);
+    fp::MessageBuffer buffer(16);
 
     const char *test = "0123456789ABCDE";
     buffer.append(reinterpret_cast<const byte *>(test), 16);
@@ -187,7 +187,7 @@ TEST(MessageBuffer, EraseFrontPartial) {
 }
 
 TEST(MessageBuffer, EraseFrontAll) {
-    DCF::MessageBuffer buffer(16);
+    fp::MessageBuffer buffer(16);
 
     const char *test = "0123456789ABCDE";
     buffer.append(reinterpret_cast<const byte *>(test), 16);
@@ -206,14 +206,14 @@ TEST(MessageBuffer, EraseFrontAll) {
 }
 
 TEST(MessageBuffer, MoveConstructor) {
-    DCF::MessageBuffer buffer1(16);
+    fp::MessageBuffer buffer1(16);
 
     const char *test = "Hello";
     for (int i = 0; i < 4; i++) {
         buffer1.append(reinterpret_cast<const byte *>(test), 5);
     }
 
-    DCF::MessageBuffer buffer2 = DCF::MessageBuffer(std::move(buffer1));
+    fp::MessageBuffer buffer2 = fp::MessageBuffer(std::move(buffer1));
 
     const byte *data = nullptr;
     EXPECT_EQ(0u, buffer1.bytes(&data));

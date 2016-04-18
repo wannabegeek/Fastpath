@@ -26,7 +26,7 @@
 #include "fastpath/transport/SHMTransport.h"
 #include "fastpath/transport/TransportIOEvent.h"
 
-namespace DCF {
+namespace fp {
     SHMTransport::SHMTransport(const char *url_ptr, const char *description) : SHMTransport(url(url_ptr), description) {
     }
 

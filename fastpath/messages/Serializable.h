@@ -23,13 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SERIALIZABLE_H
-#define TFDCF_SERIALIZABLE_H
+#ifndef FASTPATH_SERIALIZABLE_H
+#define FASTPATH_SERIALIZABLE_H
 
 #include "fastpath/MessageBuffer.h"
 #include "fastpath/types.h"
 
-namespace DCF {
+namespace fp {
     template<typename T> T endianScalar(T t) {
 #ifdef __BIG_ENDIAN__
         if (sizeof(T) == 1) {   // Compile-time if-then's.
@@ -70,4 +70,4 @@ namespace DCF {
 
 }
 
-#endif //TFDCF_SERIALIZABLE_H
+#endif //FASTPATH_SERIALIZABLE_H

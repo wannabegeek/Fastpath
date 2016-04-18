@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SUBJECT_H
-#define TFDCF_SUBJECT_H
+#ifndef FASTPATH_SUBJECT_H
+#define FASTPATH_SUBJECT_H
 
 #include "fastpath/utils/stringhash.h"
 
@@ -80,4 +80,4 @@ namespace fp {
     };
 }
 
-#endif //TFDCF_SUBJECT_H
+#endif //FASTPATH_SUBJECT_H

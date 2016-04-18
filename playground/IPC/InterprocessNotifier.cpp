@@ -18,7 +18,7 @@
 
 #define MAX_FDS 960
 
-namespace DCF {
+namespace fp {
     InterprocessNotifier::InterprocessNotifier(std::unique_ptr<UnixSocket> &&socket) : m_socket(std::move(socket)) {
     }
 
@@ -90,8 +90,8 @@ namespace DCF {
         msgh.msg_control = control_un.control;
         msgh.msg_controllen = sizeof(struct cmsghdr) + sizeof(int) * num_fds;
 
-        DCF::UnixSocket::ReadResult result = socket->read_ancillary(&msgh);
-        if (result == DCF::UnixSocket::MoreData) {
+        fp::UnixSocket::ReadResult result = socket->read_ancillary(&msgh);
+        if (result == fp::UnixSocket::MoreData) {
             struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msgh);
             if (cmsg != nullptr) {
                 num_fds = std::min(num_fds, (cmsg->cmsg_len - sizeof(struct cmsghdr)) / sizeof(int));
@@ -103,9 +103,9 @@ namespace DCF {
             } else {
                 ERROR_LOG("No header found");
             }
-        } else if (result == DCF::UnixSocket::NoData) {
+        } else if (result == fp::UnixSocket::NoData) {
             DEBUG_LOG("No data");
-        } else if (result == DCF::UnixSocket::Closed) {
+        } else if (result == fp::UnixSocket::Closed) {
             DEBUG_LOG("Closed");
         }
 

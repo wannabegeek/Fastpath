@@ -37,7 +37,7 @@
 #include <sys/socket.h>
 #include <cstring>
 
-namespace DCF {
+namespace fp {
 
     TCPSocket::TCPSocket(const std::string &host, const std::string &service) throw(socket_error) {
         struct addrinfo hints;

@@ -23,12 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_TCPSOCKET_H
-#define TFDCF_TCPSOCKET_H
+#ifndef FASTPATH_TCPSOCKET_H
+#define FASTPATH_TCPSOCKET_H
 
 #include "fastpath/transport/Socket.h"
 
-namespace DCF {
+namespace fp {
     class TCPSocket : public Socket {
     protected:
         uint16_t m_port;
@@ -48,4 +48,4 @@ namespace DCF {
 }
 
 
-#endif //TFDCF_TCPSOCKET_H
+#endif //FASTPATH_TCPSOCKET_H

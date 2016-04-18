@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_MUTABLEBYTESTORAGE_H
-#define TFDCF_MUTABLEBYTESTORAGE_H
+#ifndef FASTPATH_MUTABLEBYTESTORAGE_H
+#define FASTPATH_MUTABLEBYTESTORAGE_H
 
 
 #include <stddef.h>
@@ -33,7 +33,7 @@
 
 #include "fastpath/ByteStorage.h"
 
-namespace DCF {
+namespace fp {
     template <typename T, typename Allocator = std::allocator<T>> class MutableByteStorage : public ByteStorage<T, Allocator> {
     public:
 
@@ -98,4 +98,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_MUTABLEBYTESTORAGE_H
+#endif //FASTPATH_MUTABLEBYTESTORAGE_H

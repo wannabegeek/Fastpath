@@ -34,7 +34,7 @@
 #include "fastpath/event/IOEvent.h"
 #include "fastpath/utils/logger.h"
 
-namespace DCF {
+namespace fp {
 
     GlobalEventManager::GlobalEventManager() {
         m_eventLoop.add(m_actionNotifier.pollElement());

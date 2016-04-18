@@ -23,14 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SMALLDATAFIELD_H
-#define TFDCF_SMALLDATAFIELD_H
+#ifndef FASTPATH_SMALLDATAFIELD_H
+#define FASTPATH_SMALLDATAFIELD_H
 
 #include "fastpath/messages/DataField.h"
 
 #include <cstring>
 
-namespace DCF {
+namespace fp {
     class SmallDataField final : public DataField {
     public:
         static constexpr std::size_t max_size = 256;
@@ -49,11 +49,11 @@ namespace DCF {
         virtual std::ostream& output(std::ostream& out) const override {
             out << m_identifier << ":" << StorageTypeDescription[m_type] << "=";
             switch (m_type) {
-                case StorageType::string: {
+                case storage_type::string: {
                     out << std::string(reinterpret_cast<const char *>(m_storage), m_data_length - 1); // -1 for NULL
                     break;
                 }
-                case StorageType::data: {
+                case storage_type::data: {
                     out << "[data of " << m_data_length << " bytes]";
                     break;
                 }
@@ -66,11 +66,11 @@ namespace DCF {
         }
 
     public:
-        SmallDataField(const char *identifier, const char *value) noexcept : DataField(identifier, StorageType::string, strlen(value) + 1) {
+        SmallDataField(const char *identifier, const char *value) noexcept : DataField(identifier, storage_type::string, strlen(value) + 1) {
             std::strncpy(reinterpret_cast<char *>(m_storage), value, m_data_length);
         }
 
-        SmallDataField(const char *identifier, const byte *value, const std::size_t length) noexcept : DataField(identifier, StorageType::data, length) {
+        SmallDataField(const char *identifier, const byte *value, const std::size_t length) noexcept : DataField(identifier, storage_type::data, length) {
             std::memcpy(m_storage, value, m_data_length);
         }
 
@@ -80,13 +80,13 @@ namespace DCF {
         }
 
         const size_t get(const byte **data) const noexcept override {
-            assert(m_type == StorageType::data);
+            assert(m_type == storage_type::data);
             *data = m_storage;
             return m_data_length;
         }
 
         const size_t get(const char **data) const noexcept override {
-            assert(m_type == StorageType::string);
+            assert(m_type == storage_type::string);
             *data = reinterpret_cast<const char *>(m_storage);
             return m_data_length;
         }
@@ -101,4 +101,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_SMALLDATAFIELD_H
+#endif //FASTPATH_SMALLDATAFIELD_H

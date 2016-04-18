@@ -36,11 +36,11 @@ TEST(Session, Shutdown) {
 
     LOG_LEVEL(tf::logger::info);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     const auto startTime = std::chrono::steady_clock::now();
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
     const auto endTime = std::chrono::steady_clock::now();
 
     const auto actual = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
@@ -50,29 +50,29 @@ TEST(Session, Shutdown) {
 
 TEST(Session, SimpleTimeout) {
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
     ASSERT_NE(-1, pipe(fd));
 
-    DCF::BusySpinQueue queue;
+    fp::BusySpinQueue queue;
 
     const auto startTime = std::chrono::steady_clock::now();
-    queue.registerEvent(std::chrono::milliseconds(10), [&](const DCF::TimerEvent *event) {
+    queue.registerEvent(std::chrono::milliseconds(10), [&](const fp::TimerEvent *event) {
         callbackFired = true;
     });
 
     EXPECT_EQ(1u, queue.event_count());
 
-    EXPECT_EQ(DCF::OK, queue.dispatch());
+    EXPECT_EQ(fp::OK, queue.dispatch());
     const auto endTime = std::chrono::steady_clock::now();
     const auto actual = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
 
     EXPECT_TRUE(callbackFired);
     EXPECT_GT(50u, actual.count());
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }
 
 TEST(Session, SimpleReadInline) {
@@ -83,11 +83,11 @@ TEST(Session, SimpleReadInline) {
     int fd[2] = {0, 0};
     ASSERT_NE(-1, pipe(fd));
 
-    DCF::InlineQueue queue;
+    fp::InlineQueue queue;
 
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], fp::EventType::READ, [&](const fp::DataEvent *event, const fp::EventType eventType) {
         DEBUG_LOG("in callback");
-        EXPECT_EQ(DCF::EventType::READ, eventType);
+        EXPECT_EQ(fp::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
@@ -101,7 +101,7 @@ TEST(Session, SimpleReadInline) {
         ASSERT_NE(-1, write(fd[1], "x", 1));
         DEBUG_LOG("Signal thread complete");
     });
-    EXPECT_EQ(DCF::OK, queue.dispatch(std::chrono::seconds(5)));
+    EXPECT_EQ(fp::OK, queue.dispatch(std::chrono::seconds(5)));
 
     if (signal.joinable()) {
         signal.join();
@@ -113,17 +113,17 @@ TEST(Session, SimpleReadInline) {
 
 TEST(Session, SimpleReadBusySpin) {
     LOG_LEVEL(tf::logger::info);
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
     ASSERT_NE(-1, pipe(fd));
 
-    DCF::BusySpinQueue queue;
+    fp::BusySpinQueue queue;
 
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], fp::EventType::READ, [&](const fp::DataEvent *event, const fp::EventType eventType) {
         DEBUG_LOG("In callback");
-        EXPECT_EQ(DCF::EventType::READ, eventType);
+        EXPECT_EQ(fp::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
@@ -137,30 +137,30 @@ TEST(Session, SimpleReadBusySpin) {
         DEBUG_LOG("Written to pipe");
     });
     DEBUG_LOG("Dispatching...");
-    EXPECT_EQ(DCF::OK, queue.dispatch(std::chrono::seconds(5)));
+    EXPECT_EQ(fp::OK, queue.dispatch(std::chrono::seconds(5)));
     DEBUG_LOG("done disptach");
 
     signal.join();
     EXPECT_TRUE(callbackFired);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }
 
 TEST(Session, SimpleReadBlocking) {
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
     ASSERT_NE(-1, pipe(fd));
     bool done = false;
 
-    DCF::BlockingQueue queue;
+    fp::BlockingQueue queue;
 
     LOG_LEVEL(tf::logger::info);
-    queue.registerEvent(fd[0], DCF::EventType::READ, [&](const DCF::DataEvent *event, const DCF::EventType eventType) {
+    queue.registerEvent(fd[0], fp::EventType::READ, [&](const fp::DataEvent *event, const fp::EventType eventType) {
         DEBUG_LOG("In callback");
-        EXPECT_EQ(DCF::EventType::READ, eventType);
+        EXPECT_EQ(fp::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         DEBUG_LOG("In read");
@@ -183,24 +183,24 @@ TEST(Session, SimpleReadBlocking) {
     signal.join();
     EXPECT_TRUE(callbackFired);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }
 
 
 TEST(Session, ReadTimerInline) {
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
     ASSERT_NE(-1, pipe(fd));
 
-    DCF::InlineQueue queue;
+    fp::InlineQueue queue;
     bool shutdown = false;
 
-    DCF::DataEvent *handler = nullptr;
-    auto callback = [&](DCF::DataEvent *event, const DCF::EventType eventType) {
-        EXPECT_EQ(DCF::EventType::READ, eventType);
+    fp::DataEvent *handler = nullptr;
+    auto callback = [&](fp::DataEvent *event, const fp::EventType eventType) {
+        EXPECT_EQ(fp::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
@@ -209,10 +209,10 @@ TEST(Session, ReadTimerInline) {
     };
 
     unsigned long timerCounter = 0;
-    DCF::TimerEvent *timer = queue.registerEvent(std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
+    fp::TimerEvent *timer = queue.registerEvent(std::chrono::milliseconds(100), [&](const fp::TimerEvent *event) {
         DEBUG_LOG("Still waiting for data");
         if (timerCounter == 0) {
-            EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
+            EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], fp::EventType::READ, callback)));
         }
         timerCounter++;
     });
@@ -231,24 +231,24 @@ TEST(Session, ReadTimerInline) {
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     EXPECT_GE(10u, timerCounter);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }
 
 TEST(Session, ReadTimerBusySpin) {
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
     ASSERT_NE(-1, pipe(fd));
 
-    DCF::BusySpinQueue queue;
+    fp::BusySpinQueue queue;
 
     bool shutdown = false;
 
-    DCF::DataEvent *handler = nullptr;
-    auto callback = [&](DCF::DataEvent *event, const DCF::EventType eventType) {
-        EXPECT_EQ(DCF::EventType::READ, eventType);
+    fp::DataEvent *handler = nullptr;
+    auto callback = [&](fp::DataEvent *event, const fp::EventType eventType) {
+        EXPECT_EQ(fp::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
@@ -257,10 +257,10 @@ TEST(Session, ReadTimerBusySpin) {
     };
 
     unsigned long timerCounter = 0;
-    queue.registerEvent(std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
+    queue.registerEvent(std::chrono::milliseconds(100), [&](const fp::TimerEvent *event) {
         DEBUG_LOG("Still waiting for data");
         if (timerCounter == 0) {
-            EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
+            EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], fp::EventType::READ, callback)));
         }
         timerCounter++;
         if (timerCounter >= 100) {
@@ -280,23 +280,23 @@ TEST(Session, ReadTimerBusySpin) {
     EXPECT_TRUE(callbackFired);
     EXPECT_GE(10u, timerCounter);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }
 
 TEST(Session, ReadTimerBlocking) {
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
 
     bool callbackFired = false;
     int fd[2] = {0, 0};
     ASSERT_NE(-1, pipe(fd));
 
-    DCF::BlockingQueue queue;
+    fp::BlockingQueue queue;
     bool shutdown = false;
 
-    DCF::DataEvent *handler = nullptr;
-    auto callback = [&](DCF::DataEvent *event, const DCF::EventType eventType) {
-        EXPECT_EQ(DCF::EventType::READ, eventType);
+    fp::DataEvent *handler = nullptr;
+    auto callback = [&](fp::DataEvent *event, const fp::EventType eventType) {
+        EXPECT_EQ(fp::EventType::READ, eventType);
         callbackFired = true;
         char buffer[1];
         EXPECT_NE(-1, read(fd[0], &buffer, 1));
@@ -305,10 +305,10 @@ TEST(Session, ReadTimerBlocking) {
     };
 
     unsigned long timerCounter = 0;
-    queue.registerEvent(std::chrono::milliseconds(100), [&](const DCF::TimerEvent *event) {
+    queue.registerEvent(std::chrono::milliseconds(100), [&](const fp::TimerEvent *event) {
         DEBUG_LOG("Still waiting for data");
         if (timerCounter == 0) {
-            EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], DCF::EventType::READ, callback)));
+            EXPECT_NE(nullptr, (handler = queue.registerEvent(fd[0], fp::EventType::READ, callback)));
         }
         timerCounter++;
         if (timerCounter >= 100) {
@@ -328,21 +328,21 @@ TEST(Session, ReadTimerBlocking) {
     EXPECT_TRUE(callbackFired);
     EXPECT_GE(10u, timerCounter);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }
 
 TEST(Session, TimerBacklog) {
 
     LOG_LEVEL(tf::logger::info);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
 
     bool callbackFired = false;
 
-    DCF::BlockingQueue queue;
+    fp::BlockingQueue queue;
     bool shutdown = false;
 
-    queue.registerEvent(std::chrono::milliseconds(10), [&](const DCF::TimerEvent *event) {
+    queue.registerEvent(std::chrono::milliseconds(10), [&](const fp::TimerEvent *event) {
         callbackFired = true;
     });
 
@@ -359,19 +359,19 @@ TEST(Session, TimerBacklog) {
         }
     }
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }
 
 TEST(Session, TimerUnregisterWithBacklog) {
 
     LOG_LEVEL(tf::logger::info);
 
-    EXPECT_EQ(DCF::OK, DCF::Session::initialise());
+    EXPECT_EQ(fp::OK, fp::Session::initialise());
 
-    DCF::BlockingQueue queue;
+    fp::BlockingQueue queue;
 
     std::atomic<int> counter = ATOMIC_VAR_INIT(0);
-    /*auto event = */queue.registerEvent(std::chrono::milliseconds(10), [&](DCF::TimerEvent *e) {
+    /*auto event = */queue.registerEvent(std::chrono::milliseconds(10), [&](fp::TimerEvent *e) {
         queue.unregisterEvent(e);
         counter++;
         EXPECT_EQ(1, counter);
@@ -384,5 +384,5 @@ TEST(Session, TimerUnregisterWithBacklog) {
 
     queue.dispatch(std::chrono::seconds(1));
 
-    EXPECT_EQ(DCF::OK, DCF::Session::destroy());
+    EXPECT_EQ(fp::OK, fp::Session::destroy());
 }

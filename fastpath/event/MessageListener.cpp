@@ -28,7 +28,7 @@
 #include "fastpath/event/Queue.h"
 #include "fastpath/transport/TCPTransport.h"
 
-namespace DCF {
+namespace fp {
 
     TransportContainer::TransportContainer(Transport *t, std::unique_ptr<TransportIOEvent> &&e) : transport(t), event(std::move(e)) {}
 
@@ -77,7 +77,7 @@ namespace DCF {
     void MessageListener::handleMessage(const Transport *transport, Transport::MessageType &message) {
         auto it = m_observers.find(transport);
         if (it != m_observers.end()) {
-            fp::subject<> subject(message->subject());
+            subject<> subject(message->subject());
             ObserversType &observers = it->second;
             std::for_each(observers.begin(), observers.end(), [&](auto &messageEvent) noexcept {
                 if (messageEvent->subscriber()->is_interested(subject)) {

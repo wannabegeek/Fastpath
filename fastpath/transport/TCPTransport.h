@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_TCPTRANSPORT_H
-#define TFDCF_TCPTRANSPORT_H
+#ifndef FASTPATH_TCPTRANSPORT_H
+#define FASTPATH_TCPTRANSPORT_H
 
 #include <future>
 
@@ -33,7 +33,7 @@
 #include "fastpath/transport/URL.h"
 #include "fastpath/MessageBuffer.h"
 
-namespace DCF {
+namespace fp {
 
     class Event;
     class TransportIOEvent;
@@ -41,7 +41,7 @@ namespace DCF {
     class TCPTransport : public Transport {
     private:
         virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) override;
-        bool processData(const DCF::MessageBuffer::ByteStorageType &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept;
+        bool processData(const fp::MessageBuffer::ByteStorageType &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept;
     protected:
         std::unique_ptr<TCPSocketClient> m_peer;
         const url m_url;
@@ -72,4 +72,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_TCPTRANSPORT_H
+#endif //FASTPATH_TCPTRANSPORT_H

@@ -29,7 +29,7 @@
 #include <sys/fcntl.h>
 #include <netinet/tcp.h>
 
-namespace DCF {
+namespace fp {
     bool TCPSocketClient::connect(SocketOptions options) noexcept {
         if (!m_connected) {
             m_options = options;

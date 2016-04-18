@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_TRANSPORT_H
-#define TFDCF_TRANSPORT_H
+#ifndef FASTPATH_TRANSPORT_H
+#define FASTPATH_TRANSPORT_H
 
 #include <chrono>
 #include <string>
@@ -36,7 +36,7 @@
 #include "fastpath/messages/Message.h"
 #include "fastpath/transport/TransportIOEvent.h"
 
-namespace DCF {
+namespace fp {
     class EventManager;
     class TransportIOEvent;
 
@@ -88,4 +88,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_TRANSPORT_H
+#endif //FASTPATH_TRANSPORT_H

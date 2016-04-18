@@ -23,19 +23,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_DATAFIELD_H
-#define TFDCF_DATAFIELD_H
+#ifndef FASTPATH_DATAFIELD_H
+#define FASTPATH_DATAFIELD_H
 
 #include "fastpath/messages/Field.h"
 
-namespace DCF {
+namespace fp {
     class DataField : public Field {
 
     protected:
         virtual const bool isEqual(const Field &other) const noexcept override = 0;
     public:
 //        DataField(const char *identifier) noexcept : Field(identifier) {}
-        DataField(const char *identifier, const StorageType &type, const std::size_t data_length) noexcept : Field(identifier, type, data_length) {}
+        DataField(const char *identifier, const storage_type &type, const std::size_t data_length) noexcept : Field(identifier, type, data_length) {}
         DataField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {}
 
         virtual ~DataField() {}
@@ -54,4 +54,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_DATAFIELD_H
+#endif //FASTPATH_DATAFIELD_H

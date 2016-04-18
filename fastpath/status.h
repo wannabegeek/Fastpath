@@ -23,10 +23,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_STATUS_H
-#define TFDCF_STATUS_H
+#ifndef FASTPATH_STATUS_H
+#define FASTPATH_STATUS_H
 
-namespace DCF {
+namespace fp {
 
     static constexpr const char *str_status[20] = {
             "Everything is OK and successful",
@@ -85,4 +85,4 @@ namespace DCF {
 
 }
 
-#endif //TFDCF_STATUS_H
+#endif //FASTPATH_STATUS_H

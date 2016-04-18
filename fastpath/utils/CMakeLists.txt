@@ -13,6 +13,7 @@ set(HEADER_FILES
         tfmultiringbuffer.h
         fast_linear_allocator.h
         short_alloc.h
+        stringhash.h
         )
 
 set(SOURCE_FILES

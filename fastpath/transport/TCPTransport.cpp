@@ -32,7 +32,7 @@
 #include "fastpath/messages/Message.h"
 #include "fastpath/transport/TransportIOEvent.h"
 
-namespace DCF {
+namespace fp {
 
     class BackoffStrategy {
     private:
@@ -128,7 +128,7 @@ namespace DCF {
         return m_peer->isConnected();
     }
 
-    bool TCPTransport::processData(const DCF::MessageBuffer::ByteStorageType &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
+    bool TCPTransport::processData(const fp::MessageBuffer::ByteStorageType &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
         size_t msg_length = 0;
         if (Message::have_complete_message(storage, msg_length) == CompleteMessage) {
             MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
@@ -152,18 +152,18 @@ namespace DCF {
 
             ssize_t size = 0;
             while (true) {
-                DCF::Socket::ReadResult result = m_peer->read(reinterpret_cast<const char *>(m_readBuffer.allocate(MTU_SIZE)), MTU_SIZE, size);
+                fp::Socket::ReadResult result = m_peer->read(reinterpret_cast<const char *>(m_readBuffer.allocate(MTU_SIZE)), MTU_SIZE, size);
                 m_readBuffer.erase_back(MTU_SIZE - size);
 
-                if (result == DCF::Socket::MoreData) {
-                    const DCF::MessageBuffer::ByteStorageType &storage = m_readBuffer.byteStorage();
+                if (result == fp::Socket::MoreData) {
+                    const fp::MessageBuffer::ByteStorageType &storage = m_readBuffer.byteStorage();
 
                     while (this->processData(storage, messageCallback));
 
                     m_readBuffer.erase_front(storage.bytesRead());
-                } else if (result == DCF::Socket::NoData) {
+                } else if (result == fp::Socket::NoData) {
                     break;
-                } else if (result == DCF::Socket::Closed) {
+                } else if (result == fp::Socket::Closed) {
                     DEBUG_LOG("Client Socket closed");
                     break;
                 }

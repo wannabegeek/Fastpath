@@ -23,12 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_MESSAGEADDRESSING_H
-#define TFDCF_MESSAGEADDRESSING_H
+#ifndef FASTPATH_MESSAGEADDRESSING_H
+#define FASTPATH_MESSAGEADDRESSING_H
 
 #include "fastpath/messages/BaseMessage.h"
 
-namespace DCF {
+namespace fp {
     typedef enum {
         CompleteMessage,
         IncompleteMessage,
@@ -73,4 +73,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_MESSAGEADDRESSING_H
+#endif //FASTPATH_MESSAGEADDRESSING_H

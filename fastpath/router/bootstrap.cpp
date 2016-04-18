@@ -37,8 +37,8 @@ namespace fp {
 
     void bootstrap::run() {
         // Start server socket listening
-        if (m_server.connect(DCF::SocketOptionsDisableNagle | DCF::SocketOptionsDisableSigPipe | DCF::SocketOptionsNonBlocking)) {
-            DCF::DataEvent *connectionAttempt = m_dispatchQueue.registerEvent(m_server.getSocket(), DCF::EventType::READ, [&](DCF::DataEvent *event, const DCF::EventType eventType) {
+        if (m_server.connect(fp::SocketOptionsDisableNagle | fp::SocketOptionsDisableSigPipe | fp::SocketOptionsNonBlocking)) {
+            fp::DataEvent *connectionAttempt = m_dispatchQueue.registerEvent(m_server.getSocket(), fp::EventType::READ, [&](fp::DataEvent *event, const fp::EventType eventType) {
                 INFO_LOG("Someone has tried to connect");
                 m_connections.emplace_back(std::make_unique<peer_connection>(&m_dispatchQueue,
                                                                              m_server.acceptPendingConnection(),
@@ -59,7 +59,7 @@ namespace fp {
         DEBUG_LOG("Shutting down");
     }
 
-    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const DCF::MessageBuffer::ByteStorageType &msgData) noexcept {
+    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const fp::MessageBuffer::ByteStorageType &msgData) noexcept {
         DEBUG_LOG("Processing message");
         // send the message out to all local client who are interested
         std::for_each(m_connections.begin(), m_connections.end(), [&](auto &connection) noexcept {

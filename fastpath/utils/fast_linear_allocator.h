@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_FAST_LINEAR_ALLOCATOR_H
-#define TFDCF_FAST_LINEAR_ALLOCATOR_H
+#ifndef FASTPATH_FAST_LINEAR_ALLOCATOR_H
+#define FASTPATH_FAST_LINEAR_ALLOCATOR_H
 
 #include <cstddef>
 #include "fastpath/utils/logger.h"
@@ -216,5 +216,5 @@ namespace tf {
     template <class T, class U> bool operator==(const linear_allocator<T>&, const linear_allocator<U>&);
     template <class T, class U> bool operator!=(const linear_allocator<T>&, const linear_allocator<U>&);
 }
-#endif //TFDCF_FAST_LINEAR_ALLOCATOR_H
+#endif //FASTPATH_FAST_LINEAR_ALLOCATOR_H
 

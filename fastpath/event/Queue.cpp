@@ -30,7 +30,7 @@
 #include "fastpath/event/MessageListener.h"
 #include "fastpath/event/Subscriber.h"
 
-namespace DCF {
+namespace fp {
 
     Queue::~Queue() noexcept {
         std::for_each(m_registeredEvents.begin(), m_registeredEvents.end(), [&](auto &event) noexcept {

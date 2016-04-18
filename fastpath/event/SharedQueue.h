@@ -23,14 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SHAREDQUEUE_H
-#define TFDCF_SHAREDQUEUE_H
+#ifndef FASTPATH_SHAREDQUEUE_H
+#define FASTPATH_SHAREDQUEUE_H
 
 #include "fastpath/utils/tfringbuffer.h"
 #include "fastpath/event/TimerEvent.h"
 #include "fastpath/event/Queue.h"
 
-namespace DCF {
+namespace fp {
     /**
      * Abstract base class for BusySpinQueue and BlockingQueue.
      */
@@ -78,4 +78,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_SHAREDQUEUE_H
+#endif //FASTPATH_SHAREDQUEUE_H

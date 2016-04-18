@@ -23,15 +23,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_INLINEEVENTMANAGER_H
-#define TFDCF_INLINEEVENTMANAGER_H
+#ifndef FASTPATH_INLINEEVENTMANAGER_H
+#define FASTPATH_INLINEEVENTMANAGER_H
 
 #include <unordered_map>
 #include <vector>
 
 #include "fastpath/event/EventManager.h"
 
-namespace DCF {
+namespace fp {
     class Timer;
     class IOEvent;
 
@@ -66,4 +66,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_INLINEEVENTMANAGER_H
+#endif //FASTPATH_INLINEEVENTMANAGER_H

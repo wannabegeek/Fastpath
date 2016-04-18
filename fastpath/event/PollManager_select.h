@@ -53,7 +53,7 @@
 #   define FD_COPY(src, dest) memcpy((dest), (src), sizeof *(dest))
 #endif
 
-namespace DCF {
+namespace fp {
 
     template<int MAX_EVENTS>
     class EventPoll {

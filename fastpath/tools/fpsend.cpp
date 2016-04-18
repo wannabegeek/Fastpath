@@ -62,7 +62,7 @@ int main( int argc, char *argv[] )  {
     }
 
     try {
-        DCF::Session::initialise();
+        fp::Session::initialise();
 
         const std::string url = o.getWithDefault("url", "");
         std::string subject;
@@ -73,10 +73,10 @@ int main( int argc, char *argv[] )  {
         auto transport = fp::make_relm_connection(url.c_str(), "");
 
         if (transport->valid()) {
-            DCF::Message msg;
+            fp::Message msg;
             msg.setSubject(subject.c_str());
             msg.addDataField("name", "tom");
-            if (transport->sendMessage(msg) == DCF::OK) {
+            if (transport->sendMessage(msg) == fp::OK) {
                 INFO_LOG("Message send successfully");
             } else {
                 ERROR_LOG("Failed to send message");
@@ -84,7 +84,7 @@ int main( int argc, char *argv[] )  {
         } else {
             ERROR_LOG("Failed to send message - transport not connected");
         }
-        DCF::Session::destroy();
+        fp::Session::destroy();
     } catch (const std::exception &stde) {
         ERROR_LOG("Internal error: " << stde.what());
         return 1;

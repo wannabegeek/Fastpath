@@ -2,8 +2,8 @@
 // Created by Tom Fewster on 31/03/2016.
 //
 
-#ifndef TFDCF_REF_COUNT_PTR_H
-#define TFDCF_REF_COUNT_PTR_H
+#ifndef FASTPATH_REF_COUNT_PTR_H
+#define FASTPATH_REF_COUNT_PTR_H
 
 #include <functional>
 
@@ -40,4 +40,4 @@ namespace tf {
 
 }
 
-#endif //TFDCF_REF_COUNT_PTR_H
+#endif //FASTPATH_REF_COUNT_PTR_H

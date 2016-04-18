@@ -53,7 +53,7 @@
 #include "fastpath/event/IOEvent.h"
 #include "fastpath/utils/logger.h"
 
-namespace DCF {
+namespace fp {
     EventManager::EventManager() : m_ioCallback(std::bind(&EventManager::serviceIOEvent, this, std::placeholders::_1)), m_timerCallback(std::bind(&EventManager::serviceTimerEvent, this, std::placeholders::_1)) {}
 
 	bool isFileDescriptorValid(int fd) {

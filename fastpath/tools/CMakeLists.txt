@@ -22,13 +22,13 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -Ofast
 #################################
 
 add_executable(fpsend fpsend.cpp)
-target_link_libraries(fpsend TFDCF ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(fpsend fastpath ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(fplisten fplisten.cpp)
-target_link_libraries(fplisten TFDCF ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(fplisten fastpath ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(fpperf_source performance_source.cpp)
-target_link_libraries(fpperf_source TFDCF ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(fpperf_source fastpath ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(fpperf_sink performance_sink.cpp)
-target_link_libraries(fpperf_sink TFDCF ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(fpperf_sink fastpath ${CMAKE_THREAD_LIBS_INIT})

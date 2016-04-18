@@ -2,8 +2,8 @@
 // Created by Tom Fewster on 13/03/2016.
 //
 
-#ifndef TFDCF_PERFORMANCE_H
-#define TFDCF_PERFORMANCE_H
+#ifndef FASTPATH_PERFORMANCE_H
+#define FASTPATH_PERFORMANCE_H
 
 #include <chrono>
 #include <utility>
@@ -21,4 +21,4 @@ namespace tf {
     };
 }
 
-#endif //TFDCF_PERFORMANCE_H
+#endif //FASTPATH_PERFORMANCE_H

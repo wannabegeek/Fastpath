@@ -25,7 +25,7 @@
 
 #include "IOEvent.h"
 
-namespace DCF {
+namespace fp {
     IOEvent::IOEvent(Queue *queue, const int fd, const EventType eventType) noexcept
             : Event(queue), m_fd(fd), m_eventTypes(eventType) {
     }

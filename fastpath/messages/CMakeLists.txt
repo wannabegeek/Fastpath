@@ -11,6 +11,8 @@ set(HEADER_FILES
         StorageTypes.h
         SmallDataField.h
         LargeDataField.h
+        subject.h
+        subscription.h
 )
 
 set(SOURCE_FILES

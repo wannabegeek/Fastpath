@@ -32,7 +32,7 @@
 #include <functional>
 #include <stdexcept>
 
-namespace DCF {
+namespace fp {
     auto find_separator = [](std::string::const_iterator begin, std::string::const_iterator end) {
         return std::find_if(begin, end, [](const char &v) {
             return v == '/' || v == ':' || v == '?';

@@ -26,7 +26,7 @@
 #include "fastpath/utils/logger.h"
 #include "fastpath/messages/Message.h"
 
-namespace DCF {
+namespace fp {
 
     Message::Message() : m_flags(-1), m_hasAddressing(true) {
         m_subject[0] = '\0';

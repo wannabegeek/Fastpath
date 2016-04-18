@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(TFDCF)
+project(fastpath)
 
 set(GENERIC_COMPILER_FLAGS "-Wall -pedantic -std=c++14 -fPIC -mtune=native")
 IF (CMAKE_COMPILER_IS_GNUCXX)

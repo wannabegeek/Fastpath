@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_BASEMESSAGE_H
-#define TFDCF_BASEMESSAGE_H
+#ifndef FASTPATH_BASEMESSAGE_H
+#define FASTPATH_BASEMESSAGE_H
 
 #include <cstdint>
 #include <string>
@@ -48,7 +48,7 @@
 #include "fastpath/messages/SmallDataField.h"
 #include "fastpath/messages/LargeDataField.h"
 
-namespace DCF {
+namespace fp {
     class MessageField;
 
     /// @cond DEV
@@ -76,7 +76,7 @@ namespace DCF {
         PayloadContainer m_payload;
         KeyMappingsContainer m_keys;
 
-        static const DataStorageType getStorageType(const StorageType type);
+        static const DataStorageType getStorageType(const storage_type type);
 
         using field_allocator_type = tf::linear_allocator<unsigned char>; //std::allocator<unsigned char>;
         field_allocator_type::arena_type m_arena;
@@ -152,7 +152,7 @@ namespace DCF {
          *
          * @return number of fields.
          */
-        const uint32_t size() const noexcept { return m_payload.size(); }
+        const uint32_t size() const noexcept { return static_cast<uint32_t>(m_payload.size()); }
 
         /**
          * Return the storage type for a field
@@ -160,7 +160,7 @@ namespace DCF {
          * @param field The field identifier name.
          * @return The storage type.
          */
-        const StorageType storageType(const char *field) const {
+        const storage_type storageType(const char *field) const {
             const Field *element = m_payload[m_keys.at(field)];
             return element->type();
         }
@@ -254,17 +254,7 @@ namespace DCF {
             return false;
         }
 
-        bool getDataField(const char *field, const char **value, size_t &length) const {
-            if (field != nullptr) {
-                auto index = m_keys.find(field);
-                if (index != m_keys.end()) {
-                    const DataField *element = reinterpret_cast<DataField *>(m_payload[index->second]);
-                    length = element->get(value);
-                    return true;
-                }
-            }
-            return false;
-        }
+        bool getDataField(const char *field, const char **value, size_t &length) const;
 
         /**
          * Detach the message from the library.
@@ -280,9 +270,7 @@ namespace DCF {
         virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) override;
 
         // from reusable
-        void prepareForReuse() override {
-            this->clear();
-        }
+        void prepareForReuse() override;
 
         /// @endcond
 
@@ -296,4 +284,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_MESSAGE_H
+#endif //FASTPATH_MESSAGE_H

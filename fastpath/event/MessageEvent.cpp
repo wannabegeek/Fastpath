@@ -27,7 +27,7 @@
 #include "Queue.h"
 #include "Subscriber.h"
 
-namespace DCF {
+namespace fp {
     MessageEvent::MessageEvent(Queue *queue, const Subscriber *subscriber) : Event(queue), m_subscriber(subscriber) {
     }
 

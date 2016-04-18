@@ -12,12 +12,12 @@ int main(int argc, char *argv[])
     LOG_LEVEL(tf::logger::debug);
 
     const size_t iterations = 1000000;
-    typedef tf::pool<DCF::Message> PoolType;
+    typedef tf::pool<fp::Message> PoolType;
 
     PoolType pool(3);
 
     std::vector<PoolType::shared_ptr_type> encoded_messages(iterations);
-    DCF::MessageBuffer buffer(1000000);
+    fp::MessageBuffer buffer(1000000);
 
     std::cout << "encode x" << iterations << ": " << tf::measure<std::chrono::microseconds>::execution([&]() {
         for (size_t i = 0; i < iterations; i++) {
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         for (size_t i = 0; i < iterations + 1; i++) {
             auto msg = pool.allocate_unique_ptr();
 
-            const DCF::MessageBuffer::ByteStorageType &storage = buffer.byteStorage();
+            const fp::MessageBuffer::ByteStorageType &storage = buffer.byteStorage();
             if (!msg->decode(storage)) {
                 break;
             }

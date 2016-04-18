@@ -42,7 +42,7 @@
 //	m_connected = true;
 //}
 
-namespace DCF {
+namespace fp {
 
     Socket::Socket() noexcept : m_socket(-1), m_connected(false) {
     }

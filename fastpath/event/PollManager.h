@@ -31,7 +31,7 @@
 
 #include "fastpath/config.h"
 
-namespace DCF {
+namespace fp {
 	using DistantFutureType = std::chrono::microseconds;
 	static constexpr DistantFutureType DistantFuture = DistantFutureType::max();
 

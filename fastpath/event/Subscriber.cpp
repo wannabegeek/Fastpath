@@ -27,8 +27,8 @@
 
 #include "fastpath/transport/Transport.h"
 
-namespace DCF {
-    bool Subscriber::is_interested(const fp::subject<> subject) const {
+namespace fp {
+    bool Subscriber::is_interested(const ::fp::subject<> subject) const {
         return m_subscription.matches(subject);
     }
 

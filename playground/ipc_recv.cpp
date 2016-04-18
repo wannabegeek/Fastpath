@@ -14,17 +14,17 @@
 int main(int argc, char *argv[]) {
 
     LOG_LEVEL(tf::logger::debug);
-//    DCF::Session::initialise();
-//    DCF::InlineQueue queue;
+//    fp::Session::initialise();
+//    fp::InlineQueue queue;
 
     boost::interprocess::shared_memory_object::remove("SharedMemoryTest");
     SharedMemoryBuffer buffer("SharedMemoryTest");
 
-    DCF::InlineEventManager evm;
+    fp::InlineEventManager evm;
     std::vector<tf::notifier> m_notifiers;
 
     bool shutdown = false;
-    auto notificationHandler = [&](DCF::TransportIOEvent *event, const DCF::EventType type, tf::notifier *notifier) noexcept {
+    auto notificationHandler = [&](fp::TransportIOEvent *event, const fp::EventType type, tf::notifier *notifier) noexcept {
         DEBUG_LOG("Received notification..... " << event->fileDescriptor());
         if (!notifier->reset()) {
             INFO_LOG("Client disconnected " << event->fileDescriptor());
@@ -40,13 +40,13 @@ int main(int argc, char *argv[]) {
 
     try {
         INFO_LOG("Started");
-        std::unique_ptr<DCF::TransportIOEvent> notification_handler;
-        DCF::InterprocessNotifierServer notifier([&](tf::notifier &&notifier) {
+        std::unique_ptr<fp::TransportIOEvent> notification_handler;
+        fp::InterprocessNotifierServer notifier([&](tf::notifier &&notifier) {
             int fd = notifier.read_handle();
             DEBUG_LOG("Need to add callback for " << fd);
             m_notifiers.push_back(std::move(notifier));
 
-            notification_handler = std::make_unique<DCF::TransportIOEvent>(fd, DCF::EventType::READ, std::bind(notificationHandler, std::placeholders::_1, std::placeholders::_2, &m_notifiers.back()));
+            notification_handler = std::make_unique<fp::TransportIOEvent>(fd, fp::EventType::READ, std::bind(notificationHandler, std::placeholders::_1, std::placeholders::_2, &m_notifiers.back()));
 
             evm.registerHandler(notification_handler.get());
         });
@@ -59,9 +59,9 @@ int main(int argc, char *argv[]) {
         };
         DEBUG_LOG("Event loop dropped out");
 
-    } catch (const DCF::socket_error &e) {
+    } catch (const fp::socket_error &e) {
         ERROR_LOG("BOOM - it's broken: " << e.what());
     }
 
-//    DCF::Session::m_shutdown();
+//    fp::Session::m_shutdown();
 }

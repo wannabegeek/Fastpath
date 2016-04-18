@@ -29,7 +29,7 @@
 #include "fastpath/event/Event.h"
 #include "fastpath/event/EventType.h"
 
-namespace DCF {
+namespace fp {
 
 	class IOEvent : public Event {
         friend class EventManager;

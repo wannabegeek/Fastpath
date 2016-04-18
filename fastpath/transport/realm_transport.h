@@ -23,21 +23,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_RELMTRANSPORT_H
-#define TFDCF_RELMTRANSPORT_H
+#ifndef FASTPATH_RELMTRANSPORT_H
+#define FASTPATH_RELMTRANSPORT_H
 
 #include <memory>
 #include "fastpath/Exception.h"
 
-namespace DCF {
-    class Transport;
-};
-
 namespace fp {
     class Transport;
 
-    std::unique_ptr<DCF::Transport> make_relm_connection(const char *connection_url, const char *description = "") throw(fp::exception);
+    std::unique_ptr<fp::Transport> make_relm_connection(const char *connection_url, const char *description = "") throw(fp::exception);
 
 }
 
-#endif //TFDCF_RELMTRANSPORT_H
+#endif //FASTPATH_RELMTRANSPORT_H

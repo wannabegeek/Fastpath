@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_LISTENER_H
-#define TFDCF_LISTENER_H
+#ifndef FASTPATH_LISTENER_H
+#define FASTPATH_LISTENER_H
 
 #include <unordered_set>
 #include <tuple>
@@ -35,7 +35,7 @@
 #include "fastpath/event/Subscriber.h"
 #include "fastpath/event/MessageEvent.h"
 
-namespace DCF {
+namespace fp {
     class Queue;
     class TCPTransport;
     class TransportIOEvent;
@@ -72,4 +72,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_LISTENER_H
+#endif //FASTPATH_LISTENER_H

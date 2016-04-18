@@ -23,14 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_UNIXSOCKET_H
-#define TFDCF_UNIXSOCKET_H
+#ifndef FASTPATH_UNIXSOCKET_H
+#define FASTPATH_UNIXSOCKET_H
 
 #include <sys/un.h>
 
 #include "fastpath/transport/Socket.h"
 
-namespace DCF {
+namespace fp {
     class UnixSocket : public Socket{
     protected:
         struct sockaddr_un m_addr;
@@ -52,4 +52,4 @@ namespace DCF {
 }
 
 
-#endif //TFDCF_UNIXSOCKET_H
+#endif //FASTPATH_UNIXSOCKET_H

@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_BLOCKING_RINGBUFFER_H
-#define TFDCF_BLOCKING_RINGBUFFER_H
+#ifndef FASTPATH_BLOCKING_RINGBUFFER_H
+#define FASTPATH_BLOCKING_RINGBUFFER_H
 
 #include "tfringbuffer.h"
 #include "semaphore_light.h"
@@ -55,4 +55,4 @@ namespace tf {
     };
 }
 
-#endif //TFDCF_BLOCKING_RINGBUFFER_H
+#endif //FASTPATH_BLOCKING_RINGBUFFER_H

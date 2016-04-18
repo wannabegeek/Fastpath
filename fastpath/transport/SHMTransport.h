@@ -23,15 +23,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_SHMTRANSPORT_H
-#define TFDCF_SHMTRANSPORT_H
+#ifndef FASTPATH_SHMTRANSPORT_H
+#define FASTPATH_SHMTRANSPORT_H
 
 #include "fastpath/status.h"
 #include "fastpath/messages/Message.h"
 #include "fastpath/transport/URL.h"
 #include "fastpath/transport/Transport.h"
 
-namespace DCF {
+namespace fp {
     class SHMTransport : public Transport {
     private:
         virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) override;
@@ -54,4 +54,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_SHMTRANSPORT_H
+#endif //FASTPATH_SHMTRANSPORT_H

@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_RWLOCK_H
-#define TFDCF_RWLOCK_H
+#ifndef FASTPATH_RWLOCK_H
+#define FASTPATH_RWLOCK_H
 
 #include <atomic>
 #include <thread>
@@ -364,4 +364,4 @@ namespace tf {
     };
 }
 
-#endif //TFDCF_RWLOCK_H
+#endif //FASTPATH_RWLOCK_H

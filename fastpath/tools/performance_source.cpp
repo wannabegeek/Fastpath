@@ -70,11 +70,11 @@ int main( int argc, char *argv[] )  {
         using ResultsType = std::pair<TimeType, TimeType>;
         std::vector<ResultsType> m_times(count);
 
-        DCF::Session::initialise();
+        fp::Session::initialise();
 
         const std::string url = o.getWithDefault("url", "");
 
-        DCF::BlockingQueue queue;
+        fp::BlockingQueue queue;
         auto transport = fp::make_relm_connection(url.c_str(), "");
 
         if (!transport->valid()) {
@@ -85,20 +85,20 @@ int main( int argc, char *argv[] )  {
         uint32_t id = 0;
         bool shutdown = false;
 
-        DCF::Message sendMsg;
+        fp::Message sendMsg;
         sendMsg.setSubject("TEST.PERF.SOURCE");
         sendMsg.addScalarField("id", id);
 
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::microseconds(1000000) / rate);
         INFO_LOG("Sending a message every " << duration.count() << " us");
 
-        queue.registerEvent(duration, [&](DCF::TimerEvent *event) noexcept {
+        queue.registerEvent(duration, [&](fp::TimerEvent *event) noexcept {
             if (id < count) {
                 sendMsg.clear();
                 sendMsg.setSubject("TEST.PERF.SOURCE");
                 sendMsg.addScalarField("id", id);
                 m_times[id].first = std::chrono::high_resolution_clock::now();
-                if (transport->sendMessage(sendMsg) == DCF::OK) {
+                if (transport->sendMessage(sendMsg) == fp::OK) {
                     DEBUG_LOG("Message send successfully: " << sendMsg);
                 } else {
                     ERROR_LOG("Failed to send message");
@@ -108,7 +108,7 @@ int main( int argc, char *argv[] )  {
             }
         });
 
-        DCF::Subscriber subscriber(transport, "TEST.PERF.SINK", [&](const DCF::Subscriber *event, const DCF::Message *recvMsg) noexcept {
+        fp::Subscriber subscriber(transport, "TEST.PERF.SINK", [&](const fp::Subscriber *event, const fp::Message *recvMsg) noexcept {
             DEBUG_LOG("Received message from sink: " << *recvMsg);
 //            std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
             uint32_t recv_id = 0;
@@ -131,7 +131,7 @@ int main( int argc, char *argv[] )  {
             queue.dispatch();
         }
 
-        DCF::Session::destroy();
+        fp::Session::destroy();
 
         std::vector<std::chrono::microseconds> latencies;
         latencies.reserve(count);

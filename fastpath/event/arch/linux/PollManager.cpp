@@ -35,7 +35,7 @@
 #include <cstring>
 #include <sys/epoll.h>
 
-namespace DCF {
+namespace fp {
 
     static const uint64_t TimerIdentifier = 1l << 33;
 

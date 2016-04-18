@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef TFDCF_MESSAGEBUFFER2_H
-#define TFDCF_MESSAGEBUFFER2_H
+#ifndef FASTPATH_MESSAGEBUFFER2_H
+#define FASTPATH_MESSAGEBUFFER2_H
 
 #include <cassert>
 #include <iomanip>
@@ -34,7 +34,7 @@
 #include "fastpath/types.h"
 #include "fastpath/utils/logger.h"
 
-namespace DCF {
+namespace fp {
     struct MsgAddressing {
         using addressing_start = uint8_t;
         using msg_length = uint64_t;
@@ -238,4 +238,4 @@ namespace DCF {
     };
 }
 
-#endif //TFDCF_MESSAGEBUFFER2_H
+#endif //FASTPATH_MESSAGEBUFFER2_H

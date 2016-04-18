@@ -23,7 +23,7 @@ add_executable(tests
 #        SubscriptionTests.cpp
         linear_allocator_tests.cpp)
 
-target_link_libraries(tests TFDCF ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tests fastpath ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(
         NAME tests

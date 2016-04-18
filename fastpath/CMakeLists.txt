@@ -72,7 +72,7 @@ set(HEADER_FILES
         fastpath.h
 )
 
-add_library(TFDCF SHARED ${HEADER_FILES} $<TARGET_OBJECTS:utils>
+add_library(fastpath SHARED ${HEADER_FILES} $<TARGET_OBJECTS:utils>
         $<TARGET_OBJECTS:event>
         $<TARGET_OBJECTS:messages>
         $<TARGET_OBJECTS:transport>)
@@ -84,5 +84,5 @@ add_subdirectory(transport)
 add_subdirectory(router)
 add_subdirectory(tools)
 
-INSTALL(TARGETS TFDCF DESTINATION lib/fastpath)
+INSTALL(TARGETS fastpath DESTINATION lib/fastpath)
 INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath)

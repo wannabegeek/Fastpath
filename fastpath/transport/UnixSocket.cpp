@@ -31,7 +31,7 @@
 
 #include "fastpath/transport/UnixSocket.h"
 
-namespace DCF {
+namespace fp {
     UnixSocket::UnixSocket(const std::string &path) throw(socket_error) {
         memset(static_cast<void *>(&m_addr), 0, sizeof(struct sockaddr_un));
         m_addr.sun_family = AF_UNIX;

@@ -8,10 +8,10 @@
 #include <cassert>
 #include "InterprocessNotifierServer.h"
 
-namespace DCF {
+namespace fp {
     InterprocessNotifierServer::InterprocessNotifierServer(std::function<void(tf::notifier &&notifier)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>("test_unix")), m_callback(callback) {
         m_socket->setOptions(SocketOptionsNonBlocking);
-        if (!m_socket->connect(DCF::SocketOptionsNone)) {
+        if (!m_socket->connect(fp::SocketOptionsNone)) {
             ERROR_LOG("Failed to create connection");
             throw fp::exception("Failed to create server connection");
         }
