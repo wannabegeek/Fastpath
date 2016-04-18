@@ -95,7 +95,10 @@ TEST(Field, CreateDateTime) {
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     fp::DateTimeField e("time", time);
     ASSERT_EQ(e.type(), fp::storage_type::date_time);
-    ASSERT_EQ(time, e.get());
+
+    std::chrono::time_point<std::chrono::system_clock> time_out;
+    e.get(time_out);
+    ASSERT_EQ(time, time_out);
 }
 
 

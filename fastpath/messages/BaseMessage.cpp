@@ -94,6 +94,28 @@ namespace fp {
         return result.second;
     }
 
+    bool BaseMessage::addDateTimeField(const char *field, const std::chrono::microseconds &time) {
+        DateTimeField *e = this->createDateTimeField(field, time);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (result.second) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addDateTimeField(const char *field, const uint64_t seconds, const uint64_t microseconds) {
+        DateTimeField *e = this->createDateTimeField(field, seconds, microseconds);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (result.second) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
     bool BaseMessage::removeField(const char* field) {
         if (field != nullptr) {
             auto index = m_keys.find(field);

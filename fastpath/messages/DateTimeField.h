@@ -32,50 +32,64 @@
 namespace fp {
     class DateTimeField final : public Field {
     private:
-        static constexpr int seconds = 0;
-        static constexpr int microseconds = 1;
-
-        std::chrono::time_point<std::chrono::system_clock> m_time_point;
-        int64_t m_time[2];
-
+        static constexpr int fp_seconds = 0;
+        static constexpr int fp_microseconds = 1;
         static constexpr std::size_t data_size = sizeof(int64_t) + sizeof(int64_t);
+
+        int64_t m_time[2];
 
     protected:
         virtual const bool isEqual(const Field &other) const noexcept override {
             if (typeid(other) == typeid(DateTimeField)) {
                 const DateTimeField &f = static_cast<const DateTimeField &>(other);
-                return m_time[seconds] == f.m_time[seconds] && m_time[microseconds] == f.m_time[microseconds];
+                return m_time[fp_seconds] == f.m_time[fp_seconds]
+                       && m_time[fp_microseconds] == f.m_time[fp_microseconds];
             }
             return false;
         }
 
         virtual std::ostream& output(std::ostream& out) const override {
-            out << m_identifier << ":date_time=";
-
+            out << m_identifier << ":date_time=" << m_time[fp_seconds] << "s " << m_time[fp_microseconds] << "us";
             return out;
         }
 
     public:
+        DateTimeField(const char *identifier, const uint64_t seconds, const uint64_t microseconds) noexcept : Field(identifier, storage_type::date_time, data_size) {
+            m_time[fp_seconds] = seconds;
+            m_time[fp_microseconds] = microseconds;
+        }
+
         DateTimeField(const char *identifier, const std::chrono::time_point<std::chrono::system_clock> &value) noexcept : Field(identifier, storage_type::date_time, data_size) {
-            m_time_point = value;
             auto time = std::chrono::duration_cast<std::chrono::microseconds>(value.time_since_epoch());
-            m_time[seconds] = std::chrono::duration_cast<std::chrono::seconds>(time).count();
-            m_time[microseconds] = std::chrono::duration_cast<std::chrono::microseconds>(time).count() % 1000;
+            m_time[fp_seconds] = std::chrono::duration_cast<std::chrono::seconds>(time).count();
+            m_time[fp_microseconds] = std::chrono::duration_cast<std::chrono::microseconds>(time).count() % std::chrono::microseconds::period::den;
+        }
+
+        DateTimeField(const char *identifier, const std::chrono::microseconds &value) noexcept : Field(identifier, storage_type::date_time, data_size) {
+            m_time[fp_seconds] = std::chrono::duration_cast<std::chrono::seconds>(value).count();
+            m_time[fp_microseconds] = std::chrono::duration_cast<std::chrono::microseconds>(value).count() % std::chrono::microseconds::period::den;
         }
 
         DateTimeField(const MessageBuffer::ByteStorageType &buffer) : Field(buffer) {
-            m_time[seconds] = readScalar<int64_t>(buffer.readBytes());
+            m_time[fp_seconds] = readScalar<int64_t>(buffer.readBytes());
             buffer.advanceRead(sizeof(int64_t));
-            m_time[microseconds] = readScalar<int64_t>(buffer.readBytes());
+            m_time[fp_microseconds] = readScalar<int64_t>(buffer.readBytes());
             buffer.advanceRead(sizeof(int64_t));
         }
 
         const void get(std::chrono::time_point<std::chrono::system_clock> &data) const noexcept {
-            data = m_time_point;
+            std::chrono::microseconds ms((m_time[fp_seconds] * std::chrono::microseconds::period::den) + m_time[fp_microseconds]);
+            std::chrono::time_point<std::chrono::system_clock, std::chrono::microseconds> time(ms);
+            data = time;
         }
 
-        const std::chrono::time_point<std::chrono::system_clock> &get() const noexcept {
-            return m_time_point;
+        const void get(uint64_t &seconds, uint64_t &microseconds) const noexcept {
+            seconds = m_time[fp_seconds];
+            microseconds = m_time[fp_microseconds];
+        }
+
+        const std::chrono::microseconds get() const noexcept {
+            return std::chrono::microseconds((m_time[fp_seconds] * std::chrono::microseconds::period::den) + m_time[fp_microseconds]);
         }
 
         const size_t encode(MessageBuffer &buffer) const noexcept override {

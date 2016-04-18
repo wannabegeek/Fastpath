@@ -33,3 +33,12 @@ include_directories(${BOOST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 add_subdirectory(fastpath)
 add_subdirectory(tests)
 add_subdirectory(playground)
+
+find_package(Doxygen)
+IF (DOXYGEN_FOUND)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doxyfile.conf @ONLY)
+    add_custom_target(docs ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile.conf
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+ENDIF()

@@ -228,6 +228,25 @@ namespace fp {
          */
         bool addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time);
 
+        /**
+         * Adds a date-time field to the message.
+         *
+         * @param field The field identifier name.
+         * @param time Sets the field value to this time.
+         * @return `true` if the field was successfully added, `false` otherwise
+         */
+        bool addDateTimeField(const char *field, const std::chrono::microseconds &time);
+
+        /**
+         * Adds a date-time field to the message.
+         *
+         * @param field The field identifier name.
+         * @param seconds Sets the field value with seconds.
+         * @param microseconds Sets the field value with microseconds.
+         * @return `true` if the field was successfully added, `false` otherwise
+         */
+        bool addDateTimeField(const char *field, const uint64_t seconds, const uint64_t microseconds);
+
         ////////////// REMOVE ///////////////
 
         /**
