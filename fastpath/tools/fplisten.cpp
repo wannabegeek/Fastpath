@@ -71,7 +71,7 @@ int main( int argc, char *argv[] )  {
         }
 
         fp::BlockingQueue queue;
-        auto transport = fp::make_relm_connection(url.c_str(), "");
+        auto transport = fp::make_realm_connection(url.c_str(), "");
 
         queue.addSubscriber(fp::Subscriber(transport, subject.c_str(), [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
             INFO_LOG(*msg);

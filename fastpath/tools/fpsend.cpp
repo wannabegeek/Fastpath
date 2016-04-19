@@ -70,7 +70,7 @@ int main( int argc, char *argv[] )  {
             ERROR_LOG("You must specify a subject");
         }
 
-        auto transport = fp::make_relm_connection(url.c_str(), "");
+        auto transport = fp::make_realm_connection(url.c_str(), "");
 
         if (transport->valid()) {
             fp::Message msg;

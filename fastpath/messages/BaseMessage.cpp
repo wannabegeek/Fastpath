@@ -50,6 +50,127 @@ namespace fp {
         m_keys.clear();
     }
 
+    bool BaseMessage::addScalarField(const char *field, const bool &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const int8_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const int16_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const int32_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const int64_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const uint8_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const uint16_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const uint32_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const uint64_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const float32_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
+    bool BaseMessage::addScalarField(const char *field, const float64_t &value) {
+        auto e = this->createScalarField(field, value);
+        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
+        if (tf::likely(result.second)) {
+            m_payload.emplace_back(e);
+        } else {
+            this->destroyField(e);
+        }
+        return result.second;
+    }
+
     bool BaseMessage::addDataField(const char *field, const byte *value, const size_t size) {
         DataField *e = this->createDataField(size, field, value, size);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
@@ -217,6 +338,150 @@ namespace fp {
         }
         return r;
     }
+
+    bool BaseMessage::getScalarField(const char *field, bool &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<bool>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, int8_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<int8_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, int16_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<int16_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, int32_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<int32_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, int64_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<int64_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, uint8_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<uint8_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, uint16_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<uint16_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, uint32_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<uint32_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, uint64_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<uint64_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, float32_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<float32_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool BaseMessage::getScalarField(const char *field, float64_t &value) const noexcept {
+        if (field != nullptr) {
+            auto index = m_keys.find(field);
+            if (index != m_keys.end()) {
+                const ScalarField *element = reinterpret_cast<ScalarField *>(
+                        m_payload[index->second]);
+                value = element->get<float64_t>();
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     bool BaseMessage::getDataField(const char *field, const char **value, size_t &length) const {
         if (field != nullptr) {

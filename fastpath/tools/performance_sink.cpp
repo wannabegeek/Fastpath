@@ -67,7 +67,7 @@ int main( int argc, char *argv[] )  {
 
         fp::BlockingQueue queue;
 
-        auto transport = fp::make_relm_connection(url.c_str(), "");
+        auto transport = fp::make_realm_connection(url.c_str(), "");
 
         if (!transport->valid()) {
             ERROR_LOG("Failed to create transport");

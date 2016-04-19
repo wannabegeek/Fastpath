@@ -32,7 +32,7 @@
 namespace fp {
     class Transport;
 
-    std::unique_ptr<fp::Transport> make_relm_connection(const char *connection_url, const char *description = "") throw(fp::exception);
+    std::unique_ptr<fp::Transport> make_realm_connection(const char *connection_url, const char *description = "") throw(fp::exception);
 
 }
 

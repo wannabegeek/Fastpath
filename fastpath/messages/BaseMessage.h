@@ -170,6 +170,8 @@ namespace fp {
          */
         virtual void clear();
 
+        ////////////// MUTATORS ///////////////
+
         /**
          * Adds a scalar field of a type `<T>` to the message.
          *
@@ -177,17 +179,17 @@ namespace fp {
          * @param value Sets the field value as this scalar value.
          * @return `true` if the field was successfully added, `false` otherwise
          */
-        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_arithmetic<T>::value>> bool addScalarField(const char *field, const T &value) {
-//            void *ptr = m_a.allocate(sizeof(ScalarField));
-            auto e = this->createScalarField(field, value);
-            auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-            if (result.second) {
-                m_payload.emplace_back(e);
-            } else {
-                this->destroyField(e);
-            }
-            return result.second;
-        }
+        bool addScalarField(const char *field, const bool &value);
+        bool addScalarField(const char *field, const int8_t &value);
+        bool addScalarField(const char *field, const int16_t &value);
+        bool addScalarField(const char *field, const int32_t &value);
+        bool addScalarField(const char *field, const int64_t &value);
+        bool addScalarField(const char *field, const uint8_t &value);
+        bool addScalarField(const char *field, const uint16_t &value);
+        bool addScalarField(const char *field, const uint32_t &value);
+        bool addScalarField(const char *field, const uint64_t &value);
+        bool addScalarField(const char *field, const float32_t &value);
+        bool addScalarField(const char *field, const float64_t &value);
 
         /**
          * Adds a data field of a string type to the message.
@@ -247,8 +249,6 @@ namespace fp {
          */
         bool addDateTimeField(const char *field, const uint64_t seconds, const uint64_t microseconds);
 
-        ////////////// REMOVE ///////////////
-
         /**
          * Remove a field from the message.
          *
@@ -260,18 +260,17 @@ namespace fp {
 
         ////////////// ACCESSOR ///////////////
 
-        template <typename T> bool getScalarField(const char *field, T &value) const {
-            if (field != nullptr) {
-                auto index = m_keys.find(field);
-                if (index != m_keys.end()) {
-                    const ScalarField *element = reinterpret_cast<ScalarField *>(
-                            m_payload[index->second]);
-                    value = element->get<T>();
-                    return true;
-                }
-            }
-            return false;
-        }
+        bool getScalarField(const char *field, bool &value) const noexcept;
+        bool getScalarField(const char *field, int8_t &value) const noexcept;
+        bool getScalarField(const char *field, int16_t &value) const noexcept;
+        bool getScalarField(const char *field, int32_t &value) const noexcept;
+        bool getScalarField(const char *field, int64_t &value) const noexcept;
+        bool getScalarField(const char *field, uint8_t &value) const noexcept;
+        bool getScalarField(const char *field, uint16_t &value) const noexcept;
+        bool getScalarField(const char *field, uint32_t &value) const noexcept;
+        bool getScalarField(const char *field, uint64_t &value) const noexcept;
+        bool getScalarField(const char *field, float32_t &value) const noexcept;
+        bool getScalarField(const char *field, float64_t &value) const noexcept;
 
         bool getDataField(const char *field, const char **value, size_t &length) const;
 
