@@ -23,7 +23,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#include "fastpath/messages/Message.h"
+#include "fastpath/messages/BaseMessage.h"
 
 #include "fastpath/utils/logger.h"
 #include "fastpath/messages/DataField.h"
@@ -34,12 +34,18 @@
 
 namespace fp {
 
-    BaseMessage::BaseMessage(BaseMessage &&other) noexcept : m_payload(std::move(other.m_payload)),
-                                        m_keys(std::move(other.m_keys)), m_field_allocator(std::move(other.m_field_allocator)) {
+    BaseMessage::BaseMessage(BaseMessage &&other) noexcept : //m_arena(std::move(other.m_arena)),
+                                                             m_field_allocator(other.m_field_allocator),
+                                                             m_payload(std::move(other.m_payload)),
+                                                             m_keys(std::move(other.m_keys)) {
+        other.m_payload.clear();
+        other.m_keys.clear();
     }
 
     BaseMessage::~BaseMessage() {
-//        this->clear();
+        for (Field *field : m_payload) {
+            this->destroyField(field);
+        }
     }
 
     void BaseMessage::clear() {
@@ -48,208 +54,6 @@ namespace fp {
         }
         m_payload.clear();
         m_keys.clear();
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const bool &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const int8_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const int16_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const int32_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const int64_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const uint8_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const uint16_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const uint32_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const uint64_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const float32_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addScalarField(const char *field, const float64_t &value) {
-        auto e = this->createScalarField(field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (tf::likely(result.second)) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addDataField(const char *field, const byte *value, const size_t size) {
-        DataField *e = this->createDataField(size, field, value, size);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (result.second) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addDataField(const char *field, const char *value) {
-        DataField *e = this->createDataField(strlen(value) + 1, field, value);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (result.second) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addMessageField(const char *field, BaseMessage &&msg) {
-        MessageField *e = this->createMessageField(field, std::forward<BaseMessage>(msg));
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (result.second) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time) {
-        DateTimeField *e = this->createDateTimeField(field, time);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (result.second) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addDateTimeField(const char *field, const std::chrono::microseconds &time) {
-        DateTimeField *e = this->createDateTimeField(field, time);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (result.second) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::addDateTimeField(const char *field, const uint64_t seconds, const uint64_t microseconds) {
-        DateTimeField *e = this->createDateTimeField(field, seconds, microseconds);
-        auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
-        if (result.second) {
-            m_payload.emplace_back(e);
-        } else {
-            this->destroyField(e);
-        }
-        return result.second;
-    }
-
-    bool BaseMessage::removeField(const char* field) {
-        if (field != nullptr) {
-            auto index = m_keys.find(field);
-            if (index != m_keys.end()) {
-                m_keys.erase(field);
-                auto it = m_payload.begin();
-                std::advance(it, index->second);
-                this->destroyField(*it);
-                m_payload.erase(it);
-                return true;
-            }
-        }
-        return false;
     }
 
     void BaseMessage::detach() noexcept {
@@ -321,22 +125,6 @@ namespace fp {
             }
         }
         return success;
-    }
-
-    const DataStorageType BaseMessage::getStorageType(const storage_type type) {
-        DataStorageType r = scalar_t;
-        switch (type) {
-            case storage_type::data:
-            case storage_type::string:
-                r = data_t;
-                break;
-            case storage_type::message:
-                r = message_t;
-                break;
-            default:
-                break;
-        }
-        return r;
     }
 
     bool BaseMessage::getScalarField(const char *field, bool &value) const noexcept {
@@ -512,3 +300,4 @@ namespace fp {
         return out;
     }
 }
+

@@ -12,7 +12,7 @@
 #include <fastpath/event/BlockingQueue.h>
 #include <fastpath/event/IOEvent.h>
 #include <fastpath/event/EventManager.h>
-#include <fastpath/messages/Message.h>
+#include <fastpath/messages/MutableMessage.h>
 //#include <utils/ByteStorage.h>
 
 
@@ -23,7 +23,7 @@ TEST(TCPTransport, TryConnectFail) {
     std::this_thread::sleep_for(std::chrono::seconds(15));
     EXPECT_FALSE(transport.valid());
 
-    fp::Message msg;
+    fp::MutableMessage msg;
     msg.addDataField("Name", "Tom Fewster");
     EXPECT_EQ(fp::CANNOT_SEND, transport.sendMessage(msg));
 }
@@ -37,7 +37,7 @@ TEST(TCPTransport, TryConnectSuccess) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_FALSE(transport.valid());
 
-    fp::Message sendMsg;
+    fp::MutableMessage sendMsg;
     sendMsg.setSubject("UNIT.TEST");
     sendMsg.addDataField("Name", "Tom Fewster");
 
@@ -66,7 +66,7 @@ TEST(TCPTransport, TryConnectSuccess) {
                 fp::Socket::ReadResult result = connection->read(buffer, MTU, size); // 1500 is the typical MTU size
                 DEBUG_LOG("got stuff");
                 if (result == fp::Socket::MoreData) {
-                    fp::Message msg;
+                    fp::MutableMessage msg;
                     EXPECT_TRUE(msg.decode(fp::MessageBuffer::ByteStorageType(reinterpret_cast<const byte *>(buffer), size, true)));
                     DEBUG_LOG("Received " << msg);
                     EXPECT_EQ(sendMsg, msg);
@@ -128,7 +128,7 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_FALSE(transport.valid());
 
-    fp::Message sendMsg;
+    fp::MutableMessage sendMsg;
     sendMsg.setSubject("UNIT.TEST");
     sendMsg.addDataField("Name", "Tom Fewster");
 

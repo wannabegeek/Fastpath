@@ -23,17 +23,35 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_H
-#define FASTPATH_H
+#ifndef FASTPATH_ALLOCATE_POLYMORPHIC_H
+#define FASTPATH_ALLOCATE_POLYMORPHIC_H
 
-#include "fastpath/status.h"
-#include "fastpath/Exception.h"
-#include "fastpath/event/Session.h"
-#include "fastpath/transport/realm_transport.h"
-#include "fastpath/transport/Transport.h"
-#include "fastpath/event/BusySpinQueue.h"
-#include "fastpath/event/BlockingQueue.h"
-#include "fastpath/event/Subscriber.h"
-#include "fastpath/messages/MutableMessage.h"
+/**
+ * Simple allocator for handling polymorphic types
+ * It stores extra bytes at the start of the allocation to keep track of the allocation size.
+ */
 
-#endif //FASTPATH_H
+namespace tf {
+    struct allocate_polymorphic {
+        template <typename T, typename Allocator, class ...Args> inline static T *allocate(Allocator &allocator, Args &&...args) {
+            typename std::allocator_traits<Allocator>::pointer ptr = std::allocator_traits<Allocator>::allocate(allocator, sizeof(T) + sizeof(std::size_t));
+            std::size_t *info = reinterpret_cast<std::size_t *>(ptr);
+
+            *info = sizeof(T);
+            std::advance(ptr, sizeof(std::size_t));
+            return new(ptr) T(std::forward<Args>(args)...);
+        }
+
+        template <typename T, typename Allocator> inline static void deallocate(Allocator &allocator, T *ptr) noexcept {
+            ptr->~T();
+
+            typename std::allocator_traits<Allocator>::pointer alloc_ptr = reinterpret_cast<typename std::allocator_traits<Allocator>::pointer>(ptr);
+            std::advance(alloc_ptr, -sizeof(std::size_t));
+            std::size_t *info = reinterpret_cast<std::size_t *>(alloc_ptr);
+            *info += sizeof(std::size_t);
+            std::allocator_traits<Allocator>::deallocate(allocator, alloc_ptr, *info);
+        }
+    };
+}
+
+#endif //FASTPATH_ALLOCATE_POLYMORPHIC_H

@@ -35,7 +35,7 @@ namespace fp {
         CorruptMessage
     } MessageDecodeStatus;
 
-    class Message final : public BaseMessage {
+    class Message : public BaseMessage {
     public:
         static constexpr size_t max_subject_length = std::numeric_limits<uint16_t>::max();
     private:

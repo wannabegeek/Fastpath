@@ -73,7 +73,7 @@ int main( int argc, char *argv[] )  {
         auto transport = fp::make_realm_connection(url.c_str(), "");
 
         if (transport->valid()) {
-            fp::Message msg;
+            fp::MutableMessage msg;
             msg.setSubject(subject.c_str());
             msg.addDataField("name", "tom");
             if (transport->sendMessage(msg) == fp::OK) {

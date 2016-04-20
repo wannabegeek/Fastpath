@@ -34,7 +34,7 @@ namespace fp {
 
 
     void MessageListener::subscribe(Transport *transport, const char *subject) noexcept {
-        Message msg;
+        MutableMessage msg;
         msg.setSubject("_FP.REGISTER.OBSERVER");
         msg.addDataField("subject", subject);
         msg.addScalarField("id", reinterpret_cast<uint64_t>(this));
@@ -42,7 +42,7 @@ namespace fp {
     }
 
     void MessageListener::unsubscribe(Transport *transport, const char *subject) noexcept {
-        Message msg;
+        MutableMessage msg;
         msg.setSubject("_FP.UNREGISTER.OBSERVER");
         msg.addDataField("subject", subject);
         msg.addScalarField("id", reinterpret_cast<uint64_t>(this));

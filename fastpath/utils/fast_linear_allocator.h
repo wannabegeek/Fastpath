@@ -114,6 +114,11 @@ namespace tf {
 
     public:
         ~arena() {
+            slab *s = m_root_slab;
+            while (s != nullptr) {
+                s = s->m_next;
+                delete s;
+            }
             m_root_slab = nullptr;
         }
 

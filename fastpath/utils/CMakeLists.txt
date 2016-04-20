@@ -14,7 +14,7 @@ set(HEADER_FILES
         fast_linear_allocator.h
         short_alloc.h
         stringhash.h
-        )
+        allocate_polymorphic.h)
 
 set(SOURCE_FILES
         daemon_process.cpp

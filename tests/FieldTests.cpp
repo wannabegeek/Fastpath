@@ -24,7 +24,7 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include "fastpath/messages/Message.h"
+#include "fastpath/messages/MutableMessage.h"
 #include "fastpath/messages/DateTimeField.h"
 #include "fastpath/messages/MessageField.h"
 
@@ -194,7 +194,7 @@ TEST(Field, SerializeSubMessage) {
 
     LOG_LEVEL(tf::logger::info);
 
-    fp::Message msg;
+    fp::MutableMessage msg;
     float32_t t = 22.0;
     EXPECT_TRUE(msg.addScalarField("TEST1", t));
     EXPECT_TRUE(msg.addScalarField("TEST2", true));

@@ -74,7 +74,7 @@ int main( int argc, char *argv[] )  {
             return 1;
         }
 
-        fp::Message sendMsg;
+        fp::MutableMessage sendMsg;
         fp::Subscriber subscriber(transport, "TEST.PERF.SOURCE", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
             auto recv_ts = std::chrono::high_resolution_clock::now();
             DEBUG_LOG("Received message: " << *msg);

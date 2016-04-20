@@ -24,7 +24,7 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include "fastpath/messages/Message.h"
+#include "fastpath/messages/MutableMessage.h"
 #include "fastpath/utils/logger.h"
 
 TEST(Message, SetSubject) {
@@ -40,7 +40,7 @@ TEST(Message, SetSubject) {
 
 TEST(Message, AddStringField) {
 
-    fp::Message msg;
+    fp::MutableMessage msg;
     ASSERT_TRUE(msg.addDataField("1234", "TEST"));
 
     const char * v = nullptr;
@@ -56,7 +56,7 @@ TEST(Message, AddStringField) {
 }
 
 TEST(Message, AddFloatField) {
-    fp::Message msg;
+    fp::MutableMessage msg;
     msg.addScalarField("TEST", static_cast<float32_t>(1.4));
     float32_t t = 0.0;
     ASSERT_TRUE(msg.getScalarField("TEST", t));
@@ -64,7 +64,7 @@ TEST(Message, AddFloatField) {
 }
 
 TEST(Message, AddMixedDuplicateField) {
-    fp::Message msg;
+    fp::MutableMessage msg;
     msg.addDataField("TEST", "AGAIN");
 
     ASSERT_FALSE(msg.addScalarField("TEST", static_cast<float32_t>(1.4)));
@@ -77,10 +77,10 @@ TEST(Message, AddMixedDuplicateField) {
 }
 
 TEST(Message, AddMessageField) {
-    fp::Message msg;
+    fp::MutableMessage msg;
     msg.addScalarField("TEST", static_cast<float32_t>(1.4));
 
-    fp::Message m;
+    fp::MutableMessage m;
     m.addDataField("TEST2", "TOMTOMTOM");
 
     msg.addMessageField("MSG_TEST", std::move(m));
@@ -89,7 +89,7 @@ TEST(Message, AddMessageField) {
 }
 
 TEST(Message, RemoveFieldByString) {
-    fp::Message msg;
+    fp::MutableMessage msg;
     float32_t t = 22.0;
     msg.addScalarField("TEST", t);
     ASSERT_TRUE(msg.getScalarField("TEST", t));
@@ -102,7 +102,7 @@ TEST(Message, RemoveFieldByString) {
 }
 
 TEST(Message, Encode) {
-    fp::Message msg;
+    fp::MutableMessage msg;
     msg.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
     msg.addScalarField("TEST", t);
@@ -118,7 +118,7 @@ TEST(Message, Encode) {
 
 TEST(Message, Decode) {
     LOG_LEVEL(tf::logger::info);
-    fp::Message in;
+    fp::MutableMessage in;
     in.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
     EXPECT_TRUE(in.addScalarField("TEST1", t));
@@ -145,7 +145,7 @@ TEST(Message, Decode) {
 TEST(Message, MultiDecode) {
     LOG_LEVEL(tf::logger::info);
 
-    fp::Message in1;
+    fp::MutableMessage in1;
     in1.setSubject("SAMPLE.MSG.1");
     float32_t t = 22.0;
     in1.addScalarField("TEST", t);
@@ -153,7 +153,7 @@ TEST(Message, MultiDecode) {
     in1.addDataField("Name", "Tom");
     in1.addDataField("Name", "Zac");
 
-    fp::Message in2;
+    fp::MutableMessage in2;
     in2.setSubject("SAMPLE.MSG.2");
     t = 26.0;
     in2.addScalarField("TEST", t);
@@ -182,7 +182,7 @@ TEST(Message, MultiDecode) {
 
 TEST(Message, MultiPartialDecode) {
     LOG_LEVEL(tf::logger::info);
-    fp::Message in1;
+    fp::MutableMessage in1;
     float32_t t = 22.0;
 //    in1.addScalarField("TEST_float", t);
 //    in1.addScalarField("TEST_bool", true);
@@ -226,7 +226,7 @@ TEST(Message, MultiPartialDecode) {
 TEST(Message, MoveConstructor) {
     LOG_LEVEL(tf::logger::info);
 
-    fp::Message in1;
+    fp::MutableMessage in1;
     in1.setSubject("SAMPLE.MSG.1");
     float32_t t = 22.0;
     in1.addScalarField("TEST", t);

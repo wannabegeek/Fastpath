@@ -31,7 +31,7 @@
 
 #include "fastpath/messages/StorageTypes.h"
 #include "fastpath/transport/Transport.h"
-#include "fastpath/messages/Message.h"
+#include "fastpath/messages/MutableMessage.h"
 #include "fastpath/event/Subscriber.h"
 #include "fastpath/event/MessageEvent.h"
 

@@ -19,7 +19,7 @@ set(SOURCE_FILES
         BaseMessage.cpp
         Message.cpp
         MessageField.cpp
-)
+        MutableMessage.cpp MutableMessage.h)
 
 add_library(messages OBJECT ${SOURCE_FILES} ${HEADER_FILES})
 INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath/messages)

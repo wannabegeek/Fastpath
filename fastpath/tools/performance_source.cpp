@@ -86,7 +86,7 @@ int main( int argc, char *argv[] )  {
         uint32_t id = 0;
         bool shutdown = false;
 
-        fp::Message sendMsg;
+        fp::MutableMessage sendMsg;
         sendMsg.setSubject("TEST.PERF.SOURCE");
         sendMsg.addScalarField("id", id);
 

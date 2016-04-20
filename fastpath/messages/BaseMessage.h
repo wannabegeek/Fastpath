@@ -47,18 +47,10 @@
 #include "fastpath/messages/DateTimeField.h"
 #include "fastpath/messages/SmallDataField.h"
 #include "fastpath/messages/LargeDataField.h"
+#include "fastpath/utils/allocate_polymorphic.h"
 
 namespace fp {
     class MessageField;
-
-    /// @cond DEV
-    typedef enum {
-        scalar_t,
-        data_t,
-        message_t
-    } DataStorageType;
-
-    /// @endcond
 
     /**
      * Base class containing the body implementation of a message.
@@ -67,20 +59,7 @@ namespace fp {
      */
     class BaseMessage : public Serializable, public tf::reusable {
     private:
-        using payload_type = Field *;
-        typedef std::vector<payload_type> PayloadContainer;
-        typedef std::unordered_map<const char *, const size_t, tf::string_hash, tf::string_comparator> KeyMappingsContainer;
-
         static constexpr const uint8_t body_flag = 2;
-
-        PayloadContainer m_payload;
-        KeyMappingsContainer m_keys;
-
-        static const DataStorageType getStorageType(const storage_type type);
-
-        using field_allocator_type = tf::linear_allocator<unsigned char>; //std::allocator<unsigned char>;
-        field_allocator_type::arena_type m_arena;
-        field_allocator_type m_field_allocator;
 
     protected:
         /// @cond DEV
@@ -88,46 +67,42 @@ namespace fp {
          * Helper method for operator<<
          */
         virtual std::ostream& output(std::ostream& out) const;
-        /// @endcond
+
+        using field_allocator_type = tf::linear_allocator<unsigned char>;
+        field_allocator_type::arena_type m_arena;
+        field_allocator_type m_field_allocator;
+
+        using payload_type = Field *;
+        typedef std::vector<payload_type> PayloadContainer;
+        typedef std::unordered_map<const char *, const size_t, tf::string_hash, tf::string_comparator> KeyMappingsContainer;
+
+        PayloadContainer m_payload;
+        KeyMappingsContainer m_keys;
 
         template <class ...Args> inline ScalarField *createScalarField(Args &&...args) {
-            return createField<ScalarField>(std::forward<Args>(args)...);
+            return tf::allocate_polymorphic::allocate<ScalarField, field_allocator_type>(m_field_allocator, std::forward<Args>(args)...);
         }
 
         template <class ...Args> inline DataField *createDataField(std::size_t size, Args &&...args) {
             if (tf::likely(size <= SmallDataField::max_size)) {
-                return createField<SmallDataField>(std::forward<Args>(args)...);
+                return tf::allocate_polymorphic::allocate<SmallDataField, field_allocator_type>(m_field_allocator, std::forward<Args>(args)...);
             } else {
-                return createField<LargeDataField<field_allocator_type>>(std::forward<Args>(args)..., m_field_allocator);
+                return tf::allocate_polymorphic::allocate<LargeDataField<field_allocator_type>, field_allocator_type>(m_field_allocator, std::forward<Args>(args)..., m_field_allocator);
             }
         }
 
         template <class ...Args> inline DateTimeField *createDateTimeField(Args &&...args) {
-            return createField<DateTimeField>(std::forward<Args>(args)...);
+            return tf::allocate_polymorphic::allocate<DateTimeField, field_allocator_type>(m_field_allocator, std::forward<Args>(args)...);
         }
 
         template <class ...Args> inline MessageField *createMessageField(Args &&...args) {
-            return createField<MessageField>(std::forward<Args>(args)...);
+            return tf::allocate_polymorphic::allocate<MessageField, field_allocator_type>(m_field_allocator, std::forward<Args>(args)...);
         }
 
-        template <typename T, class ...Args> inline T *createField(Args &&...args) {
-            std::allocator_traits<field_allocator_type>::pointer ptr = std::allocator_traits<field_allocator_type>::allocate(m_field_allocator, sizeof(T) + sizeof(std::size_t));
-            std::size_t *info = reinterpret_cast<std::size_t *>(ptr);
-
-            *info = sizeof(T);
-            std::advance(ptr, sizeof(std::size_t));
-            return new(ptr) T(std::forward<Args>(args)...);
+        template <typename T> inline void destroyField(T *field) noexcept {
+            return tf::allocate_polymorphic::deallocate<T, field_allocator_type>(m_field_allocator, field);
         }
-
-        template <typename T, class ...Args> inline void destroyField(T *field) noexcept {
-            field->~T();
-
-            std::allocator_traits<field_allocator_type>::pointer ptr = reinterpret_cast<std::allocator_traits<field_allocator_type>::pointer>(field);
-            std::advance(ptr, -sizeof(std::size_t));
-            std::size_t *info = reinterpret_cast<std::size_t *>(ptr);
-            *info += sizeof(std::size_t);
-            std::allocator_traits<field_allocator_type>::deallocate(m_field_allocator, ptr, *info);
-        }
+        /// @endcond
 
     public:
         /**
@@ -169,94 +144,6 @@ namespace fp {
          * Clears all the fields of the message, so it can be re-used.
          */
         virtual void clear();
-
-        ////////////// MUTATORS ///////////////
-
-        /**
-         * Adds a scalar field of a type `<T>` to the message.
-         *
-         * @param field The field identifier name.
-         * @param value Sets the field value as this scalar value.
-         * @return `true` if the field was successfully added, `false` otherwise
-         */
-        bool addScalarField(const char *field, const bool &value);
-        bool addScalarField(const char *field, const int8_t &value);
-        bool addScalarField(const char *field, const int16_t &value);
-        bool addScalarField(const char *field, const int32_t &value);
-        bool addScalarField(const char *field, const int64_t &value);
-        bool addScalarField(const char *field, const uint8_t &value);
-        bool addScalarField(const char *field, const uint16_t &value);
-        bool addScalarField(const char *field, const uint32_t &value);
-        bool addScalarField(const char *field, const uint64_t &value);
-        bool addScalarField(const char *field, const float32_t &value);
-        bool addScalarField(const char *field, const float64_t &value);
-
-        /**
-         * Adds a data field of a string type to the message.
-         *
-         * @param field The field identifier name.
-         * @param value Sets the field value as this string.
-         * @return `true` if the field was successfully added, `false` otherwise
-         */
-        bool addDataField(const char *field, const char *value);
-
-        /**
-         * Adds a data field containing opaque bytes type to the message.
-         *
-         * @param field The field identifier name.
-         * @param value Sets the field value as byte array.
-         * @param size The length of the data array to be added.
-         * @return `true` if the field was successfully added, `false` otherwise
-         */
-        bool addDataField(const char *field, const byte *value, const size_t size);
-
-        /**
-         * Adds a field containing a sub-message to the message.
-         * It is the responsibility of the application to make sure the
-         * sub-message is valid until the message has been send successfully.
-         *
-         * @param field The field identifier name.
-         * @param msg Sets the field value to this message.
-         * @return `true` if the field was successfully added, `false` otherwise
-         */
-        bool addMessageField(const char *field, BaseMessage &&msg);
-
-        /**
-         * Adds a date-time field to the message.
-         *
-         * @param field The field identifier name.
-         * @param time Sets the field value to this time.
-         * @return `true` if the field was successfully added, `false` otherwise
-         */
-        bool addDateTimeField(const char *field, const std::chrono::time_point<std::chrono::system_clock> &time);
-
-        /**
-         * Adds a date-time field to the message.
-         *
-         * @param field The field identifier name.
-         * @param time Sets the field value to this time.
-         * @return `true` if the field was successfully added, `false` otherwise
-         */
-        bool addDateTimeField(const char *field, const std::chrono::microseconds &time);
-
-        /**
-         * Adds a date-time field to the message.
-         *
-         * @param field The field identifier name.
-         * @param seconds Sets the field value with seconds.
-         * @param microseconds Sets the field value with microseconds.
-         * @return `true` if the field was successfully added, `false` otherwise
-         */
-        bool addDateTimeField(const char *field, const uint64_t seconds, const uint64_t microseconds);
-
-        /**
-         * Remove a field from the message.
-         *
-         * @param field The field identifier name.
-         * @return `true` if the field was successfully removed, `false` otherwise
-         */
-        bool removeField(const char *field);
-
 
         ////////////// ACCESSOR ///////////////
 
@@ -303,3 +190,4 @@ namespace fp {
 }
 
 #endif //FASTPATH_MESSAGE_H
+

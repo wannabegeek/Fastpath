@@ -35,13 +35,7 @@ namespace fp {
         iov.iov_len = sizeof(int);
 
         struct msghdr msgh;
-        union {
-            struct cmsghdr cmh;
-            int control[MAX_FDS];
-            /* Space large enough to hold an 'int' */
-        } control_un;
-
-        char cmsgbuf[CMSG_SPACE(sizeof(int) * num_fds)];
+        char cmsgbuf[CMSG_SPACE(sizeof(int) * MAX_FDS)];
 
         msgh.msg_iov = &iov;
         msgh.msg_iovlen = 1;
@@ -112,3 +106,4 @@ namespace fp {
         return false;
     }
 }
+

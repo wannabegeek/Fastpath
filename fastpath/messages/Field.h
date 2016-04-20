@@ -90,6 +90,9 @@ namespace fp {
             throw fp::exception("Decode failed");
         }
 
+        Field(const Field &other) = delete;
+        const Field &operator=(const Field &other) = delete;
+
         const char *identifier() const { return m_identifier; }
 
         const storage_type type() const noexcept {
