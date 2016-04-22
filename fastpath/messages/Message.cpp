@@ -25,6 +25,7 @@
 
 #include "fastpath/utils/logger.h"
 #include "fastpath/messages/Message.h"
+#include "fastpath/messages/FieldAllocator.h"
 
 namespace fp {
 

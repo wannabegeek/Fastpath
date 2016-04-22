@@ -14,7 +14,7 @@ set(HEADER_FILES
         LargeDataField.h
         subject.h
         subscription.h
-)
+        FieldAllocator.h)
 
 set(SOURCE_FILES
         BaseMessage.cpp

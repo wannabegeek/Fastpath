@@ -35,7 +35,7 @@
 namespace fp {
 
     class BaseMessage;
-    class ScalarField;
+//    class ScalarField;
 //    class DataField;
 //    class MessageField;
 

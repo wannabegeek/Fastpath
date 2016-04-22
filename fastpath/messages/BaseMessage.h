@@ -36,21 +36,15 @@
 #include <chrono>
 
 #include "fastpath/messages/Serializable.h"
-#include "fastpath/messages/Field.h"
 #include "fastpath/Exception.h"
 #include "fastpath/utils/stringhash.h"
 #include "fastpath/utils/tfpool.h"
 #include "fastpath/utils/fast_linear_allocator.h"
 #include "fastpath/types.h"
-#include "fastpath/messages/ScalarField.h"
-#include "fastpath/messages/DataField.h"
-#include "fastpath/messages/DateTimeField.h"
-#include "fastpath/messages/SmallDataField.h"
-#include "fastpath/messages/LargeDataField.h"
-#include "fastpath/utils/allocate_polymorphic.h"
+#include "fastpath/messages/StorageTypes.h"
 
 namespace fp {
-    class MessageField;
+    class Field;
 
     /**
      * Base class containing the body implementation of a message.
@@ -79,29 +73,6 @@ namespace fp {
         PayloadContainer m_payload;
         KeyMappingsContainer m_keys;
 
-        template <class ...Args> inline ScalarField *createScalarField(Args &&...args) {
-            return tf::allocate_polymorphic::allocate<ScalarField, field_allocator_type>(m_field_allocator, std::forward<Args>(args)...);
-        }
-
-        template <class ...Args> inline DataField *createDataField(std::size_t size, Args &&...args) {
-            if (tf::likely(size <= SmallDataField::max_size)) {
-                return tf::allocate_polymorphic::allocate<SmallDataField, field_allocator_type>(m_field_allocator, std::forward<Args>(args)...);
-            } else {
-                return tf::allocate_polymorphic::allocate<LargeDataField<field_allocator_type>, field_allocator_type>(m_field_allocator, std::forward<Args>(args)..., m_field_allocator);
-            }
-        }
-
-        template <class ...Args> inline DateTimeField *createDateTimeField(Args &&...args) {
-            return tf::allocate_polymorphic::allocate<DateTimeField, field_allocator_type>(m_field_allocator, std::forward<Args>(args)...);
-        }
-
-        template <class ...Args> inline MessageField *createMessageField(Args &&...args) {
-            return tf::allocate_polymorphic::allocate<MessageField, field_allocator_type>(m_field_allocator, std::forward<Args>(args)...);
-        }
-
-        template <typename T> inline void destroyField(T *field) noexcept {
-            return tf::allocate_polymorphic::deallocate<T, field_allocator_type>(m_field_allocator, field);
-        }
         /// @endcond
 
     public:
@@ -135,10 +106,7 @@ namespace fp {
          * @param field The field identifier name.
          * @return The storage type.
          */
-        const storage_type storageType(const char *field) const {
-            const Field *element = m_payload[m_keys.at(field)];
-            return element->type();
-        }
+        const storage_type storageType(const char *field) const;
 
         /**
          * Clears all the fields of the message, so it can be re-used.

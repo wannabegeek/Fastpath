@@ -31,6 +31,7 @@
 #include "fastpath/messages/MessageField.h"
 
 #include <iostream>
+#include "FieldAllocator.h"
 
 namespace fp {
 
@@ -44,13 +45,13 @@ namespace fp {
 
     BaseMessage::~BaseMessage() {
         for (Field *field : m_payload) {
-            this->destroyField(field);
+            destroyField(m_field_allocator, field);
         }
     }
 
     void BaseMessage::clear() {
         for (Field *field : m_payload) {
-            this->destroyField(field);
+            destroyField(m_field_allocator, field);
         }
         m_payload.clear();
         m_keys.clear();
@@ -63,6 +64,11 @@ namespace fp {
         return std::equal(m_payload.begin(), m_payload.end(), other.m_payload.begin(), [](const PayloadContainer::value_type& item1, const PayloadContainer::value_type& item2) -> bool {
                         return *item1 == *item2;
                 });
+    }
+
+    const storage_type BaseMessage::storageType(const char *field) const {
+        const Field *element = m_payload[m_keys.at(field)];
+        return element->type();
     }
 
     const size_t BaseMessage::encode(MessageBuffer &buffer) const noexcept {
@@ -106,16 +112,16 @@ namespace fp {
                 switch (static_cast<storage_type>(type)) {
                     case storage_type::string:
                     case storage_type::data:
-                        field = this->createDataField(data_size, buffer);
+                        field = createDataField(m_field_allocator, data_size, buffer);
                         break;
                     case storage_type::date_time:
-                        field = this->createDateTimeField(buffer);
+                        field = createDateTimeField(m_field_allocator, buffer);
                         break;
                     case storage_type::message:
-                        field = this->createMessageField(buffer);
+                        field = createMessageField(m_field_allocator, buffer);
                         break;
                     default:
-                        field = this->createScalarField(buffer);
+                        field = createScalarField(m_field_allocator, buffer);
                         break;
                 }
 
