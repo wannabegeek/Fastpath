@@ -81,18 +81,6 @@ int main( int argc, char *argv[] )  {
             queue.dispatch();
         }
 
-//        if (transport.valid()) {
-//            fp::Message msg;
-//            msg.setSubject(subject.c_str());
-//            msg.addDataField("name", "tom");
-//            if (transport.sendMessage(msg) == fp::OK) {
-//                INFO_LOG("Message send successfully");
-//            } else {
-//                ERROR_LOG("Failed to send message");
-//            }
-//        } else {
-//            ERROR_LOG("Failed to send message - transport not connected");
-//        }
         fp::Session::destroy();
     } catch (const std::exception &stde) {
         ERROR_LOG("Internal error: " << stde.what());
