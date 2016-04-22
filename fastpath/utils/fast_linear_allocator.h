@@ -27,7 +27,7 @@
 #define FASTPATH_FAST_LINEAR_ALLOCATOR_H
 
 #include <cstddef>
-#include "fastpath/utils/logger.h"
+#include <cassert>
 
 namespace tf {
 
@@ -134,7 +134,6 @@ namespace tf {
             if ((s = find_slab_with_space(m_root_slab, size)) != nullptr) {
                 return s->allocate(size);
             } else {
-                DEBUG_LOG("Allocating new block of size " << std::max(size, m_initial_size) << " from arena: " << *this);
                 m_current_slab->m_next = new slab(std::max(size, m_initial_size));
                 m_current_slab = m_current_slab->m_next;
                 return m_current_slab->allocate(size);

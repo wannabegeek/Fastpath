@@ -17,6 +17,8 @@ namespace fp {
 
         const bool operator==(const Message &other) const;
 
+        const bool setSubject(const char *subject);
+
         /**
          * Adds a scalar field of a type `<T>` to the message.
          *

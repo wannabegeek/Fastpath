@@ -26,6 +26,15 @@ namespace fp {
         return Message::operator==(other);
     }
 
+    const bool MutableMessage::setSubject(const char *subject) {
+        if (strlen(subject) < max_subject_length) {
+            strcpy(&m_subject[0], subject);
+            return true;
+        }
+
+        return false;
+    }
+
     bool MutableMessage::addScalarField(const char *field, const bool &value) {
         auto e = this->createScalarField(field, value);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));

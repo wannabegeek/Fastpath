@@ -28,7 +28,7 @@
 #include "fastpath/utils/logger.h"
 
 TEST(Message, SetSubject) {
-    fp::Message msg;
+    fp::MutableMessage msg;
     const char *subject = "TEST.SUBJECT";
     ASSERT_TRUE(msg.setSubject(subject));
 

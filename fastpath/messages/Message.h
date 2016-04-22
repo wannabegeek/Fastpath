@@ -41,12 +41,14 @@ namespace fp {
     private:
         static constexpr const uint8_t addressing_flag = 1;
 
-        uint8_t m_flags;
         bool m_hasAddressing;
-        char m_subject[max_subject_length];
 
         virtual std::ostream& output(std::ostream& out) const override;
         const void encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) const noexcept;
+
+    protected:
+        uint8_t m_flags;
+        char m_subject[max_subject_length];
 
     public:
         Message();
@@ -58,7 +60,6 @@ namespace fp {
         void clear() override;
 
         const char *subject() const { return m_subject; }
-        const bool setSubject(const char *subject);
 
         const uint8_t flags() const noexcept { return m_flags; }
 

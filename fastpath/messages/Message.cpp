@@ -28,13 +28,13 @@
 
 namespace fp {
 
-    Message::Message() : m_flags(-1), m_hasAddressing(true) {
+    Message::Message() : m_hasAddressing(true), m_flags(-1) {
         m_subject[0] = '\0';
     }
 
     Message::Message(Message &&other) noexcept : BaseMessage(std::move(other)),
-                                                             m_flags(other.m_flags),
-                                                             m_hasAddressing(other.m_hasAddressing) {
+                                                             m_hasAddressing(other.m_hasAddressing),
+                                                             m_flags(other.m_flags) {
         std::strcpy(m_subject, other.m_subject);
         other.m_subject[0] = '\0';
     }
@@ -48,15 +48,6 @@ namespace fp {
                && BaseMessage::operator==(other);
     }
 
-
-    const bool Message::setSubject(const char *subject) {
-        if (strlen(subject) < max_subject_length) {
-            strcpy(&m_subject[0], subject);
-            return true;
-        }
-
-        return false;
-    }
 
     void Message::clear() {
         m_flags = -1;
