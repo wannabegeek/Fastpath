@@ -70,7 +70,7 @@ namespace fp {
             m_time[fp_microseconds] = std::chrono::duration_cast<std::chrono::microseconds>(value).count() % std::chrono::microseconds::period::den;
         }
 
-        DateTimeField(const MessageBuffer::ByteStorageType &buffer) : Field(buffer) {
+        DateTimeField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {
             m_time[fp_seconds] = readScalar<int64_t>(buffer.readBytes());
             buffer.advanceRead(sizeof(int64_t));
             m_time[fp_microseconds] = readScalar<int64_t>(buffer.readBytes());

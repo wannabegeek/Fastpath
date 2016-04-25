@@ -23,35 +23,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_DATAFIELD_H
-#define FASTPATH_DATAFIELD_H
+#ifndef tfnulllock_h
+#define tfnulllock_h
 
-#include "fastpath/messages/Field.h"
+namespace tf {
 
-namespace fp {
-    class DataField : public Field {
-
-    protected:
-        virtual const bool isEqual(const Field &other) const noexcept override = 0;
-    public:
-//        DataField(const char *identifier) noexcept : Field(identifier) {}
-        DataField(const char *identifier, const storage_type &type, const std::size_t data_length) noexcept : Field(identifier, type, data_length) {}
-        DataField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {}
-
-        virtual ~DataField() noexcept {}
-
-        virtual const size_t get(const byte **data) const noexcept = 0;
-        virtual const size_t get(const char **data) const noexcept = 0;
-
-        template <typename T, typename = std::enable_if<field_traits<T>::value && std::is_pointer<T>::value>> const T get() const noexcept {
-            assert(m_type == field_traits<T>::type);
-            typename std::remove_const<T>::type bytes = nullptr;
-            this->get(&bytes);
-            return bytes;
-        }
-
-        virtual const size_t encode(MessageBuffer &buffer) const noexcept override = 0;
-    };
+	class nulllock {
+	public:
+		inline void lock() noexcept {}
+		inline void unlock() noexcept {}
+	};
 }
 
-#endif //FASTPATH_DATAFIELD_H
+#endif

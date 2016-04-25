@@ -36,7 +36,7 @@ namespace fp {
         m_data_length = 0;
     }
 
-    const BaseMessage *MessageField::get() const {
+    const BaseMessage *MessageField::get() const noexcept {
         return &m_msg;
     }
 

@@ -29,7 +29,7 @@
 
 namespace fp {
 
-    Message::Message() : m_hasAddressing(true), m_flags(-1) {
+    Message::Message() noexcept : m_hasAddressing(true), m_flags(-1) {
         m_subject[0] = '\0';
     }
 
@@ -40,7 +40,7 @@ namespace fp {
         other.m_subject[0] = '\0';
     }
 
-    Message::~Message() {
+    Message::~Message() noexcept {
     }
 
     const bool Message::operator==(const Message &other) const {
@@ -50,7 +50,7 @@ namespace fp {
     }
 
 
-    void Message::clear() {
+    void Message::clear() noexcept {
         m_flags = -1;
         m_subject[0] = '\0';
         BaseMessage::clear();

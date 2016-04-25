@@ -31,6 +31,7 @@
 #include <utility>
 #include <limits>
 
+#include "fastpath/utils/optimize.h"
 #include "fastpath/ByteStorage.h"
 
 namespace fp {
@@ -45,7 +46,7 @@ namespace fp {
         virtual ~MutableByteStorage() noexcept {};
 
         void setData(const T *data, const size_t length) noexcept {
-            if (length > this->m_storage.second) {
+            if (tf::unlikely(length > this->m_storage.second)) {
                 ByteStorage<T, Allocator>::storage_traits::deallocate(this->m_allocator, this->m_storage.first, this->m_storage.second);
                 this->allocateStorage(std::max(length, this->m_storage.second * 2));
             }
@@ -54,7 +55,7 @@ namespace fp {
         }
 
         void increaseLengthBy(const size_t length) noexcept {
-            if (this->m_storedLength + length > this->m_storage.second) {
+            if (tf::unlikely(this->m_storedLength + length > this->m_storage.second)) {
                 T *old_data = this->m_storage.first;
                 const size_t old_length = this->m_storage.second;
                 this->allocateStorage(this->m_storage.second + length);

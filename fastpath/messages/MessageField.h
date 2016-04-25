@@ -50,7 +50,7 @@ namespace fp {
         MessageField(const char *identifier, BaseMessage &&message) noexcept;
         MessageField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception);
 
-        const BaseMessage *get() const;
+        const BaseMessage *get() const noexcept;
 
         const size_t encode(MessageBuffer &buffer) const noexcept override;
     };

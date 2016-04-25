@@ -35,16 +35,7 @@
 
 namespace tf {
     struct allocate_polymorphic {
-//        template <typename T, typename Allocator, class ...Args, typename std::enable_if<std::is_nothrow_constructible<T>::value>::true> inline static T *allocate(Allocator &allocator, Args &&...args) {
-//            typename std::allocator_traits<Allocator>::pointer ptr = std::allocator_traits<Allocator>::allocate(allocator, sizeof(T) + sizeof(std::size_t));
-//            std::size_t *info = reinterpret_cast<std::size_t *>(ptr);
-//
-//            *info = sizeof(T);
-//            std::advance(ptr, sizeof(std::size_t));
-//            return new(ptr) T(std::forward<Args>(args)...);
-//        }
-
-        template <typename T, typename Allocator, class ...Args> inline static T *allocate(Allocator &allocator, Args &&...args) {
+        template <typename T, typename Allocator, class ...Args, typename Enabled = void> inline static T *allocate(Allocator &allocator, Args &&...args) {
             typename std::allocator_traits<Allocator>::pointer ptr = std::allocator_traits<Allocator>::allocate(allocator, sizeof(T) + sizeof(std::size_t));
             std::size_t *info = reinterpret_cast<std::size_t *>(ptr);
 

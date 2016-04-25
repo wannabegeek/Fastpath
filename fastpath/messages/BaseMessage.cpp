@@ -43,16 +43,16 @@ namespace fp {
         other.m_keys.clear();
     }
 
-    BaseMessage::~BaseMessage() {
+    BaseMessage::~BaseMessage() noexcept {
         for (Field *field : m_payload) {
             destroyField(m_field_allocator, field);
         }
     }
 
-    void BaseMessage::clear() {
-        for (Field *field : m_payload) {
-            destroyField(m_field_allocator, field);
-        }
+    void BaseMessage::clear() noexcept {
+        std::for_each(m_payload.begin(), m_payload.end(), [this](Field *field) {
+                destroyField(m_field_allocator, field);
+        });
         m_payload.clear();
         m_keys.clear();
     }
@@ -66,7 +66,7 @@ namespace fp {
                 });
     }
 
-    const storage_type BaseMessage::storageType(const char *field) const {
+    const storage_type BaseMessage::storageType(const char *field) const noexcept {
         const Field *element = m_payload[m_keys.at(field)];
         return element->type();
     }

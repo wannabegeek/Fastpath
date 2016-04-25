@@ -14,20 +14,20 @@
 
 namespace fp {
 
-    MutableMessage::MutableMessage() {
+    MutableMessage::MutableMessage() noexcept {
     }
 
     MutableMessage::MutableMessage(MutableMessage &&other) noexcept : Message(std::move(other)) {
     }
 
-    MutableMessage::~MutableMessage() {
+    MutableMessage::~MutableMessage() noexcept {
     }
 
     const bool MutableMessage::operator==(const Message &other) const {
         return Message::operator==(other);
     }
 
-    const bool MutableMessage::setSubject(const char *subject) {
+    const bool MutableMessage::setSubject(const char *subject) noexcept {
         if (strlen(subject) < max_subject_length) {
             strcpy(&m_subject[0], subject);
             return true;

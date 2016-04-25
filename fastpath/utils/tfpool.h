@@ -34,9 +34,7 @@
 #include <memory>
 #include <type_traits>
 
-#include "fastpath/utils/tfspinlock.h"
 #include "fastpath/utils/optimize.h"
-#include "fastpath/utils/logger.h"
 
 namespace tf {
 
@@ -48,22 +46,23 @@ namespace tf {
         virtual ~reusable() {}
         virtual void prepareForReuse() = 0;
 
-        void release() {
+        inline void release() noexcept {
            if (m_release_fn != nullptr) {
                m_release_fn(this);
            }
         }
 
-        template<typename T, typename J> friend class pool;
+        template<typename T, typename L, typename J> friend class pool;
     };
 
-    template<class T, typename Enable = void> class pool {
+    template<class T, typename L, typename Enable = void> class pool {
         static_assert(std::is_default_constructible<T>::value, "T must be default constructable");
+        static_assert(std::is_nothrow_constructible<T>::value, "T must be nothrow constructable");
 
         size_t m_poolSize;
         std::vector<T *> m_freeAllocations;
         std::vector<T *> m_objectCache;
-        mutable tf::spinlock m_lock;
+        mutable L m_lock;
 
     public:
         pool(size_t poolSize = 256) {
@@ -89,7 +88,7 @@ namespace tf {
         pool(const pool &) = delete;
         pool &operator=(const pool &) = delete;
 
-        T *allocate() {
+        inline T *allocate() noexcept {
             m_lock.lock();
             if (unlikely(m_freeAllocations.empty())) {
                 size_t newPoolSize = m_poolSize * 2;
@@ -112,7 +111,7 @@ namespace tf {
             return object;
         }
 
-        void release(T *object) {
+        inline void release(T *object) noexcept {
             if (object != nullptr) {
                 m_lock.lock();
 #ifdef CHECK_DOUBLE_FREE
@@ -124,12 +123,12 @@ namespace tf {
             }
         }
 
-        bool is_from_pool(T *object) const {
+        bool is_from_pool(T *object) const noexcept {
             auto it = std::find(m_objectCache.begin(), m_objectCache.end(), object);
             return it != m_objectCache.end();
         }
 
-        const double utilisation() const {
+        const double utilisation() const noexcept {
             m_lock.lock();
             double result = static_cast<double>(m_freeAllocations.size()) / static_cast<double>(m_poolSize);
             m_lock.unlock();
@@ -137,13 +136,14 @@ namespace tf {
         }
     };
 
-    template<class T> class pool<T, typename std::enable_if<std::is_base_of<tf::reusable, T>::value>::type> {
+    template<class T, typename L> class pool<T, L, typename std::enable_if<std::is_base_of<tf::reusable, T>::value>::type> {
         static_assert(std::is_default_constructible<T>::value, "T must be default constructable");
+        static_assert(std::is_nothrow_constructible<T>::value, "T must be nothrow constructable");
 
         size_t m_poolSize;
         std::vector<T *> m_freeAllocations;
         std::vector<T *> m_objectCache;
-        mutable tf::spinlock m_lock;
+        mutable L m_lock;
 
         std::function<void(reusable *)> m_release_function;
 
@@ -153,7 +153,7 @@ namespace tf {
         using unique_ptr_type = std::unique_ptr<T, decltype(m_deleter)>;
         using shared_ptr_type = std::shared_ptr<T>;
 
-        pool(size_t poolSize = 100) : m_release_function(std::bind(&pool<T>::release, this, std::placeholders::_1)) {
+        pool(size_t poolSize = 100) : m_release_function(std::bind(&pool<T, L>::release, this, std::placeholders::_1)) {
             m_poolSize = poolSize;
             m_freeAllocations.reserve(m_poolSize);
             m_objectCache.reserve(m_poolSize);
@@ -166,7 +166,6 @@ namespace tf {
         }
 
         virtual ~pool() {
-            DEBUG_LOG("Removing Queue " << m_freeAllocations.size() << " vs " << m_objectCache.size());
             m_lock.lock();
             assert(m_freeAllocations.size() == m_objectCache.size()); // We still have objects allocated out whilst trying to destruct our pool
             std::for_each(m_objectCache.begin(), m_objectCache.end(), [&](T *obj) {
@@ -180,19 +179,19 @@ namespace tf {
         pool(const pool &) = delete;
         pool &operator=(const pool &) = delete;
 
-        std::function<void(T *)> pool_release_fn() const noexcept {
+        inline std::function<void(T *)> pool_release_fn() const noexcept {
             return m_deleter;
         }
 
-        unique_ptr_type allocate_unique_ptr() {
+        inline unique_ptr_type allocate_unique_ptr() noexcept {
             return unique_ptr_type(allocate(), m_release_function);
         }
 
-        shared_ptr_type allocate_shared_ptr() {
+        inline shared_ptr_type allocate_shared_ptr() noexcept {
             return shared_ptr_type(allocate(), m_release_function);
         }
 
-        T *allocate() {
+        inline T *allocate() noexcept {
             m_lock.lock();
             if (unlikely(m_freeAllocations.empty())) {
                 size_t newPoolSize = m_poolSize * 2;
@@ -218,7 +217,7 @@ namespace tf {
             return object;
         }
 
-        void release(reusable *object) {
+        inline void release(reusable *object) noexcept {
             if (object != nullptr) {
                 m_lock.lock();
 #ifdef CHECK_DOUBLE_FREE
@@ -231,12 +230,12 @@ namespace tf {
             }
         }
 
-        bool is_from_pool(reusable *object) const {
+        bool is_from_pool(reusable *object) const noexcept {
             auto it = std::find(m_objectCache.begin(), m_objectCache.end(), object);
             return it != m_objectCache.end();
         }
 
-        const double utilisation() const {
+        const double utilisation() const noexcept {
             m_lock.lock();
             double result = static_cast<double>(m_freeAllocations.size()) / static_cast<double>(m_poolSize);
             m_lock.unlock();

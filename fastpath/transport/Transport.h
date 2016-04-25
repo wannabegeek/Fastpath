@@ -32,6 +32,7 @@
 
 #include "fastpath/status.h"
 #include "fastpath/messages/StorageTypes.h"
+#include "fastpath/utils/tfspinlock.h"
 #include "fastpath/utils/tfpool.h"
 #include "fastpath/messages/Message.h"
 #include "fastpath/transport/TransportIOEvent.h"
@@ -50,7 +51,7 @@ namespace fp {
             SLOW_CONSUMER
         } notification_type;
 
-        typedef tf::pool<Message> MessagePoolType;
+        typedef tf::pool<Message, tf::spinlock> MessagePoolType;
         using MessageType = MessagePoolType::shared_ptr_type;
 
     private:

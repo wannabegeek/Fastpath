@@ -51,15 +51,15 @@ namespace fp {
         char m_subject[max_subject_length];
 
     public:
-        Message();
+        Message() noexcept;
         Message(Message &&msg) noexcept;
-        virtual ~Message();
+        virtual ~Message() noexcept;
 
         const bool operator==(const Message &other) const;
 
-        void clear() override;
+        void clear() noexcept override;
 
-        const char *subject() const { return m_subject; }
+        const char *subject() const noexcept { return m_subject; }
 
         const uint8_t flags() const noexcept { return m_flags; }
 

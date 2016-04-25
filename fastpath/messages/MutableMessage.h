@@ -11,13 +11,13 @@ namespace fp {
     class MutableMessage final : public Message {
     public:
 
-        MutableMessage();
+        MutableMessage() noexcept;
         MutableMessage(MutableMessage &&msg) noexcept;
-        virtual ~MutableMessage();
+        virtual ~MutableMessage() noexcept;
 
         const bool operator==(const Message &other) const;
 
-        const bool setSubject(const char *subject);
+        const bool setSubject(const char *subject) noexcept;
 
         /**
          * Adds a scalar field of a type `<T>` to the message.

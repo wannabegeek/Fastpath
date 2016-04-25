@@ -28,6 +28,7 @@
 
 #include <cstddef>
 #include <cassert>
+#include <functional>
 
 namespace tf {
 

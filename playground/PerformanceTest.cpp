@@ -4,6 +4,7 @@
 
 #include "performance.h"
 #include "fastpath/messages/MutableMessage.h"
+#include "fastpath/utils/tfnulllock.h"
 #include "fastpath/utils/tfpool.h"
 
 int main(int argc, char *argv[])
@@ -12,7 +13,7 @@ int main(int argc, char *argv[])
     LOG_LEVEL(tf::logger::debug);
 
     const size_t iterations = 1000000;
-    typedef tf::pool<fp::MutableMessage> PoolType;
+    typedef tf::pool<fp::MutableMessage, tf::nulllock> PoolType;
 
     PoolType pool(3);
 

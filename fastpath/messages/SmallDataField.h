@@ -74,7 +74,7 @@ namespace fp {
             std::memcpy(m_storage, value, m_data_length);
         }
 
-        SmallDataField(const MessageBuffer::ByteStorageType &buffer) : DataField(buffer) {
+        SmallDataField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : DataField(buffer) {
             std::memcpy(m_storage, buffer.readBytes(), m_data_length);
             buffer.advanceRead(m_data_length);
         }

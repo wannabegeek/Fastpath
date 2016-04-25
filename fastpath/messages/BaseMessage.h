@@ -79,7 +79,7 @@ namespace fp {
         /**
          * Constructor
          */
-        BaseMessage() : m_arena(8192), m_field_allocator(m_arena) {
+        BaseMessage() noexcept : m_arena(8192), m_field_allocator(m_arena) {
             m_payload.reserve(64);
             m_keys.reserve(64);
         }
@@ -88,7 +88,7 @@ namespace fp {
          * Move constructor
          */
         BaseMessage(BaseMessage &&msg) noexcept;
-        virtual ~BaseMessage();
+        virtual ~BaseMessage() noexcept;
 
         BaseMessage(const BaseMessage &msg) = delete;
         BaseMessage& operator=(BaseMessage const&) = delete;
@@ -106,12 +106,12 @@ namespace fp {
          * @param field The field identifier name.
          * @return The storage type.
          */
-        const storage_type storageType(const char *field) const;
+        const storage_type storageType(const char *field) const noexcept;
 
         /**
          * Clears all the fields of the message, so it can be re-used.
          */
-        virtual void clear();
+        virtual void clear() noexcept;
 
         ////////////// ACCESSOR ///////////////
 
