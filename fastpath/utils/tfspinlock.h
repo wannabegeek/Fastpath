@@ -35,11 +35,11 @@ namespace tf {
 		std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
 
 	public:
-		inline void lock() {
+		inline void lock() noexcept {
             while (m_locked.test_and_set(std::memory_order_acquire));
 		}
 
-		inline void unlock() {
+		inline void unlock() noexcept {
             m_locked.clear(std::memory_order_release);
 		}
 	};
@@ -47,11 +47,11 @@ namespace tf {
 	class spinlock_auto {
 		spinlock &m_lock;
 	public:
-		explicit spinlock_auto(spinlock &lock) : m_lock(lock) {
+		explicit spinlock_auto(spinlock &lock) noexcept : m_lock(lock) {
 			m_lock.lock();
 		}
 
-		~spinlock_auto() {
+		~spinlock_auto() noexcept {
 			m_lock.unlock();
 		}
 	};

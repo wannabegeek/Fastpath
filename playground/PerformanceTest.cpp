@@ -21,7 +21,8 @@ int main(int argc, char *argv[])
 
     std::cout << "encode x" << iterations << ": " << tf::measure<std::chrono::microseconds>::execution([&]() {
         for (size_t i = 0; i < iterations; i++) {
-            auto msg = pool.allocate_unique_ptr();
+//            auto msg = pool.allocate_unique_ptr();
+            auto msg = pool.allocate();
             msg->setSubject("SOME.TEST.SUBJECT");
             float32_t t = 22.0;
             msg->addScalarField("TEST", t);
@@ -30,19 +31,21 @@ int main(int argc, char *argv[])
 
             /* const size_t encoded_len = */msg->encode(buffer);
             //encoded_messages.emplace_back(std::move(msg));
+            pool.release(msg);
         }
     }) / static_cast<float>(iterations) << "us" << std::endl;
 
     std::vector<PoolType::shared_ptr_type> decoded_messages(iterations);
     std::cout << "decode x" << iterations << ": " << tf::measure<std::chrono::microseconds>::execution([&]() {
         for (size_t i = 0; i < iterations + 1; i++) {
-            auto msg = pool.allocate_unique_ptr();
+            auto msg = pool.allocate();
 
             const fp::MessageBuffer::ByteStorageType &storage = buffer.byteStorage();
             if (!msg->decode(storage)) {
                 break;
             }
             buffer.erase_front(storage.bytesRead());
+            pool.release(msg);
 
             //decoded_messages.emplace_back(std::move(msg));
         }

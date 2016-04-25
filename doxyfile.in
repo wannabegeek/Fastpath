@@ -773,6 +773,7 @@ INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/README.md \
 		@CMAKE_CURRENT_SOURCE_DIR@/fastpath/event/Session.h \
 		@CMAKE_CURRENT_SOURCE_DIR@/fastpath/messages/BaseMessage.h \
 		@CMAKE_CURRENT_SOURCE_DIR@/fastpath/messages/Message.h \
+		@CMAKE_CURRENT_SOURCE_DIR@/fastpath/messages/MutableMessage.h \
 		@CMAKE_CURRENT_SOURCE_DIR@/fastpath/transport/Transport.h \
 		@CMAKE_CURRENT_SOURCE_DIR@/fastpath/transport/TCPTransport.h
 
