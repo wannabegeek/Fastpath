@@ -30,6 +30,7 @@
 #include <vector>
 #include <memory>
 
+#include "fastpath/messages/MessageCodec.h"
 #include "fastpath/event/IOEvent.h"
 #include "fastpath/messages/Message.h"
 #include "fastpath/MessageBuffer.h"
@@ -57,7 +58,7 @@ namespace fp {
         const std::function<void(peer_connection *)> m_disconnectionHandler;
 
         void data_handler(fp::DataEvent *event, const fp::EventType eventType) noexcept;
-        fp::MessageDecodeStatus process_buffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept;
+        fp::MessageCodec::MessageDecodeStatus process_buffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept;
 
         void handle_admin_message(const subject<> subject, fp::Message &message) noexcept;
     public:

@@ -25,6 +25,7 @@
 
 #include <gtest/gtest.h>
 #include "fastpath/messages/MutableMessage.h"
+#include "fastpath/messages/MessageCodec.h"
 #include "fastpath/utils/logger.h"
 
 TEST(Message, SetSubject) {
@@ -83,7 +84,7 @@ TEST(Message, AddMessageField) {
     fp::MutableMessage m;
     m.addDataField("TEST2", "TOMTOMTOM");
 
-    msg.addMessageField("MSG_TEST", std::move(m));
+    msg.addMessageField("MSG_TEST", &m);
 
     DEBUG_LOG("Embedded msg: " << msg);
 }
@@ -110,7 +111,7 @@ TEST(Message, Encode) {
     msg.addDataField("Name", "Zac");
 
     fp::MessageBuffer::MutableByteStorageType buffer(1024);
-    const size_t encoded_len = msg.encode(buffer);
+    const size_t encoded_len = fp::MessageCodec::encode(&msg, buffer);
     EXPECT_EQ(buffer.length(), encoded_len);
 
     DEBUG_LOG(buffer);
@@ -127,12 +128,12 @@ TEST(Message, Decode) {
     EXPECT_TRUE(in.addDataField("Name2", "Zac"));
 
     fp::MessageBuffer::MutableByteStorageType buffer(1024);
-    const size_t encoded_len = in.encode(buffer);
+    const size_t encoded_len = fp::MessageCodec::encode(&in, buffer);
     EXPECT_EQ(buffer.length(), encoded_len);
 
     DEBUG_LOG(buffer);
     fp::Message out;
-    EXPECT_TRUE(out.decode(buffer));
+    EXPECT_TRUE(fp::MessageCodec::decode(&out, buffer));
     EXPECT_EQ(encoded_len, buffer.bytesRead());
 
     DEBUG_LOG("IN:  " << in);
@@ -160,8 +161,8 @@ TEST(Message, MultiDecode) {
     in2.addDataField("Name", "Heidi");
 
     fp::MessageBuffer::MutableByteStorageType buffer(1024);
-    in1.encode(buffer);
-    in2.encode(buffer);
+    fp::MessageCodec::encode(&in1, buffer);
+    fp::MessageCodec::encode(&in2, buffer);
 
     DEBUG_LOG(buffer);
 
@@ -195,7 +196,7 @@ TEST(Message, MultiPartialDecode) {
         in1.addScalarField("TEST_bool", true);
         in1.addDataField("TEST_string", "Tom is great");
         EXPECT_TRUE(in1.addScalarField("id", i));
-        in1.encode(buffer.mutableBuffer());
+        fp::MessageCodec::encode(&in1, buffer.mutableBuffer());
         DEBUG_LOG("Encoded buffer is now: " << buffer.length())
         in1.clear();
     }
@@ -212,7 +213,7 @@ TEST(Message, MultiPartialDecode) {
 
 //        fp::Message::logMessageBufferDetails(storage);
         bool result = false;
-        result = out.decode(storage);
+        result = fp::MessageCodec::decode(&out, storage);
         if (result) {
             buffer.erase_front(storage.bytesRead());
             DEBUG_LOG("Msg decoded: " << out);
@@ -233,14 +234,14 @@ TEST(Message, MoveConstructor) {
     in1.addDataField("Name", "Zac");
 
     fp::MessageBuffer::MutableByteStorageType buffer1(1024);
-    in1.encode(buffer1);
+    fp::MessageCodec::encode(&in1, buffer1);
 
     DEBUG_LOG("Original: " << in1);
     fp::Message in2 = std::move(in1);
     DEBUG_LOG("Moved:    " << in2);
 
     fp::MessageBuffer::MutableByteStorageType buffer2(1024);
-    in2.encode(buffer2);
+    fp::MessageCodec::encode(&in2, buffer2);
 
     EXPECT_EQ(buffer1, buffer2);
 }

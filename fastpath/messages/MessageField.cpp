@@ -25,19 +25,21 @@
 
 #include "fastpath/messages/MessageField.h"
 #include "fastpath/messages/Message.h"
+#include "fastpath/messages/MessageCodec.h"
 
 namespace fp {
 
-    MessageField::MessageField(const char *identifier, BaseMessage &&message) noexcept : Field(identifier, storage_type::message, 0),  m_msg(std::move(message)) {
+    MessageField::MessageField(const char *identifier, const Message *message) noexcept : Field(identifier, storage_type::message, 0), m_msg(message) {
     }
 
     MessageField::MessageField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {
-        m_msg.decode(buffer);
+        m_msg = new Message;
+        MessageCodec::decode(const_cast<BaseMessage *>(static_cast<const BaseMessage *>(m_msg)), buffer);
         m_data_length = 0;
     }
 
-    const BaseMessage *MessageField::get() const noexcept {
-        return &m_msg;
+    const Message *MessageField::get() const noexcept {
+        return m_msg;
     }
 
     const size_t MessageField::encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept {
@@ -54,7 +56,7 @@ namespace fp {
         buffer.appendScalar(static_cast<MsgField::identifier_length>(identifier_length));
         byte *data_len_ptr = buffer.allocate(sizeof(MsgField::data_length));
         buffer.append(reinterpret_cast<const byte *>(m_identifier), identifier_length);
-        std::size_t data_length = m_msg.encode(buffer);
+        std::size_t data_length = MessageCodec::encode(static_cast<const BaseMessage *>(m_msg), buffer);
 
         writeScalar(data_len_ptr, static_cast<MsgField::data_length>(data_length));
 
@@ -62,7 +64,7 @@ namespace fp {
     }
 
     std::ostream &MessageField::output(std::ostream &out) const {
-        return out << m_identifier << ":" << StorageTypeDescription[m_type] << "=" << m_msg;
+        return out << m_identifier << ":" << StorageTypeDescription[m_type] << "=" << *m_msg;
     }
 }
 

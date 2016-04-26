@@ -4,6 +4,7 @@
 
 #include "performance.h"
 #include "fastpath/messages/MutableMessage.h"
+#include "fastpath/messages/MessageCodec.h"
 #include "fastpath/utils/tfnulllock.h"
 #include "fastpath/utils/tfpool.h"
 
@@ -30,7 +31,7 @@ int main(int argc, char *argv[])
             msg->addDataField("Name", "Tom");
             msg->addDataField("Name2", "Zac");
 
-            /* const size_t encoded_len = */msg->encode(buffer.mutableBuffer());
+            /* const size_t encoded_len = */fp::MessageCodec::encode(msg, buffer.mutableBuffer());
             //encoded_messages.emplace_back(std::move(msg));
             pool.release(msg);
         }
@@ -42,7 +43,7 @@ int main(int argc, char *argv[])
             auto msg = pool.allocate();
 
             const fp::MessageBuffer::ByteStorageType &storage = buffer.byteStorage();
-            if (!msg->decode(storage)) {
+            if (!fp::MessageCodec::decode(msg, storage)) {
                 break;
             }
             buffer.erase_front(storage.bytesRead());

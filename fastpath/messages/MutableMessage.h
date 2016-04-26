@@ -66,7 +66,7 @@ namespace fp {
          * @param msg Sets the field value to this message.
          * @return `true` if the field was successfully added, `false` otherwise
          */
-        bool addMessageField(const char *field, BaseMessage &&msg);
+        bool addMessageField(const char *field, Message *msg);
 
         /**
          * Adds a date-time field to the message.

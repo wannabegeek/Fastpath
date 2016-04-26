@@ -179,8 +179,8 @@ namespace fp {
         return result.second;
     }
 
-    bool MutableMessage::addMessageField(const char *field, BaseMessage &&msg) {
-        MessageField *e = createMessageField(m_field_allocator, field, std::forward<BaseMessage>(msg));
+    bool MutableMessage::addMessageField(const char *field, Message *msg) {
+        MessageField *e = createMessageField(m_field_allocator, field, msg);
         auto result = m_keys.insert(std::make_pair(e->identifier(), m_payload.size()));
         if (result.second) {
             m_payload.emplace_back(e);

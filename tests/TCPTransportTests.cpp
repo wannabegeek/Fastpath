@@ -13,6 +13,7 @@
 #include <fastpath/event/IOEvent.h>
 #include <fastpath/event/EventManager.h>
 #include <fastpath/messages/MutableMessage.h>
+#include <fastpath/messages/MessageCodec.h>
 //#include <utils/ByteStorage.h>
 
 
@@ -67,7 +68,7 @@ TEST(TCPTransport, TryConnectSuccess) {
                 DEBUG_LOG("got stuff");
                 if (result == fp::Socket::MoreData) {
                     fp::MutableMessage msg;
-                    EXPECT_TRUE(msg.decode(fp::MessageBuffer::ByteStorageType(reinterpret_cast<const byte *>(buffer), size, true)));
+                    EXPECT_TRUE(fp::MessageCodec::decode(&msg, fp::MessageBuffer::ByteStorageType(reinterpret_cast<const byte *>(buffer), size, true)));
                     DEBUG_LOG("Received " << msg);
                     EXPECT_EQ(sendMsg, msg);
                     break;
@@ -163,7 +164,7 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
                 if (result == fp::Socket::MoreData) {
                     fp::Message msg;
                     DEBUG_LOG("So far we have received " << msgBuffer.length() << " bytes");
-                    if (msg.decode(msgBuffer.byteStorage())) {
+                    if (fp::MessageCodec::decode(&msg, msgBuffer.byteStorage())) {
                         DEBUG_LOG("Received " << msg);
                         EXPECT_EQ(sendMsg, msg);
                         consumedMessage = true;

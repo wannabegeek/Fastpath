@@ -27,6 +27,7 @@
 #define FASTPATH_BYTESTORAGE_H
 
 #include <ostream>
+#include <iomanip>
 #include <memory>
 
 namespace fp {
@@ -82,8 +83,10 @@ namespace fp {
             m_storage.first = storage_traits::allocate(m_allocator, m_storage.second);
         }
 
-        explicit ByteStorage(const size_t allocation = 256, const Allocator &allocator = Allocator()) noexcept : m_allocator(allocator), m_storedLength(0), m_no_copy(false), m_read_ptr(m_storage.first), m_mark_ptr(m_read_ptr) {
+        explicit ByteStorage(const size_t allocation = 256, const Allocator &allocator = Allocator()) noexcept : m_allocator(allocator), m_storedLength(0), m_no_copy(false) {
             allocateStorage(allocation);
+            m_read_ptr = m_storage.first;
+            m_mark_ptr = m_read_ptr;
         }
 
 

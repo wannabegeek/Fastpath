@@ -13,8 +13,6 @@ INCLUDE(CheckFunctionExists)
 
 #################################
 
-add_executable(SharedMemoryReceiver SharedMemoryReceiver.cpp)
-add_executable(SharedMemorySender SharedMemorySender.cpp)
 add_executable(PerformanceTest PerformanceTest.cpp performance.h)
 add_executable(SubjectTest SubjectTest.cpp)
 add_executable(PoolTest PoolTest.cpp)
@@ -25,8 +23,6 @@ add_executable(ipc_recv ipc_recv.cpp IPC/InterprocessNotifier.h IPC/Interprocess
 #add_executable(ipc_send_mac arch/mac/ipc_send_mac.cpp)
 #add_executable(ipc_recv ipc_recv.cpp arch/mac/ipc_send_mac.cpp)
 
-target_link_libraries(SharedMemoryReceiver fastpath ${CMAKE_THREAD_LIBS_INIT}) # ${LIBRT_LIBRARIES})
-target_link_libraries(SharedMemorySender fastpath ${CMAKE_THREAD_LIBS_INIT}) #${LIBRT_LIBRARIES})
 target_link_libraries(PerformanceTest fastpath ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(SubjectTest ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(PoolTest fastpath ${CMAKE_THREAD_LIBS_INIT})

@@ -51,9 +51,8 @@ namespace fp {
      *
      * You shouldn't use this class directly you should use it derived class Message
      */
-    class BaseMessage : public Serializable, public tf::reusable {
-    private:
-        static constexpr const uint8_t body_flag = 2;
+    class BaseMessage : public tf::reusable {
+        friend class MessageCodec;
 
     protected:
         /// @cond DEV
@@ -137,10 +136,6 @@ namespace fp {
         void detach() noexcept;
 
         /// @cond DEV
-
-        // from Serializable
-        virtual const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override;
-        virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) override;
 
         // from reusable
         void prepareForReuse() override;

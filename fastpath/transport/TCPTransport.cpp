@@ -30,6 +30,7 @@
 #include "fastpath/transport/TCPTransport.h"
 #include "fastpath/transport/TCPSocketClient.h"
 #include "fastpath/messages/Message.h"
+#include "fastpath/messages/MessageCodec.h"
 #include "fastpath/transport/TransportIOEvent.h"
 
 namespace fp {
@@ -104,7 +105,7 @@ namespace fp {
 
     status TCPTransport::sendMessage(const Message &msg) noexcept {
         if (m_peer->isConnected()) {
-            msg.encode(m_sendBuffer.mutableBuffer());
+            fp::MessageCodec::encode(&msg, m_sendBuffer.mutableBuffer());
             const byte *data = nullptr;
             size_t len = m_sendBuffer.bytes(&data);
             if (m_peer->send(reinterpret_cast<const char *>(data), len)) {
@@ -130,11 +131,11 @@ namespace fp {
 
     bool TCPTransport::processData(const fp::MessageBuffer::ByteStorageType &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
         size_t msg_length = 0;
-        if (Message::have_complete_message(storage, msg_length) == CompleteMessage) {
+        if (MessageCodec::have_complete_message(storage, msg_length) == MessageCodec::CompleteMessage) {
             MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
             storage.mark();
 
-            if (message->decode(storage)) {
+            if (MessageCodec::decode(message.get(), storage)) {
                 messageCallback(this, message);
                 return true;
             } else {

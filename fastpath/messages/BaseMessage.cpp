@@ -71,64 +71,6 @@ namespace fp {
         return element->type();
     }
 
-    const size_t BaseMessage::encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept {
-
-        buffer.appendScalar(static_cast<MsgHeader::header_start>(body_flag));
-        buffer.appendScalar(static_cast<MsgHeader::field_count>(this->size()));
-
-        size_t msgLength = MsgHeader::size();
-        for (const Field *field : m_payload) {
-            msgLength += field->encode(buffer);
-        }
-
-        return msgLength;
-    }
-
-    const bool BaseMessage::decode(const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) {
-        bool success = false;
-        assert(buffer.length() > 0);
-
-        if (buffer.remainingReadLength() > MsgHeader::size()) {
-            MsgHeader::header_start chk = readScalar<MsgHeader::header_start>(buffer.readBytes());
-            buffer.advanceRead(sizeof(MsgHeader::header_start));
-            if (chk != body_flag) {
-                throw fp::exception("Received corrupt message - incorrect body marker");
-            }
-
-            const MsgHeader::field_count field_count = readScalar<MsgHeader::field_count>(buffer.readBytes());
-            buffer.advanceRead(sizeof(MsgHeader::field_count));
-
-            for (size_t i = 0; i < field_count; i++) {
-                MsgField::type type = unknown;
-                MsgField::identifier_length identifier_size = 0;
-                MsgField::data_length data_size = 0;
-                Field::peek_field_header(buffer, type, identifier_size, data_size);
-
-                Field *field = nullptr;
-                switch (static_cast<storage_type>(type)) {
-                    case storage_type::string:
-                    case storage_type::data:
-                        field = createDataField(m_field_allocator, data_size, buffer);
-                        break;
-                    case storage_type::date_time:
-                        field = createDateTimeField(m_field_allocator, buffer);
-                        break;
-                    case storage_type::message:
-                        field = createMessageField(m_field_allocator, buffer);
-                        break;
-                    default:
-                        field = createScalarField(m_field_allocator, buffer);
-                        break;
-                }
-
-                m_keys.insert(std::make_pair(field->identifier(), m_payload.size()));
-                m_payload.emplace_back(field);
-                success = true;
-            }
-        }
-        return success;
-    }
-
     bool BaseMessage::getScalarField(const char *field, bool &value) const noexcept {
         if (field != nullptr) {
             auto index = m_keys.find(field);

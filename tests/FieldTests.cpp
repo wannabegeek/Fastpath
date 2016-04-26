@@ -191,7 +191,7 @@ TEST(Field, SerializeDateTime) {
 
 TEST(Field, SerializeSubMessage) {
 
-    LOG_LEVEL(tf::logger::info);
+    LOG_LEVEL(tf::logger::debug);
 
     fp::MutableMessage msg;
     float32_t t = 22.0;
@@ -202,7 +202,7 @@ TEST(Field, SerializeSubMessage) {
 
     DEBUG_LOG("Passing in " << msg);
 
-    fp::MessageField in("msg", std::move(msg));
+    fp::MessageField in("msg", &msg);
 
     fp::MessageBuffer::MutableByteStorageType buffer(256);
     const size_t len_in = in.encode(buffer);

@@ -27,18 +27,18 @@
 #define FASTPATH_MESSAGEFIELD_H
 
 #include "fastpath/messages/Field.h"
-#include "fastpath/messages/BaseMessage.h"
+#include "fastpath/messages/Message.h"
 
 namespace fp {
     class MessageField final : public Field {
     private:
-        BaseMessage m_msg;
+        const Message *m_msg;
 
     protected:
         virtual const bool isEqual(const Field &other) const noexcept override {
             if (typeid(other) == typeid(MessageField)) {
                 const MessageField &f = static_cast<const MessageField &>(other);
-                return m_msg == f.m_msg;
+                return (*m_msg == *(f.m_msg));
             }
             return false;
         }
@@ -47,10 +47,10 @@ namespace fp {
 
     public:
 //        MessageField(const char *identifier, const BaseMessage message) noexcept;
-        MessageField(const char *identifier, BaseMessage &&message) noexcept;
+        MessageField(const char *identifier, const Message *message) noexcept;
         MessageField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception);
 
-        const BaseMessage *get() const noexcept;
+        const Message *get() const noexcept;
 
         const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override;
     };

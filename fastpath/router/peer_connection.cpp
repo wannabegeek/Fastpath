@@ -95,29 +95,27 @@ namespace fp {
         }
     }
 
-    fp::MessageDecodeStatus peer_connection::process_buffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept {
+    fp::MessageCodec::MessageDecodeStatus peer_connection::process_buffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept {
         const char *subject_ptr = nullptr;
         size_t subject_length = 0;
         uint8_t flags = 0;
         size_t msg_length = 0;
 
         buffer.mark();
-        auto status = fp::Message::addressing_details(buffer, &subject_ptr, subject_length, flags, msg_length);
-        if (status == fp::CompleteMessage) {
+        auto status = fp::MessageCodec::addressing_details(buffer, &subject_ptr, subject_length, flags, msg_length);
+        if (status == fp::MessageCodec::CompleteMessage) {
             buffer.resetRead();
             if (subject_ptr != nullptr && subject_length > 0) {
-                DEBUG_LOG(
-                        "Received message [" << subject_ptr << "] of length " << msg_length << ": read " <<
-                        buffer.bytesRead() << " of a total " << m_buffer.length());
+                DEBUG_LOG("Received message [" << subject_ptr << "] of length " << msg_length << ": read " << buffer.bytesRead() << " of a total " << m_buffer.length());
                 subject<> subject(subject_ptr);
                 const fp::MessageBuffer::ByteStorageType &msgData = buffer.segment(msg_length);
                 if (tf::unlikely(subject.is_admin())) {
                     fp::Message message;
-                    if (message.decode(msgData)) {
+                    if (fp::MessageCodec::decode(&message, msgData)) {
                         this->handle_admin_message(subject, message);
                     } else {
                         ERROR_LOG("Failed to decode message: " << msgData);
-                        status = fp::CorruptMessage;
+                        status = fp::MessageCodec::CorruptMessage;
                     }
                 } else {
                     // otherwise pass it to our handler
@@ -126,7 +124,7 @@ namespace fp {
                 buffer.mark();
             } else {
                 ERROR_LOG("Message has null or zero length subject");
-                status = fp::CorruptMessage;
+                status = fp::MessageCodec::CorruptMessage;
             }
         } else {
             buffer.resetRead();
@@ -150,18 +148,18 @@ namespace fp {
             if (result == fp::Socket::MoreData) {
                 const fp::MessageBuffer::ByteStorageType &storage = m_buffer.byteStorage();
 
-                fp::MessageDecodeStatus status;
-                while ((status = this->process_buffer(storage)) == fp::CompleteMessage);
+                fp::MessageCodec::MessageDecodeStatus status;
+                while ((status = this->process_buffer(storage)) == fp::MessageCodec::CompleteMessage);
 
                 switch (status) {
-                    case fp::CompleteMessage:
+                    case fp::MessageCodec::CompleteMessage:
                         break;
-                    case fp::IncompleteMessage:
+                    case fp::MessageCodec::IncompleteMessage:
                         DEBUG_LOG("Removing " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
                         m_buffer.erase_front(storage.bytesRead());
                         DEBUG_LOG("Removed " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
                         break;
-                    case fp::CorruptMessage:
+                    case fp::MessageCodec::CorruptMessage:
                         m_socket->disconnect();
                         m_disconnectionHandler(this);
                         complete = true;

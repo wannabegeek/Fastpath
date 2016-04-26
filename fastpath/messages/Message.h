@@ -29,18 +29,11 @@
 #include "fastpath/messages/BaseMessage.h"
 
 namespace fp {
-    typedef enum {
-        CompleteMessage,
-        IncompleteMessage,
-        CorruptMessage
-    } MessageDecodeStatus;
-
     class Message : public BaseMessage {
+        friend class MessageCodec;
     public:
         static constexpr size_t max_subject_length = std::numeric_limits<uint16_t>::max();
     private:
-        static constexpr const uint8_t addressing_flag = 1;
-
         bool m_hasAddressing;
 
         virtual std::ostream& output(std::ostream& out) const override;
@@ -58,15 +51,10 @@ namespace fp {
 
         void clear() noexcept override;
 
-        const char *subject() const noexcept { return m_subject; }
+        inline const char *subject() const noexcept { return m_subject; }
 
-        const uint8_t flags() const noexcept { return m_flags; }
+        inline const uint8_t flags() const noexcept { return m_flags; }
 
-        const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override;
-        const bool decode(const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) override;
-
-        static const MessageDecodeStatus have_complete_message(const MessageBuffer::ByteStorageType &buffer, size_t &msg_length) noexcept;
-        static const MessageDecodeStatus addressing_details(const MessageBuffer::ByteStorageType &buffer, const char **subject, size_t &subject_length, uint8_t &flags, size_t &msg_length) noexcept;
 #ifdef DEBUG
         static void logMessageBufferDetails(const MessageBuffer::ByteStorageType &buffer) noexcept;
 #endif
