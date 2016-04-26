@@ -52,7 +52,7 @@ namespace fp {
     }
 
     template <typename T, typename Allocator = std::allocator<T>> class ByteStorage {
-        static_assert(sizeof(T) == 1, "Can'y create byte buffer for sizes != 1");
+        static_assert(sizeof(T) == 1, "Can't create byte buffer for sizes != 1");
     protected:
         using BufferDataType = std::pair<T *, size_t>;
         using storage_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<T>;
