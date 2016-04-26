@@ -20,7 +20,7 @@ add_executable(SubjectTest SubjectTest.cpp)
 add_executable(PoolTest PoolTest.cpp)
 add_executable(KeyIndexTest KeyIndexTest.cpp)
 add_executable(ipc_send ipc_send.cpp IPC/InterprocessNotifier.h IPC/InterprocessNotifier.cpp IPC/InterprocessNotifierServer.cpp IPC/InterprocessNotifierServer.h IPC/InterprocessNotifierClient.cpp IPC/InterprocessNotifierClient.h IPC/arch/linux/notifier.h IPC/arch/mac/notifier.h IPC/notifier.h)
-add_executable(ipc_recv ipc_recv.cpp IPC/InterprocessNotifier.h IPC/InterprocessNotifier.cpp IPC/InterprocessNotifierServer.cpp IPC/InterprocessNotifierServer.h IPC/InterprocessNotifierClient.cpp IPC/InterprocessNotifierClient.h IPC/arch/linux/notifier.h IPC/arch/mac/notifier.h IPC/notifier.h)
+add_executable(ipc_recv ipc_recv.cpp IPC/InterprocessNotifier.h IPC/InterprocessNotifier.cpp IPC/InterprocessNotifierServer.cpp IPC/InterprocessNotifierServer.h IPC/InterprocessNotifierClient.cpp IPC/InterprocessNotifierClient.h IPC/arch/linux/notifier.h IPC/arch/mac/notifier.h IPC/notifier.h shm_allocator.h)
 
 #add_executable(ipc_send_mac arch/mac/ipc_send_mac.cpp)
 #add_executable(ipc_recv ipc_recv.cpp arch/mac/ipc_send_mac.cpp)

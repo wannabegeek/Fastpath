@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
 //    fp::Session::initialise();
 //    fp::InlineQueue queue;
 
-    boost::interprocess::shared_memory_object::remove("SharedMemoryTest");
-    SharedMemoryBuffer buffer("SharedMemoryTest");
+    boost::interprocess::shared_memory_object::remove("SharedMemoryTest2");
+    SharedMemoryBuffer buffer("SharedMemoryTest2");
 
     fp::InlineEventManager evm;
     std::vector<tf::notifier> m_notifiers;
@@ -35,9 +35,9 @@ int main(int argc, char *argv[]) {
 //            shutdown = true;
             evm.unregisterHandler(event);
         } else {
-            void *ptr = buffer.retrieve();
-            INFO_LOG("Received data '" << reinterpret_cast<const char *>(ptr) << "'");
-            buffer.deallocate(ptr);
+            auto ptr = buffer.retrieve();
+            INFO_LOG("Received data '" << ptr << "'");
+//            buffer.deallocate(ptr);
         }
     };
 
