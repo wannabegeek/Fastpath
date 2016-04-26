@@ -98,7 +98,7 @@ namespace fp {
          *
          * @return number of fields.
          */
-        const uint32_t size() const noexcept { return static_cast<uint32_t>(m_payload.size()); }
+        inline const uint32_t size() const noexcept { return static_cast<uint32_t>(m_payload.size()); }
 
         /**
          * Return the storage type for a field
@@ -139,7 +139,7 @@ namespace fp {
         /// @cond DEV
 
         // from Serializable
-        virtual const size_t encode(MessageBuffer &buffer) const noexcept override;
+        virtual const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override;
         virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) override;
 
         // from reusable

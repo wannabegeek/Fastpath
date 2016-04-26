@@ -71,16 +71,12 @@ namespace fp {
         return element->type();
     }
 
-    const size_t BaseMessage::encode(MessageBuffer &buffer) const noexcept {
-        size_t msgLength = 0;
+    const size_t BaseMessage::encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept {
 
-        byte *b = buffer.allocate(MsgHeader::size());
-        msgLength += MsgHeader::size();
+        buffer.appendScalar(static_cast<MsgHeader::header_start>(body_flag));
+        buffer.appendScalar(static_cast<MsgHeader::field_count>(this->size()));
 
-        b = writeScalar(b, static_cast<MsgHeader::header_start>(body_flag));
-        b = writeScalar(b, static_cast<MsgHeader::field_count>(this->size()));
-
-
+        size_t msgLength = MsgHeader::size();
         for (const Field *field : m_payload) {
             msgLength += field->encode(buffer);
         }

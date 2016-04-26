@@ -92,7 +92,7 @@ namespace fp {
             return std::chrono::microseconds((m_time[fp_seconds] * std::chrono::microseconds::period::den) + m_time[fp_microseconds]);
         }
 
-        const size_t encode(MessageBuffer &buffer) const noexcept override {
+        const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override {
             return Field::encode(buffer, reinterpret_cast<const byte *>(m_time), data_size);
         }
     };

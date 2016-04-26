@@ -49,7 +49,7 @@ TEST(MutableByteStorage, UpdateLength) {
     fp::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
     const size_t len = buffer.capacity();
 
-    buffer.increaseLengthBy(1024);
+    buffer.allocate(1024);
 
     ASSERT_LE(1024 + len, buffer.capacity());
 

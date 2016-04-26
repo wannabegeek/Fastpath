@@ -56,31 +56,22 @@ namespace fp {
         BaseMessage::clear();
     }
 
-    const void Message::encodeMsgLength(MessageBuffer &buffer, const MsgAddressing::msg_length length) const noexcept {
-        if (m_hasAddressing) {
-            const byte *b = nullptr;
-            buffer.bytes(&b);
-            std::advance(b, sizeof(MsgAddressing::addressing_start));
-            writeScalar(const_cast<byte *>(b), static_cast<MsgAddressing::msg_length>(length - MsgAddressing::msg_length_offset()));
-        }
-    }
-
-    const size_t Message::encode(MessageBuffer &buffer) const noexcept {
-        byte *b = buffer.allocate(MsgAddressing::size());
+    const size_t Message::encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept {
         size_t addressing_size = MsgAddressing::size();
 
-        b = writeScalar(b, static_cast<MsgAddressing::addressing_start>(addressing_flag));
-        b = writeScalar(b, static_cast<MsgAddressing::msg_length>(0));
-        b = writeScalar(b, static_cast<MsgAddressing::flags>(this->flags()));
-        b = writeScalar(b, static_cast<MsgAddressing::reserved>(0));
+        buffer.appendScalar(static_cast<MsgAddressing::addressing_start>(addressing_flag));
+        byte *length_ptr = buffer.allocate(sizeof(MsgAddressing::msg_length));
+        buffer.appendScalar(static_cast<MsgAddressing::flags>(this->flags()));
+        buffer.appendScalar(static_cast<MsgAddressing::reserved>(0));
         const size_t subject_length = strlen(this->subject()) + 1; // +1 for the terminating null, this make processing easier later
-        b = writeScalar(b, static_cast<MsgAddressing::subject_length>(subject_length));
+        buffer.appendScalar(static_cast<MsgAddressing::subject_length>(subject_length));
 
         buffer.append(reinterpret_cast<const byte *>(this->subject()), subject_length);
         addressing_size += subject_length;
 
         const size_t total_len = addressing_size + BaseMessage::encode(buffer);
-        encodeMsgLength(buffer, total_len);
+
+        writeScalar(length_ptr, static_cast<MsgAddressing::msg_length>(total_len - MsgAddressing::msg_length_offset()));
 
         return total_len;
     }

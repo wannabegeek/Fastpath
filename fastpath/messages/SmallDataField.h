@@ -95,7 +95,7 @@ namespace fp {
             return DataField::get<T>();
         }
 
-        const size_t encode(MessageBuffer &buffer) const noexcept override {
+        const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override {
             return Field::encode(buffer, m_storage, m_data_length);
         }
     };

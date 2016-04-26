@@ -40,7 +40,7 @@ namespace fp {
         return &m_msg;
     }
 
-    const size_t MessageField::encode(MessageBuffer &buffer) const noexcept {
+    const size_t MessageField::encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept {
 //        MessageBuffer storage(1024);
 //        m_msg.encode(storage);
 //
@@ -48,14 +48,14 @@ namespace fp {
 //        size_t data_length = storage.bytes(&bytes);
 //        std::size_t field_length = Field::encode(buffer, bytes, data_length)
 
-        byte *b = buffer.allocate(MsgField::size());
-        b = writeScalar(b, static_cast<MsgField::type>(this->type()));
+        buffer.appendScalar(static_cast<MsgField::type>(this->type()));
 
         const size_t identifier_length = strlen(m_identifier);
-        byte *data_len_ptr = writeScalar(b, static_cast<MsgField::identifier_length>(identifier_length));
-
+        buffer.appendScalar(static_cast<MsgField::identifier_length>(identifier_length));
+        byte *data_len_ptr = buffer.allocate(sizeof(MsgField::data_length));
         buffer.append(reinterpret_cast<const byte *>(m_identifier), identifier_length);
         std::size_t data_length = m_msg.encode(buffer);
+
         writeScalar(data_len_ptr, static_cast<MsgField::data_length>(data_length));
 
         return MsgField::size() + identifier_length + data_length;

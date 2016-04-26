@@ -103,7 +103,7 @@ namespace fp {
             return m_data_length;
         };
 
-        virtual const size_t encode(MessageBuffer &buffer) const noexcept override = 0;
+        virtual const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override = 0;
 
         virtual const bool operator==(const Field &other) const {
             return strcmp(m_identifier, other.m_identifier) == 0
@@ -127,13 +127,12 @@ namespace fp {
             return true;
         }
 
-        inline const size_t encode(MessageBuffer &buffer, const byte *data, const size_t data_length) const noexcept {
-            byte *b = buffer.allocate(MsgField::size());
-            b = writeScalar(b, static_cast<MsgField::type>(this->type()));
+        inline const size_t encode(MessageBuffer::MutableByteStorageType &buffer, const byte *data, const size_t data_length) const noexcept {
+            buffer.appendScalar(static_cast<MsgField::type>(this->type()));
 
             const size_t identifier_length = strlen(m_identifier);
-            b = writeScalar(b, static_cast<MsgField::identifier_length>(identifier_length));
-            writeScalar(b, static_cast<MsgField::data_length>(data_length));
+            buffer.appendScalar(static_cast<MsgField::identifier_length>(identifier_length));
+            buffer.appendScalar(static_cast<MsgField::data_length>(data_length));
 
             buffer.append(reinterpret_cast<const byte *>(m_identifier), identifier_length);
             buffer.append(data, data_length);

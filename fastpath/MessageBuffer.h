@@ -96,6 +96,7 @@ namespace fp {
     public:
 
         using ByteStorageType = ByteStorage<byte>;
+        using MutableByteStorageType = MutableByteStorage<byte>;
 
         explicit MessageBuffer(const size_t initialAllocation) noexcept : m_startIndex(0), m_storage(initialAllocation) {
         }
@@ -111,9 +112,9 @@ namespace fp {
 
         virtual ~MessageBuffer() noexcept {}
 
-        byte *mutableBytes() const noexcept {
+        MutableByteStorageType &mutableBuffer() noexcept {
             assert(m_startIndex <= m_storage.length());
-            return &m_storage.mutableBytes()[m_startIndex];
+            return m_storage;
         }
 
         void increaseLengthBy(const size_t length) {
@@ -136,7 +137,7 @@ namespace fp {
             }
 
             const size_t previous_length = m_storage.length();
-            m_storage.increaseLengthBy(length);
+            m_storage.allocate(length);
             return &m_storage.mutableBytes()[previous_length];
         }
 
@@ -168,7 +169,9 @@ namespace fp {
         }
 
         inline void append(const MessageBuffer &src, const size_t length = std::numeric_limits<size_t>::max()) noexcept {
-            append(src.mutableBytes(), std::min(length, src.length()));
+            const byte *b = nullptr;
+            std::size_t l = src.bytes(&b);
+            append(b, std::min(l, src.length()));
         }
 
         inline const size_t bytes(const byte **data) const noexcept {

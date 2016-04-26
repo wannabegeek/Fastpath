@@ -30,6 +30,27 @@
 #include <memory>
 
 namespace fp {
+    template<typename T> T endianScalar(T t) {
+#ifdef __BIG_ENDIAN__
+        if (sizeof(T) == 1) {   // Compile-time if-then's.
+            return t;
+        } else if (sizeof(T) == 2) {
+            auto r = __builtin_bswap16(*reinterpret_cast<uint16_t *>(&t));
+            return *reinterpret_cast<T *>(&r);
+        } else if (sizeof(T) == 4) {
+            auto r = __builtin_bswap32(*reinterpret_cast<uint32_t *>(&t));
+            return *reinterpret_cast<T *>(&r);
+        } else if (sizeof(T) == 8) {
+            auto r = __builtin_bswap64(*reinterpret_cast<uint64_t *>(&t));
+            return *reinterpret_cast<T *>(&r);
+        } else {
+            assert(0);
+        }
+#else
+        return t;
+#endif
+    }
+
     template <typename T, typename Allocator = std::allocator<T>> class ByteStorage {
         static_assert(sizeof(T) == 1, "Can'y create byte buffer for sizes != 1");
     protected:
@@ -101,43 +122,49 @@ namespace fp {
             }
         }
 
-        const size_t bytes(const T **data) const noexcept  {
+        inline const size_t bytes(const T **data) const noexcept  {
             *data = m_storedLength > 0 ? m_storage.first : nullptr;
             return m_storedLength;
         };
 
-        const size_t length() const noexcept { return m_storedLength; }
+        inline const size_t length() const noexcept { return m_storedLength; }
 
-        const bool owns_copy() const noexcept { return !m_no_copy; }
+        inline const bool owns_copy() const noexcept { return !m_no_copy; }
 
-        const T operator[](const size_t index) const noexcept {
+        inline const T operator[](const size_t index) const noexcept {
             return m_storage.first[index];
         }
 
         // for reading as a stream
-        void mark() const noexcept {
+        inline void mark() const noexcept {
             m_mark_ptr = m_read_ptr;
         };
 
-        void resetRead() const noexcept {
+        inline void resetRead() const noexcept {
             m_read_ptr = m_mark_ptr;
         }
 
-        void advanceRead(const size_t distance) const noexcept {
+        inline void advanceRead(const size_t distance) const noexcept {
             std::advance(m_read_ptr, distance);
         }
 
-        const size_t remainingReadLength() const noexcept {
+        inline const size_t remainingReadLength() const noexcept {
             size_t v =  m_storedLength - this->bytesRead();
             return v;
         }
 
-        const size_t bytesRead() const noexcept {
+        inline const size_t bytesRead() const noexcept {
             return m_read_ptr - m_storage.first;
         }
 
-        const T *readBytes() const noexcept {
+        inline const T *readBytes() const noexcept {
             return m_read_ptr;
+        }
+
+        template<typename S> inline S readScalar() const noexcept {
+            auto p = m_read_ptr;
+            std::advance(m_read_ptr, sizeof(S));
+            return endianScalar(*reinterpret_cast<const S *>(p));
         }
 
         const T *operator*() const noexcept {

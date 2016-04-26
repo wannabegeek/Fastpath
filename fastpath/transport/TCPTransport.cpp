@@ -104,7 +104,7 @@ namespace fp {
 
     status TCPTransport::sendMessage(const Message &msg) noexcept {
         if (m_peer->isConnected()) {
-            msg.encode(m_sendBuffer);
+            msg.encode(m_sendBuffer.mutableBuffer());
             const byte *data = nullptr;
             size_t len = m_sendBuffer.bytes(&data);
             if (m_peer->send(reinterpret_cast<const char *>(data), len)) {

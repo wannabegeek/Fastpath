@@ -109,7 +109,7 @@ TEST(Message, Encode) {
     msg.addDataField("Name", "Tom");
     msg.addDataField("Name", "Zac");
 
-    fp::MessageBuffer buffer(1024);
+    fp::MessageBuffer::MutableByteStorageType buffer(1024);
     const size_t encoded_len = msg.encode(buffer);
     EXPECT_EQ(buffer.length(), encoded_len);
 
@@ -126,16 +126,14 @@ TEST(Message, Decode) {
     EXPECT_TRUE(in.addDataField("Name1", "Tom"));
     EXPECT_TRUE(in.addDataField("Name2", "Zac"));
 
-    fp::MessageBuffer buffer(1024);
+    fp::MessageBuffer::MutableByteStorageType buffer(1024);
     const size_t encoded_len = in.encode(buffer);
     EXPECT_EQ(buffer.length(), encoded_len);
 
     DEBUG_LOG(buffer);
-    DEBUG_LOG(buffer.byteStorage());
     fp::Message out;
-    const fp::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
-    EXPECT_TRUE(out.decode(b));
-    EXPECT_EQ(encoded_len, b.bytesRead());
+    EXPECT_TRUE(out.decode(buffer));
+    EXPECT_EQ(encoded_len, buffer.bytesRead());
 
     DEBUG_LOG("IN:  " << in);
     DEBUG_LOG("OUT: " << out);
@@ -161,7 +159,7 @@ TEST(Message, MultiDecode) {
     in2.addDataField("Name", "Caroline");
     in2.addDataField("Name", "Heidi");
 
-    fp::MessageBuffer buffer(1024);
+    fp::MessageBuffer::MutableByteStorageType buffer(1024);
     in1.encode(buffer);
     in2.encode(buffer);
 
@@ -197,7 +195,7 @@ TEST(Message, MultiPartialDecode) {
         in1.addScalarField("TEST_bool", true);
         in1.addDataField("TEST_string", "Tom is great");
         EXPECT_TRUE(in1.addScalarField("id", i));
-        in1.encode(buffer);
+        in1.encode(buffer.mutableBuffer());
         DEBUG_LOG("Encoded buffer is now: " << buffer.length())
         in1.clear();
     }
@@ -234,15 +232,15 @@ TEST(Message, MoveConstructor) {
     in1.addDataField("Name", "Tom");
     in1.addDataField("Name", "Zac");
 
-    fp::MessageBuffer buffer1(1024);
+    fp::MessageBuffer::MutableByteStorageType buffer1(1024);
     in1.encode(buffer1);
 
     DEBUG_LOG("Original: " << in1);
     fp::Message in2 = std::move(in1);
     DEBUG_LOG("Moved:    " << in2);
 
-    fp::MessageBuffer buffer2(1024);
+    fp::MessageBuffer::MutableByteStorageType buffer2(1024);
     in2.encode(buffer2);
 
-    EXPECT_EQ(buffer1.byteStorage(), buffer2.byteStorage());
+    EXPECT_EQ(buffer1, buffer2);
 }

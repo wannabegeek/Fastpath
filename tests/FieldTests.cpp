@@ -134,14 +134,13 @@ TEST(Field, SerializeString_Large) {
     const char *temp = "Hello world";
     fp::LargeDataField<std::allocator<byte>> in("0", reinterpret_cast<const byte *>(temp), strlen(temp));
 
-    fp::MessageBuffer buffer(256);
+    fp::MessageBuffer::MutableByteStorageType buffer(256);
     const size_t len_in = in.encode(buffer);
     EXPECT_EQ(len_in, buffer.length());
 
-    const fp::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
-    fp::LargeDataField<std::allocator<byte>> out(b);
+    fp::LargeDataField<std::allocator<byte>> out(buffer);
 //    EXPECT_TRUE(out.decode(b));
-    ASSERT_EQ(len_in, b.bytesRead());
+    ASSERT_EQ(len_in, buffer.bytesRead());
 
     EXPECT_EQ(in, out);
 }
@@ -150,14 +149,13 @@ TEST(Field, SerializeString_Small) {
     const char *temp = "Hello world";
     fp::SmallDataField in("0", reinterpret_cast<const byte *>(temp), strlen(temp));
 
-    fp::MessageBuffer buffer(256);
+    fp::MessageBuffer::MutableByteStorageType buffer(256);
     const size_t len_in = in.encode(buffer);
     EXPECT_EQ(len_in, buffer.length());
 
-    const fp::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
-    fp::SmallDataField out(b);
+    fp::SmallDataField out(buffer);
 //    EXPECT_TRUE(out.decode(b));
-    ASSERT_EQ(len_in, b.bytesRead());
+    ASSERT_EQ(len_in, buffer.bytesRead());
 
     EXPECT_EQ(in, out);
 }
@@ -165,14 +163,13 @@ TEST(Field, SerializeScalar) {
     const uint32_t temp = 1234567890u;
     fp::ScalarField in("0", temp);
 
-    fp::MessageBuffer buffer(256);
+    fp::MessageBuffer::MutableByteStorageType buffer(256);
     const size_t len_in = in.encode(buffer);
     EXPECT_EQ(len_in, buffer.length());
 
-    const fp::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
-    fp::ScalarField out(b);
+    fp::ScalarField out(buffer);
 //    EXPECT_TRUE(out.decode(b));
-    EXPECT_EQ(len_in, b.bytesRead());
+    EXPECT_EQ(len_in, buffer.bytesRead());
 
     EXPECT_EQ(in, out);
 }
@@ -181,14 +178,13 @@ TEST(Field, SerializeDateTime) {
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     fp::DateTimeField in("0", time);
 
-    fp::MessageBuffer buffer(256);
+    fp::MessageBuffer::MutableByteStorageType buffer(256);
     const size_t len_in = in.encode(buffer);
     EXPECT_EQ(len_in, buffer.length());
 
-    const fp::MessageBuffer::ByteStorageType &b = buffer.byteStorage();
-    fp::DateTimeField out(b);
+    fp::DateTimeField out(buffer);
 //    EXPECT_TRUE(out.decode(b));
-    EXPECT_EQ(len_in, b.bytesRead());
+    EXPECT_EQ(len_in, buffer.bytesRead());
 
     EXPECT_EQ(in, out);
 }
@@ -208,12 +204,12 @@ TEST(Field, SerializeSubMessage) {
 
     fp::MessageField in("msg", std::move(msg));
 
-    fp::MessageBuffer buffer(256);
+    fp::MessageBuffer::MutableByteStorageType buffer(256);
     const size_t len_in = in.encode(buffer);
     EXPECT_EQ(len_in, buffer.length());
 
     DEBUG_LOG("Buffer is: " << buffer);
-    fp::MessageField out(buffer.byteStorage());
+    fp::MessageField out(buffer);
 
 //    EXPECT_EQ(len_in, b.bytesRead());
 //

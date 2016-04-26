@@ -54,7 +54,7 @@ namespace fp {
             this->m_storedLength = length;
         }
 
-        void increaseLengthBy(const size_t length) noexcept {
+        T *allocate(const size_t length) noexcept {
             if (tf::unlikely(this->m_storedLength + length > this->m_storage.second)) {
                 T *old_data = this->m_storage.first;
                 const size_t old_length = this->m_storage.second;
@@ -62,37 +62,42 @@ namespace fp {
                 memmove(this->m_storage.first, old_data, old_length);
                 ByteStorage<T, Allocator>::storage_traits::deallocate(this->m_allocator, old_data, old_length);
             }
+
+            const size_t pref_length = this->m_storedLength;
             this->m_storedLength += length;
+            return &this->m_storage.first[pref_length];
         }
 
-        const size_t capacity() const noexcept {
+        inline const size_t capacity() const noexcept {
             return this->m_storage.second;
         }
 
-        void truncate(const size_t length) noexcept {
+        inline void truncate(const size_t length) noexcept {
             this->m_storedLength = length;
         }
 
-        T *mutableBytes() const noexcept {
+        inline T *mutableBytes() const noexcept {
             return this->m_storage.first;
         }
 
-        void append(const T *buffer, const size_t length) noexcept {
-            const size_t current_length = this->m_storedLength;
-            this->increaseLengthBy(length);
-            std::copy(buffer, &buffer[length], &this->m_storage.first[current_length]);
+        inline void append(const T *buffer, const size_t length) noexcept {
+            T *s = this->allocate(length);
+            std::copy(buffer, &buffer[length], s);
         }
 
-        void append(const ByteStorage<T, Allocator> &src, const size_t length = std::numeric_limits<size_t>::max()) noexcept {
-            const size_t current_length = this->m_storedLength;
+        inline void append(const ByteStorage<T, Allocator> &src, const size_t length = std::numeric_limits<size_t>::max()) noexcept {
             const T *data = nullptr;
             const size_t copy_length = std::min(src.bytes(&data), length);
-            this->increaseLengthBy(copy_length);
 
-            std::copy(data, &data[copy_length], &this->m_storage.first[current_length]);
+            this->append(data, copy_length);
         }
 
-        void clear() noexcept {
+        template<typename S> inline void appendScalar(S s) {
+            T *t = this->allocate(sizeof(S));
+            *reinterpret_cast<S *>(t) = endianScalar(s);
+        }
+
+        inline void clear() noexcept {
             this->m_storedLength = 0;
             this->m_read_ptr = this->m_mark_ptr = this->m_storage.first;
         }

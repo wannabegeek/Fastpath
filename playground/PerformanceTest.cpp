@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
             msg->addDataField("Name", "Tom");
             msg->addDataField("Name2", "Zac");
 
-            /* const size_t encoded_len = */msg->encode(buffer);
+            /* const size_t encoded_len = */msg->encode(buffer.mutableBuffer());
             //encoded_messages.emplace_back(std::move(msg));
             pool.release(msg);
         }

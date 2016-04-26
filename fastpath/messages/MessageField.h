@@ -52,7 +52,7 @@ namespace fp {
 
         const BaseMessage *get() const noexcept;
 
-        const size_t encode(MessageBuffer &buffer) const noexcept override;
+        const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override;
     };
 }
 #endif //FASTPATH_MESSAGEFIELD_H

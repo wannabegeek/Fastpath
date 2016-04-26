@@ -50,7 +50,7 @@ namespace fp {
             return bytes;
         }
 
-        virtual const size_t encode(MessageBuffer &buffer) const noexcept override = 0;
+        virtual const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override = 0;
     };
 }
 

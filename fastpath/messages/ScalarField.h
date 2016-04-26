@@ -115,7 +115,7 @@ namespace fp {
             return readScalar<T>(m_raw);
         }
 
-        const size_t encode(MessageBuffer &buffer) const noexcept override {
+        const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept override {
             return Field::encode(buffer, reinterpret_cast<const byte *>(m_raw), m_data_length);
         }
     };
