@@ -44,9 +44,6 @@ namespace fp {
         }
     }
 
-    EventPoll::~EventPoll() {
-    }
-
     bool EventPoll::add(const EventPollTimerElement &event) noexcept {
         struct epoll_event ev;
         memset(&ev, 0, sizeof(struct epoll_event));

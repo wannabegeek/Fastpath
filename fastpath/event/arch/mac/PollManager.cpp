@@ -43,9 +43,6 @@ namespace fp {
         }
     }
 
-    EventPoll::~EventPoll() {
-    }
-
     bool EventPoll::add(const EventPollTimerElement &event) noexcept {
         int filter = EVFILT_TIMER;
         struct kevent ke;

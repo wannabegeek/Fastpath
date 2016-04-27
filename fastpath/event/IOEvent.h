@@ -42,7 +42,7 @@ namespace fp {
 
 		IOEvent(Queue *queue, const int fd, const EventType eventType) noexcept;
 		IOEvent(IOEvent &&other) noexcept;
-		virtual ~IOEvent() noexcept {}
+		virtual ~IOEvent() noexcept = default;
 
         inline const int fileDescriptor() const noexcept {
             return m_fd;

@@ -66,7 +66,7 @@ namespace fp {
 
     public:
         Transport(const char *description) : m_description(description), m_msg_pool(10000) {};
-        virtual ~Transport() noexcept {}
+        virtual ~Transport() noexcept = default;
 
         status sendMessage(const MessageType &msg) noexcept {
             return sendMessage(*(msg.get()));

@@ -124,7 +124,7 @@ namespace fp {
 
         subscription(subscription &&other) noexcept : m_components(std::move(other.m_components)), m_contains_wildcard(other.m_contains_wildcard), m_subject_hash(other.m_subject_hash) {}
 
-        ~subscription() noexcept {};
+        ~subscription() noexcept = default;
 
         subscription& operator=(const subscription& other) noexcept {
             std::copy(other.m_components.begin(), other.m_components.end(), std::back_inserter(m_components));

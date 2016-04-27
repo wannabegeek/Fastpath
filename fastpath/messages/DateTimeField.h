@@ -71,10 +71,8 @@ namespace fp {
         }
 
         DateTimeField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {
-            m_time[fp_seconds] = readScalar<int64_t>(buffer.readBytes());
-            buffer.advanceRead(sizeof(int64_t));
-            m_time[fp_microseconds] = readScalar<int64_t>(buffer.readBytes());
-            buffer.advanceRead(sizeof(int64_t));
+            m_time[fp_seconds] = buffer.readScalar<int64_t>();
+            m_time[fp_microseconds] = buffer.readScalar<int64_t>();
         }
 
         const void get(std::chrono::time_point<std::chrono::system_clock> &data) const noexcept {

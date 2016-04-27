@@ -62,7 +62,7 @@ namespace fp {
         EventManager(const EventManager &) = delete;
         EventManager &operator=(const EventManager &) = delete;
 
-        virtual ~EventManager() {};
+        virtual ~EventManager() = default;
 
         virtual void registerHandler(TimerEvent *eventRegistration) noexcept = 0;
 		virtual void registerHandler(IOEvent *eventRegistration) noexcept = 0;

@@ -44,7 +44,7 @@ namespace fp {
         SharedQueue() : m_timeout(nullptr) {
         }
 
-        virtual ~SharedQueue() noexcept { }
+        virtual ~SharedQueue() noexcept = default;
 
         virtual inline void dispatch_event(queue_value_type &dispatcher) noexcept {
             Event *event = dispatcher.event;

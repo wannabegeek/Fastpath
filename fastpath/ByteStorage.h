@@ -53,7 +53,9 @@ namespace fp {
     }
 
     template <typename T, typename Allocator = std::allocator<T>> class ByteStorage {
+    private:
         static_assert(sizeof(T) == 1, "Can't create byte buffer for sizes != 1");
+
     protected:
         using BufferDataType = std::pair<T *, size_t>;
         using storage_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<T>;
@@ -80,7 +82,7 @@ namespace fp {
             m_storage.second |= m_storage.second >> 16;
             m_storage.second++;
 
-            m_storage.first = storage_traits::allocate(m_allocator, m_storage.second);
+            m_storage.first = static_cast<T *>(storage_traits::allocate(m_allocator, m_storage.second));
         }
 
         explicit ByteStorage(const size_t allocation = 256, const Allocator &allocator = Allocator()) noexcept : m_allocator(allocator), m_storedLength(0), m_no_copy(false) {
@@ -91,6 +93,7 @@ namespace fp {
 
 
     public:
+
         explicit ByteStorage(const T *bytes, size_t length, bool no_copy=false, const Allocator &allocator = Allocator()) noexcept : m_allocator(allocator), m_storedLength(0), m_no_copy(no_copy) {
             if (m_no_copy) {
                 m_storage.first = const_cast<T *>(bytes);

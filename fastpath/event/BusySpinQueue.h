@@ -51,7 +51,7 @@ namespace fp {
             });
         }
 
-        virtual ~BusySpinQueue() noexcept { }
+        virtual ~BusySpinQueue() noexcept = default;
 
         /**
          * Attempt to dispatch any pending events and return immediately.

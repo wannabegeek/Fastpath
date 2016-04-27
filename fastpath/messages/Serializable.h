@@ -42,7 +42,7 @@ namespace fp {
 
     class Serializable {
     public:
-        virtual ~Serializable() {}
+        virtual ~Serializable() noexcept = default;
 
         virtual const size_t encode(MessageBuffer::MutableByteStorageType &buffer) const noexcept = 0;
         virtual const bool decode(const MessageBuffer::ByteStorageType &buffer) = 0;

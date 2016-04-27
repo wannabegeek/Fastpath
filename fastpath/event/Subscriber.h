@@ -52,7 +52,7 @@ namespace fp {
             std::copy_n(subject, len + 1, m_subject.get());
         }
 
-        ~Subscriber() {};
+        ~Subscriber() noexcept = default;
 
         Transport *transport() const noexcept { return m_transport; }
         const char *subject() const noexcept { return m_subject.get(); }

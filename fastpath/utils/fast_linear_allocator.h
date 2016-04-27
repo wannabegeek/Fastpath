@@ -205,7 +205,7 @@ namespace tf {
 
         linear_allocator(arena_type &arena) : m_arena(arena) {}
 
-        ~linear_allocator() {}
+        ~linear_allocator() noexcept = default;
 
         linear_allocator(const linear_allocator &other) : m_arena(other.m_arena) {}
 

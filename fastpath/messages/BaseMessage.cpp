@@ -227,7 +227,7 @@ namespace fp {
         return false;
     }
 
-    void BaseMessage::prepareForReuse() {
+    void BaseMessage::prepareForReuse() noexcept {
         this->clear();
     }
 

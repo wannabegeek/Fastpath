@@ -38,7 +38,7 @@ namespace fp {
         DataField(const char *identifier, const storage_type &type, const std::size_t data_length) noexcept : Field(identifier, type, data_length) {}
         DataField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {}
 
-        virtual ~DataField() noexcept {}
+        virtual ~DataField() noexcept = default;
 
         virtual const size_t get(const byte **data) const noexcept = 0;
         virtual const size_t get(const char **data) const noexcept = 0;

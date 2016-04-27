@@ -138,7 +138,7 @@ namespace fp {
         /// @cond DEV
 
         // from reusable
-        void prepareForReuse() override;
+        void prepareForReuse() noexcept override;
 
         /// @endcond
 

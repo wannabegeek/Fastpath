@@ -63,7 +63,7 @@ namespace fp {
         Event(const Event &other) = delete;
         Event& operator=(Event const&) = delete;
 
-        virtual ~Event() noexcept {}
+        virtual ~Event() noexcept = default;
 
         virtual const bool __notify(const EventType &eventType) noexcept = 0;
         virtual void __destroy() noexcept = 0;

@@ -43,8 +43,8 @@ namespace tf {
         std::function<void(reusable *)> m_release_fn;
 
     public:
-        virtual ~reusable() {}
-        virtual void prepareForReuse() = 0;
+        virtual ~reusable() noexcept = default;
+        virtual void prepareForReuse() noexcept = 0;
 
         inline void release() noexcept {
            if (m_release_fn != nullptr) {

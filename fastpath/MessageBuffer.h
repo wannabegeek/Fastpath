@@ -29,6 +29,7 @@
 #include <cassert>
 #include <iomanip>
 #include <cstring>
+#include <fastpath/utils/generic_allocator.h>
 
 #include "fastpath/MutableByteStorage.h"
 #include "fastpath/types.h"
@@ -87,17 +88,17 @@ namespace fp {
 //  char *name;
 
     class MessageBuffer {
+    public:
+        using ByteStorageType = ByteStorage<byte>; //, tf::allocator_resource<byte>>;
+        using MutableByteStorageType = MutableByteStorage<byte>; //, tf::allocator_resource<byte>>;
+
     private:
         size_t m_startIndex = 0;
 
-        MutableByteStorage<byte> m_storage;
+        MutableByteStorageType m_storage;
         const size_t visible_length() const { return m_storage.length() > m_startIndex ? m_storage.length() - m_startIndex : 0; }
 
     public:
-
-        using ByteStorageType = ByteStorage<byte>;
-        using MutableByteStorageType = MutableByteStorage<byte>;
-
         explicit MessageBuffer(const size_t initialAllocation) noexcept : m_startIndex(0), m_storage(initialAllocation) {
         }
 
@@ -110,7 +111,7 @@ namespace fp {
         MessageBuffer(const MessageBuffer &) = delete;
         const MessageBuffer &operator=(const MessageBuffer &) = delete;
 
-        virtual ~MessageBuffer() noexcept {}
+        virtual ~MessageBuffer() noexcept = default;
 
         MutableByteStorageType &mutableBuffer() noexcept {
             assert(m_startIndex <= m_storage.length());

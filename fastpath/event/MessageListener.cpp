@@ -49,7 +49,7 @@ namespace fp {
         transport->sendMessage(msg);
     }
 
-    MessageListener::~MessageListener() {}
+    MessageListener::~MessageListener() = default;
 
     const bool MessageListener::registerTransport(Transport *transport, EventManager *eventManager) {
         if (transport->m_eventManager == nullptr) {

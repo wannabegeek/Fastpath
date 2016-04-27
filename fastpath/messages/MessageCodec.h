@@ -1,6 +1,27 @@
-//
-// Created by Tom Fewster on 26/04/2016.
-//
+/***************************************************************************
+                          __FILE__
+                          -------------------
+    copyright            : Copyright (c) 2004-2016 Tom Fewster
+    email                : tom@wannabegeek.com
+    date                 : 26/03/2016
+
+ ***************************************************************************/
+
+/***************************************************************************
+ * This library is free software; you can redistribute it and/or           *
+ * modify it under the terms of the GNU Lesser General Public              *
+ * License as published by the Free Software Foundation; either            *
+ * version 2.1 of the License, or (at your option) any later version.      *
+ *                                                                         *
+ * This library is distributed in the hope that it will be useful,         *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *
+ * Lesser General Public License for more details.                         *
+ *                                                                         *
+ * You should have received a copy of the GNU Lesser General Public        *
+ * License along with this library; if not, write to the Free Software     *
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
+ ***************************************************************************/
 
 #ifndef FASTPATH_MESSAGECODEC_H
 #define FASTPATH_MESSAGECODEC_H
@@ -76,7 +97,7 @@ namespace fp {
             CorruptMessage
         } MessageDecodeStatus;
 
-        static const MessageDecodeStatus have_complete_message(const MessageBuffer::ByteStorageType &buffer, std::size_t &msg_length) noexcept {
+        template <typename T = ByteStorage<byte>> static const MessageDecodeStatus have_complete_message(const T &buffer, std::size_t &msg_length) noexcept {
             if (buffer.remainingReadLength() >= MsgAddressing::size()) {
                 const byte *bytes = buffer.readBytes();
                 MsgAddressing::addressing_start chk = readScalar<MsgAddressing::addressing_start>(buffer.readBytes());
@@ -93,7 +114,7 @@ namespace fp {
             return IncompleteMessage;
         }
 
-        static const MessageDecodeStatus addressing_details(const MessageBuffer::ByteStorageType &buffer, const char **subject, std::size_t &subject_length, uint8_t &flags, std::size_t &msg_length) noexcept {
+        template <typename T = ByteStorage<byte>> static const MessageDecodeStatus addressing_details(const T &buffer, const char **subject, std::size_t &subject_length, uint8_t &flags, std::size_t &msg_length) noexcept {
             const MessageDecodeStatus status = have_complete_message(buffer, msg_length);
 
             if (status == CompleteMessage) {
@@ -115,7 +136,7 @@ namespace fp {
         }
 
 
-        static const std::size_t encode(const BaseMessage *msg, MessageBuffer::MutableByteStorageType &buffer) noexcept {
+        template <typename T = MutableByteStorage<byte>> static const std::size_t encode(const BaseMessage *msg, T &buffer) noexcept {
             buffer.appendScalar(static_cast<MsgHeader::header_start>(body_flag));
             buffer.appendScalar(static_cast<MsgHeader::field_count>(msg->size()));
 
@@ -127,7 +148,7 @@ namespace fp {
             return msgLength;
         }
 
-        static const std::size_t encode(const Message *msg, MessageBuffer::MutableByteStorageType &buffer) noexcept {
+        template <typename T = MutableByteStorage<byte>> static const std::size_t encode(const Message *msg, T &buffer) noexcept {
             std::size_t addressing_size = MsgAddressing::size();
 
             buffer.appendScalar(static_cast<MsgAddressing::addressing_start>(addressing_flag));
@@ -147,7 +168,7 @@ namespace fp {
             return total_len;
         }
 
-        static const bool decode(Message *msg, const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) {
+        template <typename T = ByteStorage<byte>> static const bool decode(Message *msg, const T &buffer) throw (fp::exception) {
             size_t subject_length = 0;
             size_t msg_length = 0;
             const char *subject = nullptr;
@@ -165,19 +186,17 @@ namespace fp {
             return false;
         }
 
-        static const bool decode(BaseMessage *msg, const MessageBuffer::ByteStorageType &buffer) throw (fp::exception) {
+        template <typename T = ByteStorage<byte>> static const bool decode(BaseMessage *msg, const T &buffer) throw (fp::exception) {
             bool success = false;
             assert(buffer.length() > 0);
 
             if (buffer.remainingReadLength() > MsgHeader::size()) {
-                MsgHeader::header_start chk = readScalar<MsgHeader::header_start>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgHeader::header_start));
+                MsgHeader::header_start chk = buffer.template readScalar<MsgHeader::header_start>();
                 if (chk != body_flag) {
                     throw fp::exception("Received corrupt message - incorrect body marker");
                 }
 
-                const MsgHeader::field_count field_count = readScalar<MsgHeader::field_count>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgHeader::field_count));
+                const MsgHeader::field_count field_count = buffer.template readScalar<MsgHeader::field_count>();
 
                 for (size_t i = 0; i < field_count; i++) {
                     MsgField::type type = unknown;

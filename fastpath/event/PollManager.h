@@ -64,7 +64,7 @@ namespace fp {
 
     public:
         EventPoll();
-        ~EventPoll();
+        ~EventPoll() noexcept = default;
 
         bool add(const EventPollTimerElement &event) noexcept;
         bool update(const EventPollTimerElement &event) noexcept;

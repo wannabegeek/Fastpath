@@ -35,7 +35,7 @@
 #include "fastpath/ByteStorage.h"
 
 namespace fp {
-    template <typename T, typename Allocator = std::allocator<T>> class MutableByteStorage : public ByteStorage<T, Allocator> {
+    template <typename T, typename Allocator = std::allocator<T>> class MutableByteStorage final : public ByteStorage<T, Allocator> {
     public:
 
         explicit MutableByteStorage(const size_t allocation = 256, const Allocator &allocator = Allocator()) noexcept : ByteStorage<T, Allocator>(allocation, allocator) {}
@@ -43,7 +43,7 @@ namespace fp {
 
         MutableByteStorage(MutableByteStorage<T, Allocator> &&orig) noexcept : ByteStorage<T, Allocator>(std::move(orig)) {};
 
-        virtual ~MutableByteStorage() noexcept {};
+        virtual ~MutableByteStorage() noexcept = default;
 
         void setData(const T *data, const size_t length) noexcept {
             if (tf::unlikely(length > this->m_storage.second)) {
@@ -59,6 +59,8 @@ namespace fp {
                 T *old_data = this->m_storage.first;
                 const size_t old_length = this->m_storage.second;
                 this->allocateStorage(this->m_storage.second + length);
+                this->m_read_ptr = this->m_storage.first + std::distance(old_data, this->m_read_ptr);
+                this->m_mark_ptr = this->m_storage.first + std::distance(old_data, this->m_mark_ptr);
                 memmove(this->m_storage.first, old_data, old_length);
                 ByteStorage<T, Allocator>::storage_traits::deallocate(this->m_allocator, old_data, old_length);
             }

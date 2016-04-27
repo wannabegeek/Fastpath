@@ -63,14 +63,9 @@ namespace fp {
 
         Field(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) {
             if (tf::likely(buffer.remainingReadLength() >= MsgField::size())) {
-                m_type = static_cast<storage_type>(readScalar<MsgField::type>(buffer.readBytes()));
-                buffer.advanceRead(sizeof(MsgField::type));
-
-                const size_t identifier_length = readScalar<MsgField::identifier_length>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgField::identifier_length));
-
-                m_data_length = readScalar<MsgField::data_length>(buffer.readBytes());
-                buffer.advanceRead(sizeof(MsgField::data_length));
+                m_type = static_cast<storage_type>(buffer.readScalar<MsgField::type>());
+                const size_t identifier_length = buffer.readScalar<MsgField::identifier_length>();
+                m_data_length = buffer.readScalar<MsgField::data_length>();
 
                 if (tf::likely(buffer.remainingReadLength() >= identifier_length)) {
                     std::copy(buffer.readBytes(), &buffer.readBytes()[identifier_length], m_identifier);

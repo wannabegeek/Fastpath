@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 26/03/2016
+    date                 : 04/03/2016
 
  ***************************************************************************/
 
@@ -23,53 +23,37 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_SHM_ALLOCATOR_H
-#define FASTPATH_SHM_ALLOCATOR_H
+#ifndef FASTPATH_STD_ALLOCATOR_RESOURCE_H
+#define FASTPATH_STD_ALLOCATOR_RESOURCE_H
 
+#include <memory>
 #include <cstddef>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#include <boost/interprocess/managed_shared_memory.hpp>
-
-#pragma GCC diagnostic pop
+#include "fastpath/utils/allocator/generic_allocator.h"
 
 namespace tf {
-    template <class T, class SegmentManager> class shm_allocator {
+    class std_allocator_resource final : public allocator_resource {
     private:
-        SegmentManager *m_segment_manager;
-    public:
-    public:
-        typedef T value_type;
+        typedef char value_type;
         typedef value_type* pointer;
-        typedef const value_type* const_pointer;
-        typedef value_type& reference;
-        typedef const value_type& const_reference;
-        typedef std::size_t size_type;
-        typedef std::ptrdiff_t difference_type;
 
+        std::allocator<value_type> m_allocator;
 
-        template<typename U> struct rebind {
-            typedef shm_allocator<U, SegmentManager> other;
-        };
-
-        shm_allocator(SegmentManager *segment_manager) noexcept : m_segment_manager(segment_manager) {}
-
-        ~shm_allocator() noexcept = default;
-
-        shm_allocator(const shm_allocator &other) noexcept : m_segment_manager(other.m_segment_manager) {}
-
-        inline pointer allocate(const std::size_t size) noexcept {
-            return reinterpret_cast<pointer>(m_segment_manager->allocate(size, std::nothrow));
+    public:
+        void *allocate(const std::size_t size) noexcept {
+            return std::allocator_traits<std::allocator<value_type>>::allocate(m_allocator, size);
         }
 
-        inline void deallocate(T* p, std::size_t size) noexcept {
-            m_segment_manager->deallocate(reinterpret_cast<void *>(p));
+        void deallocate(void *p, const std::size_t size) noexcept {
+            std::allocator_traits<std::allocator<value_type>>::deallocate(m_allocator, reinterpret_cast<pointer>(p), size);
         }
+
     };
 
-    template <class T, class U, class A> bool operator==(const shm_allocator<T, A>&, const shm_allocator<U, A>&);
-    template <class T, class U, class A> bool operator!=(const shm_allocator<T, A>&, const shm_allocator<U, A>&);
-};
-
-#endif //FASTPATH_SHM_ALLOCATOR_H
+    ////////////////
+    static allocator_resource *get_default_allocator() noexcept {
+        static std::unique_ptr<allocator_resource> s_resource = std::make_unique<std_allocator_resource>();
+        return s_resource.get();
+    }
+}
+#endif //FASTPATH_STD_ALLOCATOR_RESOURCE_H

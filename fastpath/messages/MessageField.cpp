@@ -33,6 +33,7 @@ namespace fp {
     }
 
     MessageField::MessageField(const MessageBuffer::ByteStorageType &buffer) throw(fp::exception) : Field(buffer) {
+        // TODO: This is a very big todo!!!!
         m_msg = new Message;
         MessageCodec::decode(const_cast<BaseMessage *>(static_cast<const BaseMessage *>(m_msg)), buffer);
         m_data_length = 0;
