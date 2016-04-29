@@ -6,17 +6,21 @@
 #define FASTPATH_INTERPROCESSNOTIFIERCLIENT_H
 
 #include "InterprocessNotifier.h"
-#include "notifier.h"
+#include "fastpath/event/notifier.h"
 
 namespace fp {
     class InterprocessNotifierClient : public InterprocessNotifier {
     private:
-        tf::notifier inbound_notification;
-        tf::notifier outbound_notification;
+        fp::notifier inbound_notification;
+        fp::notifier outbound_notification;
 
+        bool m_connected = false;
     public:
         InterprocessNotifierClient();
 
+        inline bool is_connected() const noexcept { return m_connected; }
+
+        bool connect() noexcept;
         bool notify() noexcept;
     };
 }

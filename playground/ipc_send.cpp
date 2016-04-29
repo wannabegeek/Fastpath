@@ -13,19 +13,21 @@ int main(int argc, char *argv[]) {
 
     LOG_LEVEL(tf::logger::debug);
 
-    SharedMemoryBuffer buffer("SharedMemoryTest2");
-
     try {
         fp::InterprocessNotifierClient notifier;
-//        } else {
-//            std::cerr << "Failed to create connection" << std::endl;
-//        }
+
+        while (!notifier.connect()) {
+            INFO_LOG("Not connected yet, waiting...");
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+
+        SharedMemoryBuffer buffer("SharedMemoryTest2");
 
         unsigned int counter = 1000;
-        SharedMemoryBuffer::mutable_storage_type storage(2048, buffer.allocator());
         for (unsigned int i = 0; i <= counter; i++) {
             std::this_thread::sleep_for(std::chrono::seconds(2));
 
+            SharedMemoryBuffer::mutable_storage_type storage(2048, buffer.allocator());
             char m[255];
             sprintf(m, "Hello World %i", i);
             storage.append(reinterpret_cast<byte *>(&m[0]), strlen(m));

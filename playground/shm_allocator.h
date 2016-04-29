@@ -35,41 +35,24 @@
 #pragma GCC diagnostic pop
 
 namespace tf {
-    template <class T, class SegmentManager> class shm_allocator {
+    template <class SegmentManager> class shm_allocator : public tf::allocator_resource {
     private:
         SegmentManager *m_segment_manager;
     public:
-    public:
-        typedef T value_type;
-        typedef value_type* pointer;
-        typedef const value_type* const_pointer;
-        typedef value_type& reference;
-        typedef const value_type& const_reference;
-        typedef std::size_t size_type;
-        typedef std::ptrdiff_t difference_type;
-
-
-        template<typename U> struct rebind {
-            typedef shm_allocator<U, SegmentManager> other;
-        };
-
         shm_allocator(SegmentManager *segment_manager) noexcept : m_segment_manager(segment_manager) {}
 
         ~shm_allocator() noexcept = default;
 
         shm_allocator(const shm_allocator &other) noexcept : m_segment_manager(other.m_segment_manager) {}
 
-        inline pointer allocate(const std::size_t size) noexcept {
-            return reinterpret_cast<pointer>(m_segment_manager->allocate(size, std::nothrow));
+        inline void *allocate(const std::size_t size) noexcept {
+            return m_segment_manager->allocate(size, std::nothrow);
         }
 
-        inline void deallocate(T* p, std::size_t size) noexcept {
+        inline void deallocate(void* p, std::size_t size) noexcept {
             m_segment_manager->deallocate(reinterpret_cast<void *>(p));
         }
     };
-
-    template <class T, class U, class A> bool operator==(const shm_allocator<T, A>&, const shm_allocator<U, A>&);
-    template <class T, class U, class A> bool operator!=(const shm_allocator<T, A>&, const shm_allocator<U, A>&);
 };
 
 #endif //FASTPATH_SHM_ALLOCATOR_H

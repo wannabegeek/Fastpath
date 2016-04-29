@@ -12,7 +12,7 @@ SET(HEADER_FILES
         BlockingQueue.h
         InlineQueue.h
         Session.h
-        ActionNotifier.h
+        notifier.h
         GlobalEventManager.h
         InlineEventManager.h
         SharedQueue.h
@@ -30,7 +30,6 @@ SET(SOURCE_FILES
         EventManager.cpp
         TimerEvent.cpp
         IOEvent.cpp
-        ActionNotifier.cpp
         GlobalEventManager.cpp
         InlineEventManager.cpp
         )

@@ -23,4 +23,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#include "fastpath/event/ActionNotifier.h"
+#ifndef FASTPATH_NOTIFIER_H_H
+#define FASTPATH_NOTIFIER_H_H
+
+#include "fastpath/config.h"
+
+#ifdef HAVE_EVENTFD
+    #include "fastpath/event/arch/linux/notifier.h"
+#else
+    #include "fastpath/event/arch/mac/notifier.h"
+#endif
+
+#endif //FASTPATH_NOTIFIER_H_H

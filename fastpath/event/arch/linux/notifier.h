@@ -23,127 +23,78 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_ACTIONNOTIFIER_H
-#define FASTPATH_ACTIONNOTIFIER_H
+#ifndef FASTPATH_NOTIFIER_H
+#define FASTPATH_NOTIFIER_H
 
-#include <unistd.h>
-#include <atomic>
 #include <fcntl.h>
-#include <cstring>
-
-#include "fastpath/config.h"
-
-#ifdef HAVE_EVENTFD
 #include <sys/eventfd.h>
-#endif
+#include <atomic>
 
 #include "fastpath/Exception.h"
-#include "fastpath/event/PollManager.h"
 #include "fastpath/event/EventType.h"
+#include "fastpath/event/PollManager.h"
 
 namespace fp {
-#ifdef HAVE_EVENTFD
-    class ActionNotifier {
+    class notifier {
     private:
         int m_fd;
         std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
 
     public:
-        explicit ActionNotifier() {
+        explicit notifier() {
             m_fd = eventfd(0, O_NONBLOCK);
             if (m_fd == -1) {
                 ThrowException(fp::exception, "Failed to create eventfd: " << strerror(errno));
             }
         }
 
-        ActionNotifier(ActionNotifier &&other) {
+        explicit notifier(int *fd) noexcept {
+            m_fd = fd[0];
+        }
+
+        notifier(notifier &&other) noexcept {
             m_fd = other.m_fd;
+            other.m_fd = -1;
         }
 
-        ~ActionNotifier() {
-            close(m_fd);
+        notifier(const notifier &other) = delete;
+        notifier &operator=(const notifier &other) = delete;
+
+        ~notifier() noexcept {
+            if (m_fd != -1) {
+                ::close(m_fd);
+            }
         }
 
-        inline void notify_and_wait() {
+        inline bool notify() noexcept {
+            const uint64_t data = 1;
+            return (::write(m_fd, &data, sizeof(uint64_t)) != -1);
+        }
+
+        inline void notify_and_wait() noexcept {
             m_locked.test_and_set(std::memory_order_acquire);
             this->notify();
             while(!m_locked.test_and_set(std::memory_order_acquire));
         }
 
-        inline void notify() {
-            const uint64_t data = 1;
-            write(m_fd, &data, sizeof(uint64_t));
-        }
-
-        inline void reset() {
+        inline bool reset() noexcept {
             m_locked.clear(std::memory_order_release);
             uint64_t data;
-            read(m_fd, &data, sizeof(uint64_t));
+            return (::read(m_fd, &data, sizeof(uint64_t)) != -1);
         }
 
         inline int read_handle() const noexcept {
             return m_fd;
         }
 
-        inline EventPollIOElement pollElement() const {
+        inline int signal_handle() const noexcept {
+            return m_fd;
+        }
+
+        inline EventPollIOElement pollElement() const noexcept {
             return {m_fd, EventType::READ};
         }
     };
-
-#else
-    class ActionNotifier {
-    private:
-        int m_fd[2];
-
-        std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
-
-    public:
-        explicit ActionNotifier() {
-            if (::pipe(m_fd) == -1) {
-                ThrowException(fp::exception, "Failed to create pipe: " << strerror(errno));
-            }
-            ::fcntl(m_fd[0], F_SETFD, O_NONBLOCK);
-            ::fcntl(m_fd[1], F_SETFD, O_NONBLOCK);
-        }
-
-        ActionNotifier(ActionNotifier &&other) {
-            m_fd[0] = other.m_fd[0];
-            m_fd[1] = other.m_fd[1];
-        }
-
-        ~ActionNotifier() {
-            close(m_fd[0]);
-            close(m_fd[1]);
-        }
-
-        inline void notify_and_wait() {
-            m_locked.test_and_set(std::memory_order_acquire);
-            this->notify();
-            while(!m_locked.test_and_set(std::memory_order_acquire));
-        }
-
-        inline void notify() {
-            char data[] = "\n";
-            unsigned int length = 1;
-            write(m_fd[1], data, length);
-        }
-
-        inline void reset() {
-            m_locked.clear(std::memory_order_release);
-            char data[256];
-            unsigned int length = 255;
-            read(m_fd[0], data, length);
-        }
-
-        inline int read_handle() const noexcept {
-            return m_fd[0];
-        }
-
-        inline EventPollIOElement pollElement() const {
-            return {m_fd[0], EventType::READ};
-        }
-    };
-#endif
 }
 
-#endif //FASTPATH_ACTIONNOTIFIER_H
+#endif //FASTPATH_NOTIFIER_H

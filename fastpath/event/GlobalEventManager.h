@@ -32,7 +32,7 @@
 #include "fastpath/utils/tfspinlock.h"
 #include "fastpath/utils/rwlock.h"
 #include "fastpath/event/EventManager.h"
-#include "fastpath/event/ActionNotifier.h"
+#include "fastpath/event/notifier.h"
 
 namespace fp {
     class Event;
@@ -42,7 +42,7 @@ namespace fp {
         using IOEventTable = std::unordered_map<int, std::vector<IOEvent *>>;
         using TimerEventTable = std::unordered_map<int, TimerEvent *>;
 
-        ActionNotifier m_actionNotifier;
+        notifier m_actionNotifier;
 
         IOEventTable m_ioHandlerLookup;
         TimerEventTable m_timerHandlerLookup;

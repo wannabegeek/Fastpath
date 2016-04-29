@@ -53,6 +53,12 @@ namespace fp {
     }
 
     template <typename T, typename Allocator = std::allocator<T>> class ByteStorage {
+    public:
+        typedef enum {
+            COPY_ON_CONSTRUCT = 1 << 0,
+            TAKE_OWNERSHIP = 1 << 1
+        } storage_options;
+
     private:
         static_assert(sizeof(T) == 1, "Can't create byte buffer for sizes != 1");
 
@@ -66,7 +72,7 @@ namespace fp {
         BufferDataType m_storage;
         size_t m_storedLength;
 
-        bool m_no_copy;
+        int m_options;
 
         mutable T *m_read_ptr;
         mutable T *m_mark_ptr;
@@ -85,7 +91,7 @@ namespace fp {
             m_storage.first = static_cast<T *>(storage_traits::allocate(m_allocator, m_storage.second));
         }
 
-        explicit ByteStorage(const size_t allocation = 256, const Allocator &allocator = Allocator()) noexcept : m_allocator(allocator), m_storedLength(0), m_no_copy(false) {
+        explicit ByteStorage(const size_t allocation = 256, const Allocator &allocator = Allocator()) noexcept : m_allocator(allocator), m_storedLength(0), m_options(0) {
             allocateStorage(allocation);
             m_read_ptr = m_storage.first;
             m_mark_ptr = m_read_ptr;
@@ -94,25 +100,25 @@ namespace fp {
 
     public:
 
-        explicit ByteStorage(const T *bytes, size_t length, bool no_copy=false, const Allocator &allocator = Allocator()) noexcept : m_allocator(allocator), m_storedLength(0), m_no_copy(no_copy) {
-            if (m_no_copy) {
-                m_storage.first = const_cast<T *>(bytes);
-                m_storage.second = 0;
-                m_storedLength = length;
-            } else {
+        explicit ByteStorage(const T *bytes, size_t length, int options = COPY_ON_CONSTRUCT | TAKE_OWNERSHIP, const Allocator &allocator = Allocator()) noexcept : m_allocator(allocator), m_storedLength(0), m_options(options) {
+            if ((m_options & COPY_ON_CONSTRUCT) == COPY_ON_CONSTRUCT) {
                 allocateStorage(length);
                 std::copy(bytes, &bytes[length], m_storage.first);
+                m_storedLength = length;
+            } else {
+                m_storage.first = const_cast<T *>(bytes);
+                m_storage.second = 0;
                 m_storedLength = length;
             }
             m_read_ptr = m_storage.first;
             m_mark_ptr = m_read_ptr;
         }
 
-        ByteStorage(ByteStorage &&orig) noexcept : m_allocator(orig.m_allocator), m_storage(orig.m_storage), m_storedLength(orig.m_storedLength), m_no_copy(orig.m_no_copy) {
+        ByteStorage(ByteStorage &&orig) noexcept : m_allocator(orig.m_allocator), m_storage(orig.m_storage), m_storedLength(orig.m_storedLength), m_options(orig.m_options) {
             orig.m_storage.first = nullptr;
             orig.m_storage.second = 0;
             orig.m_storedLength = 0;
-            orig.m_no_copy = true;
+            orig.m_options = 0;
             orig.m_read_ptr = orig.m_storage.first;
             orig.m_mark_ptr = 0;
             m_read_ptr = m_storage.first;
@@ -123,9 +129,17 @@ namespace fp {
         const ByteStorage &operator=(const ByteStorage &) = delete;
 
         virtual ~ByteStorage() noexcept {
-            if (!m_no_copy) {
+            if ((m_options & TAKE_OWNERSHIP) == TAKE_OWNERSHIP) {
                 storage_traits::deallocate(m_allocator, m_storage.first, m_storage.second);
             }
+        }
+
+        /**
+         * Release storage to caller, who will now take responsibility for freeing it
+         */
+        void release_ownership() noexcept {
+            m_options &= ~TAKE_OWNERSHIP;
+            m_storage.second = 0;
         }
 
         inline const size_t bytes(const T **data) const noexcept  {
@@ -135,7 +149,7 @@ namespace fp {
 
         inline const size_t length() const noexcept { return m_storedLength; }
 
-        inline const bool owns_copy() const noexcept { return !m_no_copy; }
+        inline const bool owns_copy() const noexcept { return (m_options & TAKE_OWNERSHIP) == TAKE_OWNERSHIP; }
 
         inline const T operator[](const size_t index) const noexcept {
             return m_storage.first[index];

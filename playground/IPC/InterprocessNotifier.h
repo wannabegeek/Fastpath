@@ -19,7 +19,7 @@ namespace fp {
 
     public:
         InterprocessNotifier(std::unique_ptr<UnixSocket> &&socket);
-        virtual ~InterprocessNotifier();
+        virtual ~InterprocessNotifier() = default;
 
         bool send_fds(const int *fds, const size_t num_fds) noexcept;
         bool receive_fd(UnixSocket *socket, int *fd, size_t &num_fds) noexcept;

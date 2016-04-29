@@ -29,8 +29,8 @@
 #include <cassert>
 #include <iomanip>
 #include <cstring>
-#include <fastpath/utils/generic_allocator.h>
 
+#include "fastpath/utils/allocator/generic_allocator.h"
 #include "fastpath/MutableByteStorage.h"
 #include "fastpath/types.h"
 #include "fastpath/utils/logger.h"

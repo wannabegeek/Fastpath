@@ -33,6 +33,7 @@
 #include "fastpath/messages/StorageTypes.h"
 #include "fastpath/event/Session.h"
 #include "fastpath/event/EventManager.h"
+#include "fastpath/event/EventType.h"
 
 namespace fp {
     class Event;

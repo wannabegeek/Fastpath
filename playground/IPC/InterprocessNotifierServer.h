@@ -8,14 +8,14 @@
 #include <fastpath/event/EventType.h>
 #include <fastpath/transport/TransportIOEvent.h>
 #include "InterprocessNotifier.h"
-#include "notifier.h"
+#include "fastpath/event/notifier.h"
 
 namespace fp {
     class InterprocessNotifierServer : public InterprocessNotifier {
     private:
-        std::function<void(tf::notifier &&notifier)> m_callback;
+        std::function<void(std::unique_ptr<fp::notifier> &&notifier)> m_callback;
     public:
-        InterprocessNotifierServer(std::function<void(tf::notifier &&notifier)> callback);
+        InterprocessNotifierServer(std::function<void(std::unique_ptr<fp::notifier> &&notifier)> callback);
 
         virtual std::unique_ptr<TransportIOEvent> createReceiverEvent();
     };

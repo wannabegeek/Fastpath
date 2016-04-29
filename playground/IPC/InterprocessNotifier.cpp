@@ -22,9 +22,6 @@ namespace fp {
     InterprocessNotifier::InterprocessNotifier(std::unique_ptr<UnixSocket> &&socket) : m_socket(std::move(socket)) {
     }
 
-    InterprocessNotifier::~InterprocessNotifier() {
-    }
-
 
     bool InterprocessNotifier::send_fds(const int *fds, const size_t num_fds) noexcept {
         assert(num_fds < MAX_FDS);
