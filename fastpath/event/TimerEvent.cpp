@@ -104,6 +104,10 @@ namespace fp {
     const bool TimerEvent::__notify(const EventType &eventType) noexcept {
         assert(m_queue != nullptr);
         this->__pushDispatch();
+#if defined HAVE_EPOLL
+        uint64_t v;
+        ::read(m_identifier, &v, sizeof(uint64_t));
+#endif
         return m_queue->__enqueue(QueueElement(this, std::bind(&TimerEvent::dispatch, this, this)));
     }
 

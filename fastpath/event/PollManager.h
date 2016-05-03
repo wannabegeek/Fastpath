@@ -46,7 +46,7 @@ namespace fp {
 	struct EventPollTimerElement {
         EventPollTimerElement() noexcept {}
         EventPollTimerElement(const int _fd, const std::chrono::microseconds _timeout) noexcept : identifier(_fd), timeout(_timeout) {}
-        EventPollTimerElement(const int _fd) noexcept : identifier(_fd) {}
+        EventPollTimerElement(const int _fd) noexcept : identifier(_fd), timeout(0) {}
 
 		int identifier = -1;
         std::chrono::microseconds timeout;
