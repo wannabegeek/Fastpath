@@ -28,8 +28,8 @@
 #include <fastpath/event/EventManager.h>
 #include <fastpath/event/IOEvent.h>
 #include <fastpath/event/InlineQueue.h>
-#include <fastpath/transport/TCPSocketServer.h>
-#include <fastpath/transport/TCPSocketClient.h>
+#include <fastpath/transport/socket/TCPSocketServer.h>
+#include <fastpath/transport/socket/TCPSocketClient.h>
 
 #include <chrono>
 #include <memory>

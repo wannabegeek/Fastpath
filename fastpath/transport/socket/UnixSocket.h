@@ -23,29 +23,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_TCPSOCKET_H
-#define FASTPATH_TCPSOCKET_H
+#ifndef FASTPATH_UNIXSOCKET_H
+#define FASTPATH_UNIXSOCKET_H
 
-#include "fastpath/transport/Socket.h"
+#include <sys/un.h>
+
+#include "fastpath/transport/socket/Socket.h"
 
 namespace fp {
-    class TCPSocket : public Socket {
+    class UnixSocket : public Socket{
     protected:
-        uint16_t m_port;
-        struct hostent m_host;
-        struct addrinfo *m_hostInfo = NULL;
+        struct sockaddr_un m_addr;
 
     public:
-        TCPSocket(const std::string &host, const std::string &service) throw(socket_error);
-        TCPSocket(const std::string &host, const uint16_t &port) throw(socket_error);
-        TCPSocket(const struct hostent *host, const uint16_t &port);
-        TCPSocket(const int socketFd, const bool connected);
 
-        virtual ~TCPSocket();
+        UnixSocket(const std::string &path) throw(socket_error);
+        UnixSocket(const int socketFd, const bool connected) noexcept;
+
+        UnixSocket(UnixSocket &&other) noexcept;
+
+        virtual ~UnixSocket() noexcept;
 
         void setOptions(int options) noexcept override;
+
+        bool send_ancillary(const struct msghdr *msg, int flags) noexcept;
+        const Socket::ReadResult read_ancillary(struct msghdr *msg) noexcept;
     };
 }
 
 
-#endif //FASTPATH_TCPSOCKET_H
+#endif //FASTPATH_UNIXSOCKET_H

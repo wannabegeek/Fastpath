@@ -16,7 +16,7 @@ namespace fp {
 
         bool m_connected = false;
     public:
-        InterprocessNotifierClient();
+        InterprocessNotifierClient() noexcept;
 
         inline bool is_connected() const noexcept { return m_connected; }
 

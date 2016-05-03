@@ -23,24 +23,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef __TFFIXEngine__TFSocketClient__
-#define __TFFIXEngine__TFSocketClient__
+#ifndef FASTPATH_UNIXSOCKETCLIENT_H
+#define FASTPATH_UNIXSOCKETCLIENT_H
 
-#include "fastpath/transport/TCPSocket.h"
+
+#include "UnixSocket.h"
 
 namespace fp {
-    class TCPSocketClient final : public TCPSocket {
+    class UnixSocketClient final : public UnixSocket {
     public:
-        TCPSocketClient(const std::string &host, const std::string &service) throw(socket_error)
-                : TCPSocket(host, service) {
-        }
+        UnixSocketClient(const std::string &path);
+        UnixSocketClient(UnixSocketClient &&other) noexcept;
 
-        TCPSocketClient(const std::string &host, const uint16_t &port) throw(socket_error) : TCPSocket(host, port) {
-        }
-
-
-        virtual bool connect(SocketOptions options = SocketOptionsNone) noexcept override;
+        bool connect(SocketOptions options = SocketOptionsNone) noexcept override;
     };
 }
 
-#endif /* defined(__TFFIXEngine__TFSocketClient__) */
+
+#endif //FASTPATH_UNIXSOCKETCLIENT_H

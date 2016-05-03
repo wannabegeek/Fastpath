@@ -24,7 +24,7 @@
  ***************************************************************************/
 
 #include "fastpath/transport/realm_transport.h"
-#include "fastpath/transport/TCPTransport.h"
+#include "TCPTransport.h"
 #include "fastpath/transport/SHMTransport.h"
 
 namespace fp {

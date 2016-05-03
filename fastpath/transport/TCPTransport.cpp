@@ -27,29 +27,13 @@
 #include <chrono>
 #include "fastpath/utils/logger.h"
 
-#include "fastpath/transport/TCPTransport.h"
-#include "fastpath/transport/TCPSocketClient.h"
+#include "TCPTransport.h"
+#include "fastpath/transport/socket/TCPSocketClient.h"
 #include "fastpath/messages/Message.h"
 #include "fastpath/messages/MessageCodec.h"
 #include "fastpath/transport/TransportIOEvent.h"
 
 namespace fp {
-
-    class BackoffStrategy {
-    private:
-        static constexpr std::chrono::milliseconds min_retry_interval() { return std::chrono::milliseconds(1); }
-        static constexpr std::chrono::milliseconds max_retry_interval() { return std::chrono::seconds(5); }
-
-        std::chrono::milliseconds m_current;
-    public:
-        BackoffStrategy() : m_current(min_retry_interval()) {}
-
-        void backoff() noexcept {
-            std::this_thread::sleep_for(m_current);
-            m_current = std::min(m_current * 2, max_retry_interval());
-        }
-    };
-
 
     TCPTransport::TCPTransport(const char *url_ptr, const char *description) : TCPTransport(url(url_ptr), description) {
     }

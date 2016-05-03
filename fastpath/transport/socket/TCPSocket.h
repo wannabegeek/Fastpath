@@ -23,23 +23,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#include "fastpath/transport/UnixSocketClient.h"
-#include "fastpath/utils/logger.h"
+#ifndef FASTPATH_TCPSOCKET_H
+#define FASTPATH_TCPSOCKET_H
+
+#include "Socket.h"
 
 namespace fp {
-    UnixSocketClient::UnixSocketClient(const std::string &path) : UnixSocket(path) {
-    }
+    class TCPSocket : public Socket {
+    protected:
+        uint16_t m_port;
+        struct hostent m_host;
+        struct addrinfo *m_hostInfo = NULL;
 
-    UnixSocketClient::UnixSocketClient(UnixSocketClient &&other) noexcept : UnixSocket(std::move(other)) {
-    }
+    public:
+        TCPSocket(const std::string &host, const std::string &service) throw(socket_error);
+        TCPSocket(const std::string &host, const uint16_t &port) throw(socket_error);
+        TCPSocket(const struct hostent *host, const uint16_t &port);
+        TCPSocket(const int socketFd, const bool connected);
 
-    bool UnixSocketClient::connect(SocketOptions options) noexcept {
-        if (::connect(m_socket, reinterpret_cast<struct sockaddr *>(&m_addr), sizeof(struct sockaddr_un)) != 0) {
-            INFO_LOG("Failed to connect to IPC endpoint");
-            return false;
-        }
+        virtual ~TCPSocket();
 
-        m_connected = true;
-        return true;
-    }
+        void setOptions(int options) noexcept override;
+    };
 }
+
+
+#endif //FASTPATH_TCPSOCKET_H

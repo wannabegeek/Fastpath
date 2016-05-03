@@ -5,7 +5,7 @@
 #ifndef FASTPATH_INTERPROCESSNOTIFIER_H
 #define FASTPATH_INTERPROCESSNOTIFIER_H
 
-#include <fastpath/transport/UnixSocket.h>
+#include <fastpath/transport/socket/UnixSocket.h>
 
 #define READ_FD 0
 #define WRITE_FD 1
@@ -22,7 +22,7 @@ namespace fp {
         virtual ~InterprocessNotifier() = default;
 
         bool send_fds(const int *fds, const size_t num_fds) noexcept;
-        bool receive_fd(UnixSocket *socket, int *fd, size_t &num_fds) noexcept;
+        bool receive_fd(UnixSocket *socket, int *fd, size_t &num_fds, int &pid) noexcept;
     };
 }
 

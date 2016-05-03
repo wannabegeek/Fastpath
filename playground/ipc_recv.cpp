@@ -11,25 +11,32 @@
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #include <boost/interprocess/shared_memory_object.hpp>
 #pragma GCC diagnostic pop
-#include "IPC/InterprocessNotifierServer.h"
+#include "fastpath/transport/sm/InterprocessNotifierServer.h"
 #include "fastpath/SharedMemoryBuffer.h"
+#include "fastpath/messages/Message.h"
+#include "fastpath/messages/MessageCodec.h"
+#include "fastpath/utils/tfpool.h"
+#include "fastpath/utils/tfnulllock.h"
+
 
 int main(int argc, char *argv[]) {
 
     LOG_LEVEL(tf::logger::debug);
-//    fp::Session::initialise();
-//    fp::InlineQueue queue;
 
-    boost::interprocess::shared_memory_object::remove("SharedMemoryTest2");
-    SharedMemoryBuffer buffer("SharedMemoryTest2");
+    boost::interprocess::shared_memory_object::remove("fprouter");
+    fp::SharedMemoryManager sm_manager("fprouter");
+
+    fp::SharedMemoryBuffer buffer("ServerQueue", sm_manager);
 
     fp::InlineEventManager evm;
     std::vector<std::unique_ptr<fp::notifier>> m_notifiers;
 
+    typedef tf::pool<fp::Message, tf::nulllock> PoolType;
+    PoolType pool(3);
+
+
     bool shutdown = false;
     auto notificationHandler = [&](fp::TransportIOEvent *event, const fp::EventType type, fp::notifier *notifier) noexcept {
-        DEBUG_LOG("Received notification..... " << event->fileDescriptor());
-        DEBUG_LOG("Resetting fd..... " << notifier->read_handle());
         if (!notifier->reset()) {
             INFO_LOG("Client disconnected " << event->fileDescriptor());
             auto it = std::find_if(m_notifiers.begin(), m_notifiers.end(), [&notifier](const std::unique_ptr<fp::notifier> &n) {
@@ -41,14 +48,17 @@ int main(int argc, char *argv[]) {
             evm.unregisterHandler(event);
 
             if (m_notifiers.size() == 0) {
-                DEBUG_LOG("Setting shutdown flag no client left");
+                DEBUG_LOG("Setting shutdown flag no clients left");
                 shutdown = true;
             }
 
         } else {
-            auto ptr = buffer.retrieve();
-            INFO_LOG("Received data '" << ptr << "'");
-//            buffer.deallocate(ptr);
+            buffer.retrieve([&](auto &ptr) {
+                fp::Message *msg = pool.allocate();
+                fp::MessageCodec::decode(msg, ptr);
+                INFO_LOG("Received data '" << *msg);
+                pool.release(msg);
+            });
         }
     };
 
@@ -57,9 +67,7 @@ int main(int argc, char *argv[]) {
         fp::InterprocessNotifierServer notifier([&](std::unique_ptr<fp::notifier> &&notifier) {
             int fd = notifier->read_handle();
             DEBUG_LOG("Need to add callback for " << fd);
-            DEBUG_LOG("FD contained in notifier " << notifier->read_handle());
             m_notifiers.push_back(std::move(notifier));
-            DEBUG_LOG("FD contained in notifier after move " << m_notifiers.back()->read_handle());
 
             auto ptr = m_notifiers.back().get();
             auto notification_handler = std::make_unique<fp::TransportIOEvent>(fd, fp::EventType::READ, std::bind(notificationHandler, std::placeholders::_1, std::placeholders::_2, ptr));
@@ -78,5 +86,5 @@ int main(int argc, char *argv[]) {
         ERROR_LOG("BOOM - it's broken: " << e.what());
     }
 
-//    fp::Session::m_shutdown();
+    fp::Session::destroy();
 }

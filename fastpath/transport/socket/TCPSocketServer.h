@@ -23,41 +23,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#include "fastpath/transport/TCPSocketClient.h"
+#ifndef __TFFIXEngine__TFSocketServer__
+#define __TFFIXEngine__TFSocketServer__
 
-#include <unistd.h>
-#include <sys/fcntl.h>
-#include <netinet/tcp.h>
+#include "TCPSocket.h"
+
+#include <memory>
 
 namespace fp {
-    bool TCPSocketClient::connect(SocketOptions options) noexcept {
-        if (!m_connected) {
-            m_options = options;
-            struct addrinfo *p = nullptr;
-            for (p = m_hostInfo; p != nullptr; p = p->ai_next) {
-                if ((m_socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-                    continue;
-                }
-
-                if (::connect(m_socket, p->ai_addr, p->ai_addrlen) == -1) {
-                    ::close(m_socket);
-                    continue;
-                }
-
-                break;
-            }
-
-            if (p != nullptr) {
-                m_connected = true;
-                setOptions(options);
-
-                if (m_handler) {
-                    m_handler(true);
-                }
-            }
-
+    class TCPSocketServer final : public TCPSocket {
+    public:
+        TCPSocketServer(const std::string &host, const std::string &service) throw(socket_error)
+                : TCPSocket(host, service) {
         }
 
-        return m_connected;
-    }
+        TCPSocketServer(const std::string &host, const uint16_t &port) throw(socket_error) : TCPSocket(host, port) {
+        }
+
+        virtual ~TCPSocketServer();
+
+        virtual bool connect(SocketOptions options = SocketOptionsNone) noexcept override;
+
+        std::unique_ptr<TCPSocket> acceptPendingConnection() noexcept;
+    };
 }
+
+#endif /* defined(__TFFIXEngine__TFSocketServer__) */

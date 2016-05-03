@@ -29,7 +29,7 @@
 #include <iosfwd>
 #include <memory>
 
-#include "fastpath/transport/TCPSocketServer.h"
+#include "fastpath/transport/socket/TCPSocketServer.h"
 #include "fastpath/event/InlineQueue.h"
 #include "fastpath/router/peer_connection.h"
 

@@ -30,18 +30,10 @@
 
 #include <memory>
 #include <cstddef>
+#include "fastpath/utils/allocator/std_allocator_resource.h"
+#include "fastpath/utils/allocator/allocator_resource.h"
 
 namespace tf {
-    class allocator_resource {
-    public:
-        virtual ~allocator_resource() noexcept = default;
-
-        virtual void *allocate(const std::size_t size) noexcept = 0;
-        virtual void deallocate(void *p, const std::size_t size) noexcept = 0;
-    };
-
-
-    ////////////////
     template <typename T> class generic_allocator {
     public:
         typedef T value_type;
@@ -55,7 +47,7 @@ namespace tf {
         allocator_resource *m_allocator;
 
     public:
-        generic_allocator(allocator_resource *allocator) noexcept : m_allocator(allocator) {
+        generic_allocator(allocator_resource *allocator = get_default_allocator()) noexcept : m_allocator(allocator) {
         }
 
         generic_allocator(const generic_allocator &other) noexcept : m_allocator(other.m_allocator) {}

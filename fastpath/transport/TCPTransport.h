@@ -29,7 +29,8 @@
 #include <future>
 
 #include "fastpath/transport/Transport.h"
-#include "fastpath/transport/TCPSocketClient.h"
+#include "fastpath/transport/socket/TCPSocketClient.h"
+#include "fastpath/transport/BackoffStrategy.h"
 #include "fastpath/transport/URL.h"
 #include "fastpath/MessageBuffer.h"
 

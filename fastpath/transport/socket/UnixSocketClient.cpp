@@ -23,21 +23,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_UNIXSOCKETCLIENT_H
-#define FASTPATH_UNIXSOCKETCLIENT_H
-
-
-#include "fastpath/transport/UnixSocket.h"
+#include "UnixSocketClient.h"
+#include "fastpath/utils/logger.h"
 
 namespace fp {
-    class UnixSocketClient final : public UnixSocket {
-    public:
-        UnixSocketClient(const std::string &path);
-        UnixSocketClient(UnixSocketClient &&other) noexcept;
+    UnixSocketClient::UnixSocketClient(const std::string &path) : UnixSocket(path) {
+    }
 
-        bool connect(SocketOptions options = SocketOptionsNone) noexcept override;
-    };
+    UnixSocketClient::UnixSocketClient(UnixSocketClient &&other) noexcept : UnixSocket(std::move(other)) {
+    }
+
+    bool UnixSocketClient::connect(SocketOptions options) noexcept {
+        if (::connect(m_socket, reinterpret_cast<struct sockaddr *>(&m_addr), sizeof(struct sockaddr_un)) != 0) {
+            INFO_LOG("Failed to connect to IPC endpoint");
+            return false;
+        }
+
+        m_connected = true;
+        return true;
+    }
 }
-
-
-#endif //FASTPATH_UNIXSOCKETCLIENT_H

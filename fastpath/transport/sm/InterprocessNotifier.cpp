@@ -13,7 +13,7 @@
 #include <iostream>
 #include <cassert>
 #include "InterprocessNotifier.h"
-#include "fastpath/transport/UnixSocket.h"
+#include "fastpath/transport/socket/UnixSocket.h"
 #include "fastpath/utils/logger.h"
 
 #define MAX_FDS 960
@@ -27,7 +27,7 @@ namespace fp {
         assert(num_fds < MAX_FDS);
 
         struct iovec iov;
-        int data = 1;
+        int data = ::getpid();
         iov.iov_base = &data;
         iov.iov_len = sizeof(int);
 
@@ -59,12 +59,11 @@ namespace fp {
         return true;
     }
 
-    bool InterprocessNotifier::receive_fd(UnixSocket *socket, int *fds, size_t &num_fds) noexcept {
+    bool InterprocessNotifier::receive_fd(UnixSocket *socket, int *fds, size_t &num_fds, int &pid) noexcept {
         assert(num_fds < MAX_FDS);
 
         struct iovec iov;
-        int data = 1;
-        iov.iov_base = &data;
+        iov.iov_base = &pid;
         iov.iov_len = sizeof(int);
 
         struct msghdr msgh;

@@ -28,7 +28,7 @@
 #include <errno.h>
 #include "fastpath/utils/logger.h"
 #include "fastpath/Exception.h"
-#include "fastpath/transport/UnixSocketServer.h"
+#include "UnixSocketServer.h"
 
 namespace fp {
     UnixSocketServer::UnixSocketServer(const std::string &path) : UnixSocket(path) {

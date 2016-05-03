@@ -7,7 +7,7 @@
 #include <thread>
 #include <memory>
 #include <fastpath/utils/logger.h>
-#include <fastpath/transport/TCPSocketServer.h>
+#include <fastpath/transport/socket/TCPSocketServer.h>
 #include <fastpath/event/InlineQueue.h>
 #include <fastpath/event/BlockingQueue.h>
 #include <fastpath/event/IOEvent.h>

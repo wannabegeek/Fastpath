@@ -22,34 +22,19 @@
  * License along with this library; if not, write to the Free Software     *
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
+ 
+#ifndef FASTPATH_ALLOCATOR_RESOURCE_H
+#define FASTPATH_ALLOCATOR_RESOURCE_H
 
-#ifndef FASTPATH_UNIXSOCKET_H
-#define FASTPATH_UNIXSOCKET_H
-
-#include <sys/un.h>
-
-#include "fastpath/transport/Socket.h"
-
-namespace fp {
-    class UnixSocket : public Socket{
-    protected:
-        struct sockaddr_un m_addr;
-
+namespace tf {
+    class allocator_resource {
     public:
+        virtual ~allocator_resource() noexcept = default;
 
-        UnixSocket(const std::string &path) throw(socket_error);
-        UnixSocket(const int socketFd, const bool connected) noexcept;
+        virtual void *allocate(const std::size_t size) noexcept = 0;
 
-        UnixSocket(UnixSocket &&other) noexcept;
-
-        virtual ~UnixSocket() noexcept;
-
-        void setOptions(int options) noexcept override;
-
-        bool send_ancillary(const struct msghdr *msg, int flags) noexcept;
-        const Socket::ReadResult read_ancillary(struct msghdr *msg) noexcept;
+        virtual void deallocate(void *p, const std::size_t size) noexcept = 0;
     };
 }
 
-
-#endif //FASTPATH_UNIXSOCKET_H
+#endif //FASTPATH_ALLOCATOR_RESOURCE_H

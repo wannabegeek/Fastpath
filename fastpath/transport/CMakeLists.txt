@@ -1,33 +1,41 @@
 set(HEADER_FILES
-        Socket.h
-        UnixSocket.h
-        TCPSocketClient.h
-        UnixSocketClient.h
-        TCPSocketServer.h
-        UnixSocketServer.h
         TCPTransport.h
         Transport.h
         URL.h
         realm_transport.h
         TransportIOEvent.h
         SHMTransport.h
-        TCPSocket.h
+        BackoffStrategy.h
+        socket/Socket.h
+        socket/UnixSocket.h
+        socket/TCPSocketClient.h
+        socket/UnixSocketClient.h
+        socket/TCPSocketServer.h
+        socket/UnixSocketServer.h
+        socket/TCPSocket.h
+        sm/InterprocessNotifier.h
+        sm/InterprocessNotifierServer.h
+        sm/InterprocessNotifierClient.h
+        sm/shm_allocator.h
 )
 
 set(SOURCE_FILES
-        Socket.cpp
-        UnixSocket.cpp
-        TCPSocketClient.cpp
-        UnixSocketClient.cpp
-        TCPSocketServer.cpp
-        UnixSocketServer.cpp
+        socket/Socket.cpp
+        socket/UnixSocket.cpp
+        socket/TCPSocketClient.cpp
+        socket/UnixSocketClient.cpp
+        socket/TCPSocketServer.cpp
+        socket/UnixSocketServer.cpp
         TCPTransport.cpp
         URL.cpp
         realm_transport.cpp
         TransportIOEvent.cpp
         SHMTransport.cpp
-        TCPSocket.cpp
-)
+        socket/TCPSocket.cpp
+        sm/InterprocessNotifier.cpp
+        sm/InterprocessNotifierServer.cpp
+        sm/InterprocessNotifierClient.cpp
+        )
 
 add_library(transport OBJECT ${SOURCE_FILES} ${HEADER_FILES})
 INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath/transport)

@@ -39,6 +39,14 @@ namespace fp {
             if (fcntl(m_fd[1], F_SETFL, fcntl(m_fd[1], F_GETFL) | O_NONBLOCK) != 0) {
                 ERROR_LOG("Failed to set O_NONBLOCK on m_fd[1]");
             }
+
+            if (fcntl(m_fd[0], F_SETNOSIGPIPE, 1) != 0) {
+                ERROR_LOG("Failed to set F_SETNOSIGPIPE on m_fd[0]");
+            }
+
+            if (fcntl(m_fd[1], F_SETNOSIGPIPE, 1) != 0) {
+                ERROR_LOG("Failed to set F_SETNOSIGPIPE on m_fd[1]");
+            }
 #endif
         }
 

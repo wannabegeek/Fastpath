@@ -89,8 +89,8 @@ namespace fp {
 
     class MessageBuffer {
     public:
-        using ByteStorageType = ByteStorage<byte>; //, tf::allocator_resource<byte>>;
-        using MutableByteStorageType = MutableByteStorage<byte>; //, tf::allocator_resource<byte>>;
+        using ByteStorageType = ByteStorage<byte, tf::generic_allocator<byte>>;
+        using MutableByteStorageType = MutableByteStorage<byte, tf::generic_allocator<byte>>;
 
     private:
         size_t m_startIndex = 0;

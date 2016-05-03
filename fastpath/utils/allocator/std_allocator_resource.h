@@ -29,7 +29,7 @@
 #include <memory>
 #include <cstddef>
 
-#include "fastpath/utils/allocator/generic_allocator.h"
+#include "fastpath/utils/allocator/allocator_resource.h"
 
 namespace tf {
     class std_allocator_resource final : public allocator_resource {
@@ -51,7 +51,7 @@ namespace tf {
     };
 
     ////////////////
-    static allocator_resource *get_default_allocator() noexcept {
+    static inline allocator_resource *get_default_allocator() noexcept {
         static std::unique_ptr<allocator_resource> s_resource = std::make_unique<std_allocator_resource>();
         return s_resource.get();
     }

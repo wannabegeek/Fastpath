@@ -29,7 +29,7 @@
 #include <sys/uio.h>
 #include <errno.h>
 
-#include "fastpath/transport/UnixSocket.h"
+#include "UnixSocket.h"
 
 namespace fp {
     UnixSocket::UnixSocket(const std::string &path) throw(socket_error) {

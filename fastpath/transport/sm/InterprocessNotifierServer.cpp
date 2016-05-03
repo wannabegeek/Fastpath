@@ -2,7 +2,7 @@
 // Created by Tom Fewster on 03/04/2016.
 //
 
-#include <fastpath/transport/UnixSocketServer.h>
+#include <fastpath/transport/socket/UnixSocketServer.h>
 #include <fastpath/utils/logger.h>
 #include <fastpath/Exception.h>
 #include <cassert>
@@ -28,12 +28,13 @@ namespace fp {
 
                 int fd[256];
                 size_t max = 256;
-                if (this->receive_fd(connection.get(), fd, max)) {
+                int sending_pid = -1;
+                if (this->receive_fd(connection.get(), fd, max, sending_pid)) {
                     assert(max == 2);
                     m_callback(std::make_unique<fp::notifier>(fd));
 
                     for (size_t i = 0; i < max; i++) {
-                        INFO_LOG("Extracted " << fd[i]);
+                        INFO_LOG("Received fd: " << fd[i] << " from process: " << sending_pid);
                     }
                 } else {
                     INFO_LOG("Received event not an fd");

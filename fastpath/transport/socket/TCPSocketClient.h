@@ -23,25 +23,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_UNIXSOCKETSERVER_H
-#define FASTPATH_UNIXSOCKETSERVER_H
+#ifndef __TFFIXEngine__TFSocketClient__
+#define __TFFIXEngine__TFSocketClient__
 
-#include <memory>
-
-#include "fastpath/transport/UnixSocket.h"
+#include "TCPSocket.h"
 
 namespace fp {
-    class UnixSocketServer final : public UnixSocket {
+    class TCPSocketClient final : public TCPSocket {
     public:
-        UnixSocketServer(const std::string &path);
-        UnixSocketServer(UnixSocketServer &&other) noexcept;
+        TCPSocketClient(const std::string &host, const std::string &service) throw(socket_error)
+                : TCPSocket(host, service) {
+        }
 
-        virtual ~UnixSocketServer() noexcept;
+        TCPSocketClient(const std::string &host, const uint16_t &port) throw(socket_error) : TCPSocket(host, port) {
+        }
 
-        bool connect(SocketOptions options) noexcept override;
-        std::unique_ptr<UnixSocket> acceptPendingConnection() noexcept;
+
+        virtual bool connect(SocketOptions options = SocketOptionsNone) noexcept override;
     };
 }
 
-
-#endif //FASTPATH_UNIXSOCKETSERVER_H
+#endif /* defined(__TFFIXEngine__TFSocketClient__) */

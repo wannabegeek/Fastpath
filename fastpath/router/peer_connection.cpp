@@ -27,7 +27,7 @@
 #include "fastpath/messages/Message.h"
 #include "fastpath/router/peer_connection.h"
 #include "fastpath/messages/subject.h"
-#include "fastpath/transport/Socket.h"
+#include "fastpath/transport/socket/Socket.h"
 
 namespace fp {
     peer_connection::peer_connection(fp::Queue *queue, std::unique_ptr<fp::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const fp::MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
