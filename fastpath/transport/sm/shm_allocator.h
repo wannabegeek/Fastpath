@@ -53,6 +53,6 @@ namespace tf {
             m_segment_manager->deallocate(reinterpret_cast<void *>(p));
         }
     };
-};
+}
 
 #endif //FASTPATH_SHM_ALLOCATOR_H

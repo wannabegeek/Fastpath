@@ -38,7 +38,9 @@ int main(int argc, char *argv[]) {
                 msg->addDataField("Name", "Tom");
                 msg->addDataField("Name2", "Zac");
 
-                if (transport.sendMessage(*msg) != fp::OK) {
+                fp::status s;
+                if ((s = transport.sendMessage(*msg)) != fp::OK) {
+                    ERROR_LOG("Failed to send messages: " << fp::str_status[s]);
                     shutdown = true;
                 }
                 pool.release(msg);
@@ -48,6 +50,7 @@ int main(int argc, char *argv[]) {
         });
 
 
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         while(!shutdown) {
             m_queue.dispatch();
         };

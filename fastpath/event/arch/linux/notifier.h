@@ -29,6 +29,8 @@
 #include <fcntl.h>
 #include <sys/eventfd.h>
 #include <atomic>
+#include <cstring>
+#include <unistd.h>
 
 #include "fastpath/Exception.h"
 #include "fastpath/event/EventType.h"

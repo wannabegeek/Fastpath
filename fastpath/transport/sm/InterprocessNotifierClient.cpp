@@ -14,8 +14,8 @@ namespace fp {
         if (!m_connected && m_socket->connect(fp::SocketOptionsNone)) {
             int p[] = {outbound_notification.read_handle(), inbound_notification.signal_handle()};
             this->send_fds(p, 2);
-                        ::close(outbound_notification.read_handle());
-                        ::close(inbound_notification.signal_handle());
+  //          ::close(outbound_notification.read_handle());
+   //         ::close(inbound_notification.signal_handle());
             m_connected = true;
             return true;
         }
@@ -25,6 +25,7 @@ namespace fp {
 
     bool InterprocessNotifierClient::notify() noexcept {
         if (!outbound_notification.notify()) {
+            ERROR_LOG("Notify failed " << strerror(errno));
             m_connected = false;
         }
 

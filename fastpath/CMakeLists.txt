@@ -12,6 +12,12 @@ ENDIF()
 
 CHECK_INCLUDE_FILES(pthread.h HAVE_PTHREAD_H)
 
+find_library(LIBRT_LIBRARIES rt)                                                                                                                                                                 
+
+if (LIBRT_LIBRARIES)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LIBRT_LIBRARIES}")
+endif()
+
 IF (DEFINED HAVE_PTHREAD_H)
     list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
     check_symbol_exists(pthread_setaffinity_np pthread.h HAVE_PTHREAD_SETAFFINITY_NP)

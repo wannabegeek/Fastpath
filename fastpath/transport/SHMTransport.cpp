@@ -89,6 +89,8 @@ namespace fp {
             m_buffer->notify(&storage);
             if (m_notifier->notify()) {
                 return OK;
+            } else {
+                ERROR_LOG("Failed to notify counterparty");
             }
         }
         return CANNOT_SEND;
