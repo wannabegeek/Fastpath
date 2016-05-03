@@ -28,6 +28,13 @@
 
 #include "fastpath/config.h"
 
+namespace fp {
+    typedef enum {
+        pipe_read = 0,
+        pipe_write = 1
+    } direction;
+}
+
 #ifdef HAVE_EVENTFD
     #include "fastpath/event/arch/linux/notifier.h"
 #else

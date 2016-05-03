@@ -14,8 +14,8 @@ namespace fp {
         if (!m_connected && m_socket->connect(fp::SocketOptionsNone)) {
             int p[] = {outbound_notification.read_handle(), inbound_notification.signal_handle()};
             this->send_fds(p, 2);
-  //          ::close(outbound_notification.read_handle());
-   //         ::close(inbound_notification.signal_handle());
+            outbound_notification.close_handle(pipe_read);
+            inbound_notification.close_handle(pipe_write);
             m_connected = true;
             return true;
         }

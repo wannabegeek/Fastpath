@@ -68,6 +68,10 @@ namespace fp {
             }
         }
 
+        inline void close_handle(direction d) noexcept {
+            // no-op
+        }
+
         inline bool notify() noexcept {
             const uint64_t data = 1;
             return (::write(m_fd, &data, sizeof(uint64_t)) != -1);
