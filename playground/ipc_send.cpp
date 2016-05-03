@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
                     ERROR_LOG("Failed to send messages: " << fp::str_status[s]);
                     shutdown = true;
                 }
+                DEBUG_LOG("Sent message");
                 pool.release(msg);
             } else {
                 INFO_LOG("Transport not valid - can't send");
@@ -51,9 +52,7 @@ int main(int argc, char *argv[]) {
 
 
         std::this_thread::sleep_for(std::chrono::seconds(2));
-        while(!shutdown) {
-            m_queue.dispatch();
-        };
+        while(!shutdown && m_queue.dispatch() == fp::OK);
         DEBUG_LOG("Event loop dropped out");
     } catch (const fp::socket_error &e) {
         std::cerr << "BOOM - it's broken" << std::endl;

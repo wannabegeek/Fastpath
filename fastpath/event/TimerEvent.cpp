@@ -42,6 +42,10 @@ namespace fp {
     TimerEvent::TimerEvent(Queue *queue, const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback)
             : Event(queue), m_timeout(timeout), m_callback(callback), m_identifier(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) {
 
+            if (m_identifier == -1) {
+                throw fp::exception("Failed to timerfd_create: "); // << strerror(errno));
+            }
+
             struct timespec t;
             t.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(timeout).count();
             t.tv_nsec = static_cast<decltype(t.tv_nsec)>(std::chrono::duration_cast<std::chrono::nanoseconds>(timeout).count() - (t.tv_sec * 1000000000));
