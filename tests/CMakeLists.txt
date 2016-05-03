@@ -4,6 +4,11 @@ find_package(Threads)
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 
+find_library(LIBRT_LIBRARIES rt)
+if (LIBRT_LIBRARIES)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LIBRT_LIBRARIES}")
+endif()
+
 include_directories(${GTEST_INCLUDE_DIRS})
 
 #################################

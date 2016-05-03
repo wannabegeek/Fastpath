@@ -136,15 +136,8 @@ namespace fp {
 
         if (m_events != 0) {
             struct epoll_event _events[maxDispatchSize];
-            result = epoll_wait(m_fd, _events, m_events, 0);
-            if (result == -1) {
-                if (errno == EINTR && m_err_count < 10) {
-                    ++m_err_count;
-                    return 0;
-                }
-                ERROR_LOG("epoll_wait returned -1: " << strerror(errno));
-                return -1;
-            } else {
+            result = epoll_wait(m_fd, _events, maxDispatchSize, -1);
+            if (result > 0) {
                 m_err_count = 0;
                 for (int j = 0; j < result; ++j) {
                     int filter = EventType::NONE;
@@ -156,11 +149,18 @@ namespace fp {
                     }
 
                     if ((_events[j].data.u64 & TimerIdentifier) == TimerIdentifier) {
-                        timer_events(EventPollTimerElement(_events[j].data.u64 & ~TimerIdentifier));
+                        timer_events(EventPollTimerElement(_events[j].data.fd));
                     } else if (filter != EventType::NONE) {
                         io_events(EventPollIOElement(_events[j].data.fd, filter));
                     }
                 }
+            } else if (result == -1) {
+                if (errno == EINTR && m_err_count < 10) {
+                    ++m_err_count;
+                    return 0;
+                }
+                ERROR_LOG("epoll_wait returned -1: " << strerror(errno));
+                return -1;
             }
         }
         return 0;
