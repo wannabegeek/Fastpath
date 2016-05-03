@@ -64,10 +64,10 @@ namespace fp {
         }
 
         ~notifier() noexcept {
-            if (m_fd[0] != -1) {
+            if (m_fd[pipe_read] != -1) {
                 ::close(m_fd[pipe_read]);
             }
-            if (m_fd[1] != -1) {
+            if (m_fd[pipe_write] != -1) {
                 ::close(m_fd[pipe_write]);
             }
             m_fd[pipe_read] = -1;
