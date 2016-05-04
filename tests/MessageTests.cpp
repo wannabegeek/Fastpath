@@ -1,13 +1,35 @@
-//
-// Created by Tom Fewster on 15/02/2016.
-//
+/***************************************************************************
+                          __FILE__
+                          -------------------
+    copyright            : Copyright (c) 2004-2016 Tom Fewster
+    email                : tom@wannabegeek.com
+    date                 : 04/03/2016
+
+ ***************************************************************************/
+
+/***************************************************************************
+ * This library is free software; you can redistribute it and/or           *
+ * modify it under the terms of the GNU Lesser General Public              *
+ * License as published by the Free Software Foundation; either            *
+ * version 2.1 of the License, or (at your option) any later version.      *
+ *                                                                         *
+ * This library is distributed in the hope that it will be useful,         *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *
+ * Lesser General Public License for more details.                         *
+ *                                                                         *
+ * You should have received a copy of the GNU Lesser General Public        *
+ * License along with this library; if not, write to the Free Software     *
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
+ ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include <messages/Message.h>
-#include <utils/logger.h>
+#include "fastpath/messages/MutableMessage.h"
+#include "fastpath/messages/MessageCodec.h"
+#include "fastpath/utils/logger.h"
 
 TEST(Message, SetSubject) {
-    DCF::Message msg;
+    fp::MutableMessage msg;
     const char *subject = "TEST.SUBJECT";
     ASSERT_TRUE(msg.setSubject(subject));
 
@@ -19,7 +41,7 @@ TEST(Message, SetSubject) {
 
 TEST(Message, AddStringField) {
 
-    DCF::Message msg;
+    fp::MutableMessage msg;
     ASSERT_TRUE(msg.addDataField("1234", "TEST"));
 
     const char * v = nullptr;
@@ -35,7 +57,7 @@ TEST(Message, AddStringField) {
 }
 
 TEST(Message, AddFloatField) {
-    DCF::Message msg;
+    fp::MutableMessage msg;
     msg.addScalarField("TEST", static_cast<float32_t>(1.4));
     float32_t t = 0.0;
     ASSERT_TRUE(msg.getScalarField("TEST", t));
@@ -43,11 +65,11 @@ TEST(Message, AddFloatField) {
 }
 
 TEST(Message, AddMixedDuplicateField) {
-    DCF::Message msg;
+    fp::MutableMessage msg;
     msg.addDataField("TEST", "AGAIN");
 
     ASSERT_FALSE(msg.addScalarField("TEST", static_cast<float32_t>(1.4)));
-    ASSERT_EQ(DCF::StorageType::string, msg.storageType("TEST"));
+    ASSERT_EQ(fp::storage_type::string, msg.storageType("TEST"));
     const char *t = nullptr;
     size_t length = 0;
     ASSERT_TRUE(msg.getDataField("TEST", &t, length));
@@ -56,19 +78,19 @@ TEST(Message, AddMixedDuplicateField) {
 }
 
 TEST(Message, AddMessageField) {
-    DCF::Message msg;
+    fp::MutableMessage msg;
     msg.addScalarField("TEST", static_cast<float32_t>(1.4));
 
-    DCF::MessageType m = std::make_shared<DCF::Message>();
-    m->addDataField("TEST2", "TOMTOMTOM");
+    fp::MutableMessage m;
+    m.addDataField("TEST2", "TOMTOMTOM");
 
-    msg.addMessageField("MSG_TEST", m.get());
+    msg.addMessageField("MSG_TEST", &m);
 
     DEBUG_LOG("Embedded msg: " << msg);
 }
 
 TEST(Message, RemoveFieldByString) {
-    DCF::Message msg;
+    fp::MutableMessage msg;
     float32_t t = 22.0;
     msg.addScalarField("TEST", t);
     ASSERT_TRUE(msg.getScalarField("TEST", t));
@@ -81,22 +103,23 @@ TEST(Message, RemoveFieldByString) {
 }
 
 TEST(Message, Encode) {
-    DCF::Message msg;
+    fp::MutableMessage msg;
     msg.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
     msg.addScalarField("TEST", t);
     msg.addDataField("Name", "Tom");
     msg.addDataField("Name", "Zac");
 
-    DCF::MessageBuffer buffer(1024);
-    const size_t encoded_len = msg.encode(buffer);
+    fp::MessageBuffer::MutableByteStorageType buffer(1024);
+    const size_t encoded_len = fp::MessageCodec::encode(&msg, buffer);
     EXPECT_EQ(buffer.length(), encoded_len);
 
     DEBUG_LOG(buffer);
 }
 
 TEST(Message, Decode) {
-    DCF::Message in;
+    LOG_LEVEL(tf::logger::info);
+    fp::MutableMessage in;
     in.setSubject("SOME.TEST.SUBJECT");
     float32_t t = 22.0;
     EXPECT_TRUE(in.addScalarField("TEST1", t));
@@ -104,16 +127,14 @@ TEST(Message, Decode) {
     EXPECT_TRUE(in.addDataField("Name1", "Tom"));
     EXPECT_TRUE(in.addDataField("Name2", "Zac"));
 
-    DCF::MessageBuffer buffer(1024);
-    const size_t encoded_len = in.encode(buffer);
+    fp::MessageBuffer::MutableByteStorageType buffer(1024);
+    const size_t encoded_len = fp::MessageCodec::encode(&in, buffer);
     EXPECT_EQ(buffer.length(), encoded_len);
 
     DEBUG_LOG(buffer);
-    DEBUG_LOG(buffer.byteStorage());
-    DCF::Message out;
-    const DCF::ByteStorage &b = buffer.byteStorage();
-    EXPECT_TRUE(out.decode(b));
-    EXPECT_EQ(encoded_len, b.bytesRead());
+    fp::Message out;
+    EXPECT_TRUE(fp::MessageCodec::decode(&out, buffer));
+    EXPECT_EQ(encoded_len, buffer.bytesRead());
 
     DEBUG_LOG("IN:  " << in);
     DEBUG_LOG("OUT: " << out);
@@ -123,7 +144,7 @@ TEST(Message, Decode) {
 TEST(Message, MultiDecode) {
     LOG_LEVEL(tf::logger::info);
 
-    DCF::Message in1;
+    fp::MutableMessage in1;
     in1.setSubject("SAMPLE.MSG.1");
     float32_t t = 22.0;
     in1.addScalarField("TEST", t);
@@ -131,7 +152,7 @@ TEST(Message, MultiDecode) {
     in1.addDataField("Name", "Tom");
     in1.addDataField("Name", "Zac");
 
-    DCF::Message in2;
+    fp::MutableMessage in2;
     in2.setSubject("SAMPLE.MSG.2");
     t = 26.0;
     in2.addScalarField("TEST", t);
@@ -139,16 +160,16 @@ TEST(Message, MultiDecode) {
     in2.addDataField("Name", "Caroline");
     in2.addDataField("Name", "Heidi");
 
-    DCF::MessageBuffer buffer(1024);
-    in1.encode(buffer);
-    in2.encode(buffer);
+    fp::MessageBuffer::MutableByteStorageType buffer(1024);
+    fp::MessageCodec::encode(&in1, buffer);
+    fp::MessageCodec::encode(&in2, buffer);
 
     DEBUG_LOG(buffer);
 
     DEBUG_LOG("Msg 1: " << in1);
     DEBUG_LOG("Msg 2: " << in2);
 
-    DCF::Message out;
+    fp::Message out;
 //    size_t offset = 0;
 //    while (buffer.length() != 0 && (offset = out.decode(buffer.byteStorage())) != 0) {
 //        std::cout << "Decoded: " << out << std::endl;
@@ -159,20 +180,24 @@ TEST(Message, MultiDecode) {
 
 
 TEST(Message, MultiPartialDecode) {
-    DCF::Message in1;
+    LOG_LEVEL(tf::logger::info);
+    fp::MutableMessage in1;
     float32_t t = 22.0;
-    in1.addScalarField("TEST", t);
-    in1.addScalarField("TEST", true);
-    in1.addDataField("Name", "Tom");
-    in1.addDataField("Name", "Zac");
-
-    DCF::MessageBuffer buffer(1024);
+//    in1.addScalarField("TEST_float", t);
+//    in1.addScalarField("TEST_bool", true);
+//    in1.addDataField("TEST_string", "Tom is great");
+//
+    fp::MessageBuffer buffer(1024);
     char subject[256];
     for (int i = 0; i < 10; i++) {
         sprintf(subject, "SAMPLE.MSG.%i", i);
         in1.setSubject(subject);
+        in1.addScalarField("TEST_float", t);
+        in1.addScalarField("TEST_bool", true);
+        in1.addDataField("TEST_string", "Tom is great");
         EXPECT_TRUE(in1.addScalarField("id", i));
-        in1.encode(buffer);
+        fp::MessageCodec::encode(&in1, buffer.mutableBuffer());
+        DEBUG_LOG("Encoded buffer is now: " << buffer.length())
         in1.clear();
     }
 
@@ -180,16 +205,43 @@ TEST(Message, MultiPartialDecode) {
 
     const byte *bytes = nullptr;
     size_t len = 0;
-    DCF::Message out;
+    fp::Message out;
     for (size_t i = 0; i < buffer.length(); i++) {
         len += 10;
         buffer.bytes(&bytes);
-        DCF::ByteStorage storage(bytes, std::min(len, buffer.length()), true);
+        fp::MessageBuffer::ByteStorageType storage(bytes, std::min(len, buffer.length()), true);
 
-        if (out.decode(storage)) {
+//        fp::Message::logMessageBufferDetails(storage);
+        bool result = false;
+        result = fp::MessageCodec::decode(&out, storage);
+        if (result) {
             buffer.erase_front(storage.bytesRead());
             DEBUG_LOG("Msg decoded: " << out);
             out.clear();
         }
     }
+}
+
+TEST(Message, MoveConstructor) {
+    LOG_LEVEL(tf::logger::info);
+
+    fp::MutableMessage in1;
+    in1.setSubject("SAMPLE.MSG.1");
+    float32_t t = 22.0;
+    in1.addScalarField("TEST", t);
+    in1.addScalarField("TEST", true);
+    in1.addDataField("Name", "Tom");
+    in1.addDataField("Name", "Zac");
+
+    fp::MessageBuffer::MutableByteStorageType buffer1(1024);
+    fp::MessageCodec::encode(&in1, buffer1);
+
+    DEBUG_LOG("Original: " << in1);
+    fp::Message in2 = std::move(in1);
+    DEBUG_LOG("Moved:    " << in2);
+
+    fp::MessageBuffer::MutableByteStorageType buffer2(1024);
+    fp::MessageCodec::encode(&in2, buffer2);
+
+    EXPECT_EQ(buffer1, buffer2);
 }

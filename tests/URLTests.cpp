@@ -3,17 +3,17 @@
 //
 
 #include <gtest/gtest.h>
-#include <transport/URL.h>
+#include <fastpath/transport/URL.h>
 
 TEST(URL, ParseCommon) {
-    DCF::url url("dcf://localhost:1234");
+    fp::url url("dcf://localhost:1234");
     EXPECT_STREQ("dcf", url.protocol().c_str());
     EXPECT_STREQ("localhost", url.host().c_str());
     EXPECT_STREQ("1234", url.port().c_str());
     EXPECT_STREQ("", url.path().c_str());
     EXPECT_EQ(0u, url.query().size());
 
-    DCF::url url2("dcf://localhost:1234/");
+    fp::url url2("dcf://localhost:1234/");
     EXPECT_STREQ("dcf", url2.protocol().c_str());
     EXPECT_STREQ("localhost", url2.host().c_str());
     EXPECT_STREQ("1234", url.port().c_str());
@@ -22,14 +22,14 @@ TEST(URL, ParseCommon) {
 }
 
 TEST(URL, ParseCommonNoPort) {
-    DCF::url url("dcf://localhost");
+    fp::url url("dcf://localhost");
     EXPECT_STREQ("dcf", url.protocol().c_str());
     EXPECT_STREQ("localhost", url.host().c_str());
     EXPECT_STREQ("", url.port().c_str());
     EXPECT_STREQ("", url.path().c_str());
     EXPECT_EQ(0u, url.query().size());
 
-    DCF::url url2("dcf://localhost/test");
+    fp::url url2("dcf://localhost/test");
     EXPECT_STREQ("dcf", url2.protocol().c_str());
     EXPECT_STREQ("localhost", url2.host().c_str());
     EXPECT_STREQ("", url.port().c_str());
@@ -38,13 +38,13 @@ TEST(URL, ParseCommonNoPort) {
 }
 
 TEST(URL, ParseNoProtocol) {
-    EXPECT_THROW(DCF::url url("localhost:1234"), std::invalid_argument);
-    EXPECT_THROW(DCF::url url2("localhost:1234/test"), std::invalid_argument);
+    EXPECT_THROW(fp::url url("localhost:1234"), std::invalid_argument);
+    EXPECT_THROW(fp::url url2("localhost:1234/test"), std::invalid_argument);
 }
 
 TEST(URL, ParseCommonQuery) {
     {
-        DCF::url url("dcf://localhost?a");
+        fp::url url("dcf://localhost?a");
         EXPECT_STREQ("dcf", url.protocol().c_str());
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("", url.port().c_str());
@@ -54,7 +54,7 @@ TEST(URL, ParseCommonQuery) {
     }
 
     {
-        DCF::url url("dcf://localhost:1234?a");
+        fp::url url("dcf://localhost:1234?a");
         EXPECT_STREQ("dcf", url.protocol().c_str());
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("1234", url.port().c_str());
@@ -64,7 +64,7 @@ TEST(URL, ParseCommonQuery) {
     }
 
     {
-        DCF::url url("dcf://localhost/test?a=1");
+        fp::url url("dcf://localhost/test?a=1");
         EXPECT_STREQ("dcf", url.protocol().c_str());
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("", url.port().c_str());
@@ -74,7 +74,7 @@ TEST(URL, ParseCommonQuery) {
     }
 
     {
-        DCF::url url("dcf://localhost:1234/test?a=1");
+        fp::url url("dcf://localhost:1234/test?a=1");
         EXPECT_STREQ("dcf", url.protocol().c_str());
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("1234", url.port().c_str());
@@ -84,7 +84,7 @@ TEST(URL, ParseCommonQuery) {
     }
 
     {
-        DCF::url url("dcf://localhost/test?a=1&b=2");
+        fp::url url("dcf://localhost/test?a=1&b=2");
         EXPECT_STREQ("dcf", url.protocol().c_str());
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("", url.port().c_str());
@@ -95,7 +95,7 @@ TEST(URL, ParseCommonQuery) {
     }
 
     {
-        DCF::url url("dcf://localhost:1234/test?a=1&b=2");
+        fp::url url("dcf://localhost:1234/test?a=1&b=2");
         EXPECT_STREQ("dcf", url.protocol().c_str());
         EXPECT_STREQ("localhost", url.host().c_str());
         EXPECT_STREQ("1234", url.port().c_str());

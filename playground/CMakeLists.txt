@@ -6,32 +6,27 @@ find_package(Threads)
 find_library(LIBRT_LIBRARIES rt)
 if (LIBRT_LIBRARIES)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LIBRT_LIBRARIES}")
-else()
-    SET(LIBRT_LIBRARIES rt)
-endif(LIBRT_LIBRARIES)
+endif()
 
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 
-set(GENERIC_COMPILER_FLAGS "-Wall -pedantic -std=c++14")
-IF (CMAKE_COMPILER_IS_GNUCXX)
-    set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wold-style-cast -Woverloaded-virtual")
-ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(GENERIC_COMPILER_FLAGS  "${GENERIC_COMPILER_FLAGS} -Wc++11-extensions")
-ENDIF (CMAKE_COMPILER_IS_GNUCXX)
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -g -gdwarf-2 -DDEBUG -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_COMPILER_FLAGS} -Ofast")
-
 #################################
 
-add_executable(SharedMemoryReceiver SharedMemoryReceiver.cpp)
-add_executable(SharedMemorySender SharedMemorySender.cpp)
 add_executable(PerformanceTest PerformanceTest.cpp performance.h)
 add_executable(SubjectTest SubjectTest.cpp)
+add_executable(AllocatorPlayground AllocatorPlayground.cpp ../fastpath/transport/sm/SharedMemoryManager.h)
+add_executable(KeyIndexTest KeyIndexTest.cpp)
+add_executable(ipc_send ipc_send.cpp)
+add_executable(ipc_recv ipc_recv.cpp)
 
-target_link_libraries(SharedMemoryReceiver TFDCF ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_LIBRARIES})
-target_link_libraries(SharedMemorySender TFDCF ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_LIBRARIES})
-target_link_libraries(PerformanceTest TFDCF ${CMAKE_THREAD_LIBS_INIT})
+#add_executable(ipc_send_mac arch/mac/ipc_send_mac.cpp)
+#add_executable(ipc_recv ipc_recv.cpp arch/mac/ipc_send_mac.cpp)
+
+target_link_libraries(PerformanceTest fastpath ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(SubjectTest ${CMAKE_THREAD_LIBS_INIT})
-
+target_link_libraries(AllocatorPlayground ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(ipc_send fastpath fastpath ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(ipc_recv fastpath fastpath ${CMAKE_THREAD_LIBS_INIT})
+#target_link_libraries(ipc_send_mac TFDCF ${CMAKE_THREAD_LIBS_INIT})
+#target_link_libraries(ipc_recv_mac TFDCF ${CMAKE_THREAD_LIBS_INIT})

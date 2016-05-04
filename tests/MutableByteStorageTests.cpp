@@ -1,15 +1,37 @@
-//
-// Created by fewstert on 23/02/16.
-//
+/***************************************************************************
+                          __FILE__
+                          -------------------
+    copyright            : Copyright (c) 2004-2016 Tom Fewster
+    email                : tom@wannabegeek.com
+    date                 : 04/03/2016
+
+ ***************************************************************************/
+
+/***************************************************************************
+ * This library is free software; you can redistribute it and/or           *
+ * modify it under the terms of the GNU Lesser General Public              *
+ * License as published by the Free Software Foundation; either            *
+ * version 2.1 of the License, or (at your option) any later version.      *
+ *                                                                         *
+ * This library is distributed in the hope that it will be useful,         *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *
+ * Lesser General Public License for more details.                         *
+ *                                                                         *
+ * You should have received a copy of the GNU Lesser General Public        *
+ * License along with this library; if not, write to the Free Software     *
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
+ ***************************************************************************/
 
 #include <gtest/gtest.h>
-#include <MutableByteStorage.h>
+#include "fastpath/MutableByteStorage.h"
+#include "fastpath/types.h"
 
 TEST(MutableByteStorage, StoreCopyReplace) {
     const char *data = "Hello World";
     const char *data2 = "Hello Another World Hello Another World";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
+    fp::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
     buffer.setData(reinterpret_cast<const byte *>(data2), strlen(data2) + 1);
 
     ASSERT_EQ(strlen(data2) + 1, buffer.length());
@@ -24,10 +46,10 @@ TEST(MutableByteStorage, StoreCopyReplace) {
 TEST(MutableByteStorage, UpdateLength) {
     const char *data = "Hello World";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
+    fp::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
     const size_t len = buffer.capacity();
 
-    buffer.increaseLengthBy(1024);
+    buffer.allocate(1024);
 
     ASSERT_LE(1024 + len, buffer.capacity());
 
@@ -41,7 +63,7 @@ TEST(MutableByteStorage, UpdateLength) {
 TEST(MutableByteStorage, Clear) {
     const char *data = "Hello World";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
+    fp::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1);
     const size_t capacity = buffer.capacity();
 
     buffer.clear();
@@ -58,7 +80,7 @@ TEST(MutableByteStorage, AppendString) {
     const char *data = "Hello World";
     const char *data2 = ", Goodby Universe";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data));
+    fp::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data));
 
     buffer.append(reinterpret_cast<const byte *>(data2), strlen(data2) + 1);
 
@@ -73,8 +95,8 @@ TEST(MutableByteStorage, AppendObject) {
     const char *data = "Hello World";
     const char *data2 = ", Goodby Universe";
 
-    DCF::MutableByteStorage buffer(reinterpret_cast<const byte *>(data), strlen(data));
-    DCF::MutableByteStorage buffer2(reinterpret_cast<const byte *>(data2), strlen(data2) + 1);
+    fp::MutableByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data));
+    fp::MutableByteStorage<byte> buffer2(reinterpret_cast<const byte *>(data2), strlen(data2) + 1);
 
     buffer.append(buffer2);
 

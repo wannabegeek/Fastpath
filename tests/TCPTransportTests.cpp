@@ -3,29 +3,30 @@
 //
 
 #include <gtest/gtest.h>
-#include <transport/TCPTransport.h>
+#include <fastpath/transport/TCPTransport.h>
 #include <thread>
 #include <memory>
-#include <utils/logger.h>
-#include <transport/SocketServer.h>
-#include <event/InlineQueue.h>
-#include <event/BlockingQueue.h>
-#include <event/IOEvent.h>
-#include <event/EventManager.h>
-#include <messages/Message.h>
+#include <fastpath/utils/logger.h>
+#include <fastpath/transport/socket/TCPSocketServer.h>
+#include <fastpath/event/InlineQueue.h>
+#include <fastpath/event/BlockingQueue.h>
+#include <fastpath/event/IOEvent.h>
+#include <fastpath/event/EventManager.h>
+#include <fastpath/messages/MutableMessage.h>
+#include <fastpath/messages/MessageCodec.h>
 //#include <utils/ByteStorage.h>
 
 
 TEST(TCPTransport, TryConnectFail) {
     LOG_LEVEL(tf::logger::info);
 
-    DCF::TCPTransport transport("dcf://localhost:1234", "unit test");
+    fp::TCPTransport transport("dcf://localhost:1234", "unit test");
     std::this_thread::sleep_for(std::chrono::seconds(15));
     EXPECT_FALSE(transport.valid());
 
-    DCF::Message msg;
+    fp::MutableMessage msg;
     msg.addDataField("Name", "Tom Fewster");
-    EXPECT_EQ(DCF::CANNOT_SEND, transport.sendMessage(msg));
+    EXPECT_EQ(fp::CANNOT_SEND, transport.sendMessage(msg));
 }
 
 TEST(TCPTransport, TryConnectSuccess) {
@@ -33,50 +34,50 @@ TEST(TCPTransport, TryConnectSuccess) {
 
     LOG_LEVEL(tf::logger::info);
 
-    DCF::TCPTransport transport("dcf://localhost:6867", "unit test");
+    fp::TCPTransport transport("dcf://localhost:6867", "unit test");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_FALSE(transport.valid());
 
-    DCF::Message sendMsg;
+    fp::MutableMessage sendMsg;
     sendMsg.setSubject("UNIT.TEST");
     sendMsg.addDataField("Name", "Tom Fewster");
 
     std::thread server([&]() {
 
-        DCF::SocketServer svr("localhost", "6867");
-        ASSERT_TRUE(svr.connect(DCF::SocketOptionsNonBlocking));
+        fp::TCPSocketServer svr("localhost", "6867");
+        ASSERT_TRUE(svr.connect(fp::SocketOptionsNonBlocking));
         ASSERT_NE(-1, svr.getSocket());
 
         DEBUG_LOG("Thread waiting for connections");
 
-        DCF::InlineEventManager serverMgr;
-        std::unique_ptr<DCF::Socket> connection;
+        fp::InlineEventManager serverMgr;
+        std::unique_ptr<fp::Socket> connection;
         bool finished = false;
 
-        DCF::InlineQueue queue;
-        DCF::DataEvent *clientHandler = nullptr;
+        fp::InlineQueue queue;
+        fp::DataEvent *clientHandler = nullptr;
 
-        auto client = [&](DCF::DataEvent *event, int eventType) {
+        auto client = [&](fp::DataEvent *event, int eventType) {
             DEBUG_LOG("In client callback");
-            EXPECT_EQ(DCF::EventType::READ, eventType);
+            EXPECT_EQ(fp::EventType::READ, eventType);
             char buffer[MTU];
             int counter = 0;
             ssize_t size = 0;
             while (true) {
-                DCF::Socket::ReadResult result = connection->read(buffer, MTU, size); // 1500 is the typical MTU size
+                fp::Socket::ReadResult result = connection->read(buffer, MTU, size); // 1500 is the typical MTU size
                 DEBUG_LOG("got stuff");
-                if (result == DCF::Socket::MoreData) {
-                    DCF::Message msg;
-                    EXPECT_TRUE(msg.decode(DCF::ByteStorage(reinterpret_cast<const byte *>(buffer), size, true)));
+                if (result == fp::Socket::MoreData) {
+                    fp::MutableMessage msg;
+                    EXPECT_TRUE(fp::MessageCodec::decode(&msg, fp::MessageBuffer::ByteStorageType(reinterpret_cast<const byte *>(buffer), size, true)));
                     DEBUG_LOG("Received " << msg);
                     EXPECT_EQ(sendMsg, msg);
                     break;
-                } else if (result == DCF::Socket::NoData) {
+                } else if (result == fp::Socket::NoData) {
                     std::this_thread::sleep_for(std::chrono::microseconds(10));
                     if (counter++ > 1000) {
                         break;
                     }
-                } else if (result == DCF::Socket::Closed) {
+                } else if (result == fp::Socket::Closed) {
                     DEBUG_LOG("Server Socket closed");
                     break;
                 }
@@ -88,14 +89,14 @@ TEST(TCPTransport, TryConnectSuccess) {
             queue.unregisterEvent(event);
         };
 
-        queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, int eventType) {
-            EXPECT_EQ(DCF::EventType::READ, eventType);
+        queue.registerEvent(svr.getSocket(), fp::EventType::READ, [&](const fp::DataEvent *event, int eventType) {
+            EXPECT_EQ(fp::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
                 DEBUG_LOG("out of accept");
 
-                clientHandler = queue.registerEvent(connection->getSocket(), DCF::EventType::READ, client);
+                clientHandler = queue.registerEvent(connection->getSocket(), fp::EventType::READ, client);
                 DEBUG_LOG("registered new client on socket: " << connection->getSocket());
             }
         });
@@ -114,7 +115,7 @@ TEST(TCPTransport, TryConnectSuccess) {
     EXPECT_TRUE(transport.valid());
 
     DEBUG_LOG("Sending Message");
-    EXPECT_EQ(DCF::OK, transport.sendMessage(sendMsg));
+    EXPECT_EQ(fp::OK, transport.sendMessage(sendMsg));
     DEBUG_LOG("..sent");
     server.join();
 }
@@ -124,46 +125,46 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
 
     LOG_LEVEL(tf::logger::info);
 
-    DCF::TCPTransport transport("dcf://localhost:6867", "unit test");
+    fp::TCPTransport transport("dcf://localhost:6867", "unit test");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_FALSE(transport.valid());
 
-    DCF::Message sendMsg;
+    fp::MutableMessage sendMsg;
     sendMsg.setSubject("UNIT.TEST");
     sendMsg.addDataField("Name", "Tom Fewster");
 
     std::thread server([&]() {
 
-        DCF::SocketServer svr("localhost", "6867");
-        ASSERT_TRUE(svr.connect(DCF::SocketOptionsNonBlocking));
+        fp::TCPSocketServer svr("localhost", "6867");
+        ASSERT_TRUE(svr.connect(fp::SocketOptionsNonBlocking));
         ASSERT_NE(-1, svr.getSocket());
 
         DEBUG_LOG("Thread waiting for connections");
 
-        DCF::InlineEventManager serverMgr;
-        std::unique_ptr<DCF::Socket> connection;
+        fp::InlineEventManager serverMgr;
+        std::unique_ptr<fp::Socket> connection;
         bool finished = false;
 
-        DCF::InlineQueue queue;
-        DCF::DataEvent *clientHandler = nullptr;
+        fp::InlineQueue queue;
+        fp::DataEvent *clientHandler = nullptr;
 
         bool consumedMessage = false;
-        DCF::MessageBuffer msgBuffer(1025);
+        fp::MessageBuffer msgBuffer(1025);
 
-        auto client = [&](DCF::DataEvent *event, int eventType) {
+        auto client = [&](fp::DataEvent *event, int eventType) {
             DEBUG_LOG("In client callback");
-            EXPECT_EQ(DCF::EventType::READ, eventType);
+            EXPECT_EQ(fp::EventType::READ, eventType);
             int counter = 0;
             ssize_t size = 0;
             while (true) {
                 byte *buffer = msgBuffer.allocate(MTU);
-                DCF::Socket::ReadResult result = connection->read(reinterpret_cast<char *>(buffer), MTU, size); // 1500 is the typical MTU size
+                fp::Socket::ReadResult result = connection->read(reinterpret_cast<char *>(buffer), MTU, size); // 1500 is the typical MTU size
                 msgBuffer.erase_back(MTU - size);
                 DEBUG_LOG("got stuff");
-                if (result == DCF::Socket::MoreData) {
-                    DCF::Message msg;
+                if (result == fp::Socket::MoreData) {
+                    fp::Message msg;
                     DEBUG_LOG("So far we have received " << msgBuffer.length() << " bytes");
-                    if (msg.decode(msgBuffer.byteStorage())) {
+                    if (fp::MessageCodec::decode(&msg, msgBuffer.byteStorage())) {
                         DEBUG_LOG("Received " << msg);
                         EXPECT_EQ(sendMsg, msg);
                         consumedMessage = true;
@@ -171,26 +172,26 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
                         queue.unregisterEvent(event);
                         break;
                     }
-                } else if (result == DCF::Socket::NoData) {
+                } else if (result == fp::Socket::NoData) {
                     std::this_thread::sleep_for(std::chrono::microseconds(10));
                     if (counter++ > 1000) {
                         break;
                     }
-                } else if (result == DCF::Socket::Closed) {
+                } else if (result == fp::Socket::Closed) {
                     DEBUG_LOG("Server Socket closed");
                     break;
                 }
             }
         };
 
-        queue.registerEvent(svr.getSocket(), DCF::EventType::READ, [&](const DCF::DataEvent *event, int eventType) {
-            EXPECT_EQ(DCF::EventType::READ, eventType);
+        queue.registerEvent(svr.getSocket(), fp::EventType::READ, [&](const fp::DataEvent *event, int eventType) {
+            EXPECT_EQ(fp::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
             if (connection != nullptr) {
                 DEBUG_LOG("out of accept");
 
-                clientHandler = queue.registerEvent(connection->getSocket(), DCF::EventType::READ, client);
+                clientHandler = queue.registerEvent(connection->getSocket(), fp::EventType::READ, client);
                 DEBUG_LOG("registered new client on socket: " << connection->getSocket());
             }
         });
@@ -209,7 +210,7 @@ TEST(TCPTransport, TryConnectSuccessFragmented) {
     EXPECT_TRUE(transport.valid());
 
     DEBUG_LOG("Sending Message");
-    EXPECT_EQ(DCF::OK, transport.sendMessage(sendMsg));
+    EXPECT_EQ(fp::OK, transport.sendMessage(sendMsg));
     DEBUG_LOG("..sent");
     server.join();
 }

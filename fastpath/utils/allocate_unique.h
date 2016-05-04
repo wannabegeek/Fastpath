@@ -1,0 +1,8 @@
+//
+// Created by Tom Fewster on 11/04/2016.
+//
+
+#ifndef FASTPATH_ALLOCATE_UNIQUE_H
+#define FASTPATH_ALLOCATE_UNIQUE_H
+
+#endif //FASTPATH_ALLOCATE_UNIQUE_H
