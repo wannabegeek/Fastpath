@@ -43,6 +43,8 @@ namespace fp {
 
         bool connect() noexcept;
         bool notify() noexcept;
+
+        int signal_fd() const noexcept { return inbound_notification.read_handle() ; }
     };
 }
 

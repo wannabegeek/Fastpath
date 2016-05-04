@@ -34,9 +34,9 @@
 namespace fp {
     class InterprocessNotifierServer : public InterprocessNotifier {
     private:
-        std::function<void(std::unique_ptr<fp::notifier> &&notifier)> m_callback;
+        std::function<void(std::unique_ptr<fp::notifier> &&notifier, int)> m_callback;
     public:
-        InterprocessNotifierServer(std::function<void(std::unique_ptr<fp::notifier> &&notifier)> callback);
+        InterprocessNotifierServer(std::function<void(std::unique_ptr<fp::notifier> &&notifier, int)> callback);
 
         virtual std::unique_ptr<TransportIOEvent> createReceiverEvent();
     };

@@ -30,7 +30,7 @@
 #include "InterprocessNotifierServer.h"
 
 namespace fp {
-    InterprocessNotifierServer::InterprocessNotifierServer(std::function<void(std::unique_ptr<fp::notifier> &&notifier)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>("test_unix")), m_callback(callback) {
+    InterprocessNotifierServer::InterprocessNotifierServer(std::function<void(std::unique_ptr<fp::notifier> &&notifier, int)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>("test_unix")), m_callback(callback) {
         m_socket->setOptions(SocketOptionsNonBlocking);
         if (!m_socket->connect(fp::SocketOptionsNone)) {
             ERROR_LOG("Failed to create connection");
@@ -52,7 +52,7 @@ namespace fp {
                 int sending_pid = -1;
                 if (this->receive_fd(connection.get(), fd, max, sending_pid)) {
                     assert(max == 2);
-                    m_callback(std::make_unique<fp::notifier>(fd));
+                    m_callback(std::make_unique<fp::notifier>(fd), sending_pid);
 
                     for (size_t i = 0; i < max; i++) {
                         INFO_LOG("Received fd: " << fd[i] << " from process: " << sending_pid);

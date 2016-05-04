@@ -43,7 +43,8 @@ namespace fp {
         virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) override;
 
         std::unique_ptr<SharedMemoryManager> m_smmanager;
-        std::unique_ptr<SharedMemoryBuffer> m_buffer;
+        std::unique_ptr<SharedMemoryBuffer> m_sendQueue;
+        std::unique_ptr<SharedMemoryBuffer> m_recvQueue;
         std::unique_ptr<InterprocessNotifierClient> m_notifier;
 
         std::atomic<bool> m_shouldDisconnect;

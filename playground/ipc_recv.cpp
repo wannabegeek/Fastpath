@@ -13,11 +13,27 @@
 #pragma GCC diagnostic pop
 #include "fastpath/transport/sm/InterprocessNotifierServer.h"
 #include "fastpath/SharedMemoryBuffer.h"
+#include "fastpath/messages/MutableMessage.h"
 #include "fastpath/messages/Message.h"
 #include "fastpath/messages/MessageCodec.h"
 #include "fastpath/utils/tfpool.h"
 #include "fastpath/utils/tfnulllock.h"
 
+struct PeerConnection {
+    std::unique_ptr<fp::notifier> m_notifier;
+    int m_process_id;
+
+    std::unique_ptr<fp::SharedMemoryBuffer> m_clientQueue;
+
+    PeerConnection(std::unique_ptr<fp::notifier> &&notifier, int process_id, fp::SharedMemoryManager *sm_manager)
+            : m_notifier(std::forward<std::unique_ptr<fp::notifier>>(notifier)),
+              m_process_id(process_id) {
+
+        char queueName[32];
+        ::sprintf(queueName, "ClientQueue_%i", process_id);
+        m_clientQueue = std::make_unique<fp::SharedMemoryBuffer>(queueName, *sm_manager);
+    }
+};
 
 int main(int argc, char *argv[]) {
 
@@ -26,10 +42,10 @@ int main(int argc, char *argv[]) {
     boost::interprocess::shared_memory_object::remove("fprouter");
     fp::SharedMemoryManager sm_manager("fprouter");
 
-    fp::SharedMemoryBuffer buffer("ServerQueue", sm_manager);
+    fp::SharedMemoryBuffer serverQueue("ServerQueue", sm_manager);
 
     fp::InlineEventManager evm;
-    std::vector<std::unique_ptr<fp::notifier>> m_notifiers;
+    std::vector<PeerConnection> m_notifiers;
 
     typedef tf::pool<fp::Message, tf::nulllock> PoolType;
     PoolType pool(3);
@@ -38,11 +54,11 @@ int main(int argc, char *argv[]) {
     bool shutdown = false;
     auto notificationHandler = [&](fp::TransportIOEvent *event, const fp::EventType type, fp::notifier *notifier) noexcept {
         if (!notifier->reset()) {
-            INFO_LOG("Client disconnected " << event->fileDescriptor());
-            auto it = std::find_if(m_notifiers.begin(), m_notifiers.end(), [&notifier](const std::unique_ptr<fp::notifier> &n) {
-                return n.get() == notifier;
+            auto it = std::find_if(m_notifiers.begin(), m_notifiers.end(), [&notifier](const PeerConnection &p) {
+                return p.m_notifier.get() == notifier;
             });
             if (it != m_notifiers.end()) {
+                INFO_LOG("Client " << it->m_process_id << " disconnected " << event->fileDescriptor());
                 m_notifiers.erase(it);
             }
             evm.unregisterHandler(event);
@@ -53,10 +69,38 @@ int main(int argc, char *argv[]) {
             }
 
         } else {
-            buffer.retrieve([&](auto &ptr) {
+            serverQueue.retrieve([&](auto &ptr) {
+
+                const char *subject_ptr = nullptr;
+                size_t subject_length = 0;
+                uint8_t flags = 0;
+                size_t msg_length = 0;
+
+                auto status = fp::MessageCodec::addressing_details(ptr, &subject_ptr, subject_length, flags, msg_length);
+                if (status == fp::MessageCodec::CompleteMessage) {
+                    INFO_LOG("Subject is: " << std::string(subject_ptr, subject_length));
+                }
+
                 fp::Message *msg = pool.allocate();
                 fp::MessageCodec::decode(msg, ptr);
                 INFO_LOG("Received data '" << *msg);
+
+                fp::MutableMessage msg2;
+                msg2.setSubject("SOME.TEST.REPLY");
+                uint32_t v = 0;
+                msg->getScalarField("TEST", v);
+                msg2.addScalarField("RESPONSE", v);
+                msg2.addDataField("Name", "Tom");
+                msg2.addDataField("Name2", "Zac");
+
+                fp::SharedMemoryBuffer::mutable_storage_type storage(2048, sm_manager.allocator());
+                fp::MessageCodec::encode(&msg2, storage);
+
+                std::for_each(m_notifiers.begin(), m_notifiers.end(), [&storage](const PeerConnection &p) {
+                    p.m_clientQueue->notify(&storage);
+                    p.m_notifier->notify();
+                });
+
                 pool.release(msg);
             });
         }
@@ -64,12 +108,12 @@ int main(int argc, char *argv[]) {
 
     try {
         INFO_LOG("Started");
-        fp::InterprocessNotifierServer notifier([&](std::unique_ptr<fp::notifier> &&notifier) {
+        fp::InterprocessNotifierServer notifier([&](std::unique_ptr<fp::notifier> &&notifier, int process_id) {
             int fd = notifier->read_handle();
             DEBUG_LOG("Need to add callback for " << fd);
-            m_notifiers.push_back(std::move(notifier));
+            m_notifiers.emplace_back(std::move(notifier), process_id, &sm_manager);
 
-            auto ptr = m_notifiers.back().get();
+            auto ptr = m_notifiers.back().m_notifier.get();
             auto notification_handler = std::make_unique<fp::TransportIOEvent>(fd, fp::EventType::READ, std::bind(notificationHandler, std::placeholders::_1, std::placeholders::_2, ptr));
             evm.registerHandler(notification_handler.release());
         });

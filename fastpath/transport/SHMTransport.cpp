@@ -23,6 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
+#include <cstring>
+
 #include <fastpath/messages/MessageCodec.h>
 #include "fastpath/transport/SHMTransport.h"
 #include "fastpath/transport/TransportIOEvent.h"
@@ -38,11 +40,16 @@ namespace fp {
     SHMTransport::SHMTransport(const url &url, const char *description) : Transport(description), m_notifier(std::make_unique<InterprocessNotifierClient>()) {
         if (m_notifier->connect()) {
             m_smmanager = std::make_unique<SharedMemoryManager>("fprouter");
-            m_buffer = std::make_unique<SharedMemoryBuffer>("ServerQueue", *m_smmanager);
+            m_sendQueue = std::make_unique<SharedMemoryBuffer>("ServerQueue", *m_smmanager);
+
+            char queueName[32];
+            ::sprintf(queueName, "ClientQueue_%i", ::getpid());
+            m_recvQueue = std::make_unique<SharedMemoryBuffer>(queueName, *m_smmanager);
         } else {
             m_connectionAttemptInProgress = std::async(std::launch::async, &SHMTransport::__connect, this);
         }
-//        m_peer->setConnectionStateHandler([&](bool connected) {
+
+//        m_notifier->setConnectionStateHandler([&](bool connected) {
 //            DEBUG_LOG("Transport connected: " << std::boolalpha << connected);
 //            if (m_notificationHandler) {
 //                m_notificationHandler(connected ? CONNECTED : DISCONNECTED, "");
@@ -67,7 +74,7 @@ namespace fp {
         }
 
         m_smmanager = std::make_unique<SharedMemoryManager>("fprouter");
-        m_buffer = std::make_unique<SharedMemoryBuffer>("ServerQueue", *m_smmanager);
+        m_sendQueue = std::make_unique<SharedMemoryBuffer>("ServerQueue", *m_smmanager);
         DEBUG_LOG("Either connected or given up");
         return true;
     }
@@ -75,7 +82,7 @@ namespace fp {
     bool SHMTransport::__disconnect() noexcept {
         m_shouldDisconnect = true;
         m_notifier = std::make_unique<InterprocessNotifierClient>();
-        m_buffer = nullptr;
+        m_sendQueue = nullptr;
         m_smmanager = nullptr;
 
         return true;
@@ -86,7 +93,7 @@ namespace fp {
             SharedMemoryBuffer::mutable_storage_type storage(2048, m_smmanager->allocator());
             MessageCodec::encode(&msg, storage);
 
-            m_buffer->notify(&storage);
+            m_sendQueue->notify(&storage);
             if (m_notifier->notify()) {
                 return OK;
             } else {
@@ -109,17 +116,19 @@ namespace fp {
     }
 
     std::unique_ptr<TransportIOEvent> SHMTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
+        return std::make_unique<TransportIOEvent>(m_notifier->signal_fd(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
+            m_recvQueue->retrieve([&](auto &ptr) {
+                MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
 
-//        return std::make_unique<TransportIOEvent>(m_peer->getSocket(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
-//            static const size_t MTU_SIZE = 1500;
-//
-//            ssize_t size = 0;
-//            while (true) {
-//
-//            }
-//        }
+                if (MessageCodec::decode(message.get(), ptr)) {
+                    messageCallback(this, message);
+                } else {
+                    message = nullptr;
+                }
 
-        return nullptr;
+                // if ref-counter == 0, deallocate the shared memory
+            });
+        });
     }
 }
 

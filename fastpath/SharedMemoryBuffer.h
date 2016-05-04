@@ -79,12 +79,12 @@ namespace fp {
                 m_mutex(boost::interprocess::open_or_create, (m_name + "_mutex").c_str()),
                 m_deque_allocator(sharedMemoryManager.segment().get_segment_manager()),
                 m_sharedMemoryManager(sharedMemoryManager) {
-            m_objectList = m_sharedMemoryManager.segment().find_or_construct<ObjPtrListType>("InboundList")(m_deque_allocator);
+            m_objectList = m_sharedMemoryManager.segment().find_or_construct<ObjPtrListType>(m_name.c_str())(m_deque_allocator);
         }
 
         ~SharedMemoryBuffer() {
-            m_sharedMemoryManager.segment().destroy<ObjPtrListType>(m_name.c_str());
             boost::interprocess::named_mutex::remove((m_name + "_mutex").c_str());
+            m_sharedMemoryManager.segment().destroy<ObjPtrListType>(m_name.c_str());
         }
 
         void notify(storage_type *buffer) {
