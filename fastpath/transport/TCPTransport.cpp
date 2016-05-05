@@ -45,13 +45,16 @@ namespace fp {
         if (!m_peer->connect()) {
             m_connectionAttemptInProgress = std::async(std::launch::async, &TCPTransport::__connect, this);
         }
+
         m_peer->setConnectionStateHandler([&](bool connected) {
             DEBUG_LOG("Transport connected: " << std::boolalpha << connected);
             if (m_notificationHandler) {
                 m_notificationHandler(connected ? CONNECTED : DISCONNECTED, "");
             }
             if (!connected && !m_shouldDisconnect) {
-                this->__connect();
+                if (!m_peer->connect()) {
+                    m_connectionAttemptInProgress = std::async(std::launch::async, &TCPTransport::__connect, this);
+                }
             }
         });
     }
@@ -131,7 +134,7 @@ namespace fp {
         return false;
     }
 
-    std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
+    std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
         return std::make_unique<TransportIOEvent>(m_peer->getSocket(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
             static const size_t MTU_SIZE = 1500;
 

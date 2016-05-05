@@ -31,7 +31,7 @@
 #include "fastpath/transport/socket/Socket.h"
 
 namespace fp {
-    class UnixSocket : public Socket{
+    class UnixSocket : public Socket {
     protected:
         struct sockaddr_un m_addr;
 

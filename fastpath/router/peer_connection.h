@@ -49,20 +49,20 @@ namespace fp {
         static subject<> UnregisterObserver() { return subject<>("_FP.UNREGISTER.OBSERVER"); }
 
         std::vector<subscription<>> m_subscriptions;
-        fp::Queue *m_queue;
-        std::unique_ptr<fp::Socket> m_socket;
-        fp::DataEvent *m_socketEvent;
+        Queue *m_queue;
+        std::unique_ptr<Socket> m_socket;
+        DataEvent *m_socketEvent;
 
-        fp::MessageBuffer m_buffer;
-        const std::function<void(peer_connection *, const subject<> &, const fp::MessageBuffer::ByteStorageType &)> m_messageHandler;
+        MessageBuffer m_buffer;
+        const std::function<void(peer_connection *, const subject<> &, const MessageBuffer::ByteStorageType &)> m_messageHandler;
         const std::function<void(peer_connection *)> m_disconnectionHandler;
 
-        void data_handler(fp::DataEvent *event, const fp::EventType eventType) noexcept;
-        fp::MessageCodec::MessageDecodeStatus process_buffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept;
+        void data_handler(DataEvent *event, const EventType eventType) noexcept;
+        MessageCodec::MessageDecodeStatus process_buffer(const MessageBuffer::ByteStorageType &buffer) noexcept;
 
-        void handle_admin_message(const subject<> subject, fp::Message &message) noexcept;
+        void handle_admin_message(const subject<> subject, Message &message) noexcept;
     public:
-        peer_connection(fp::Queue *queue, std::unique_ptr<fp::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const fp::MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
+        peer_connection(Queue *queue, std::unique_ptr<Socket> socket, const std::function<void(peer_connection *, const subject<> &, const MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
         peer_connection(peer_connection &&other) noexcept;
         ~peer_connection() noexcept;
 
@@ -70,7 +70,7 @@ namespace fp {
         void remove_subscription(const char *subject) noexcept;
         bool is_interested(const subject<> &subject) const noexcept;
 
-        bool sendBuffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept;
+        bool sendBuffer(const MessageBuffer::ByteStorageType &buffer) noexcept;
     };
 }
 

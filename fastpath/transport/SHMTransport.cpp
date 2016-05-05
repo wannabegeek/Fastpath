@@ -39,8 +39,8 @@ namespace fp {
 
     SHMTransport::SHMTransport(const url &url, const char *description) : Transport(description), m_notifier(std::make_unique<InterprocessNotifierClient>()), m_url(url) {
 
-        auto on_connect = [&]() {
-            const std::string sm_name = "fprouter_" + m_url.port();
+        auto on_connect = [&, this]() {
+            const std::string sm_name = "fprouter_" + this->m_url.port();
             m_smmanager = std::make_unique<SharedMemoryManager>(sm_name.c_str());
             m_sendQueue = std::make_unique<SharedMemoryBuffer>("ServerQueue", *m_smmanager);
 

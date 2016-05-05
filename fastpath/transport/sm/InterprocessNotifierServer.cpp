@@ -38,31 +38,34 @@ namespace fp {
         }
     }
 
+    void InterprocessNotifierServer::receivedClientConnection(std::unique_ptr<UnixSocket> &connection) {
+        if (connection) {
+            INFO_LOG("Accepted connection");
+
+            int fd[256];
+            size_t max = 256;
+            int sending_pid = -1;
+            if (this->receive_fd(connection.get(), fd, max, sending_pid)) {
+                assert(max == 2);
+                m_callback(std::make_unique<fp::notifier>(fd), sending_pid);
+
+                for (size_t i = 0; i < max; i++) {
+                    INFO_LOG("Received fd: " << fd[i] << " from process: " << sending_pid);
+                }
+            } else {
+                INFO_LOG("Received event not an fd");
+            }
+        } else {
+            ERROR_LOG("Something went wrong");
+        }
+    }
+
     std::unique_ptr<TransportIOEvent> InterprocessNotifierServer::createReceiverEvent() {
         return std::make_unique<TransportIOEvent>(m_socket->getSocket(), EventType::READ, [&](TransportIOEvent *event, const EventType type) {
             DEBUG_LOG("Something happened on socket");
 
             std::unique_ptr<UnixSocket> connection = reinterpret_cast<UnixSocketServer *>(m_socket.get())->acceptPendingConnection();
-
-            if (connection) {
-                INFO_LOG("Accepted connection");
-
-                int fd[256];
-                size_t max = 256;
-                int sending_pid = -1;
-                if (this->receive_fd(connection.get(), fd, max, sending_pid)) {
-                    assert(max == 2);
-                    m_callback(std::make_unique<fp::notifier>(fd), sending_pid);
-
-                    for (size_t i = 0; i < max; i++) {
-                        INFO_LOG("Received fd: " << fd[i] << " from process: " << sending_pid);
-                    }
-                } else {
-                    INFO_LOG("Received event not an fd");
-                }
-            } else {
-                ERROR_LOG("Something went wrong");
-            }
+            receivedClientConnection(connection);
         });
     }
 }

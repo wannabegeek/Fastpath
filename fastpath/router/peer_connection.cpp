@@ -30,10 +30,10 @@
 #include "fastpath/transport/socket/Socket.h"
 
 namespace fp {
-    peer_connection::peer_connection(fp::Queue *queue, std::unique_ptr<fp::Socket> socket, const std::function<void(peer_connection *, const subject<> &, const fp::MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
+    peer_connection::peer_connection(Queue *queue, std::unique_ptr<Socket> socket, const std::function<void(peer_connection *, const subject<> &, const MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler)
             : m_queue(queue), m_socket(std::move(socket)), m_buffer(4500), m_messageHandler(messageHandler), m_disconnectionHandler(disconnectionHandler) {
 
-        m_socketEvent = queue->registerEvent(m_socket->getSocket(), fp::EventType::READ,
+        m_socketEvent = queue->registerEvent(m_socket->getSocket(), EventType::READ,
                              std::bind(&peer_connection::data_handler, this, std::placeholders::_1,
                                        std::placeholders::_2));
     }
@@ -73,7 +73,7 @@ namespace fp {
         return (it != m_subscriptions.end());
     }
 
-    void peer_connection::handle_admin_message(const subject<> subject, fp::Message &message) noexcept {
+    void peer_connection::handle_admin_message(const subject<> subject, Message &message) noexcept {
         DEBUG_LOG("Received admin msg: " << message);
 
         if (subject == RegisterObserver()) {
@@ -95,27 +95,27 @@ namespace fp {
         }
     }
 
-    fp::MessageCodec::MessageDecodeStatus peer_connection::process_buffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept {
+    MessageCodec::MessageDecodeStatus peer_connection::process_buffer(const MessageBuffer::ByteStorageType &buffer) noexcept {
         const char *subject_ptr = nullptr;
         size_t subject_length = 0;
         uint8_t flags = 0;
         size_t msg_length = 0;
 
         buffer.mark();
-        auto status = fp::MessageCodec::addressing_details(buffer, &subject_ptr, subject_length, flags, msg_length);
-        if (status == fp::MessageCodec::CompleteMessage) {
+        auto status = MessageCodec::addressing_details(buffer, &subject_ptr, subject_length, flags, msg_length);
+        if (status == MessageCodec::CompleteMessage) {
             buffer.resetRead();
             if (subject_ptr != nullptr && subject_length > 0) {
                 DEBUG_LOG("Received message [" << subject_ptr << "] of length " << msg_length << ": read " << buffer.bytesRead() << " of a total " << m_buffer.length());
                 subject<> subject(subject_ptr);
-                const fp::MessageBuffer::ByteStorageType &msgData = buffer.segment(msg_length);
+                const MessageBuffer::ByteStorageType &msgData = buffer.segment(msg_length);
                 if (tf::unlikely(subject.is_admin())) {
-                    fp::Message message;
-                    if (fp::MessageCodec::decode(&message, msgData)) {
+                    Message message;
+                    if (MessageCodec::decode(&message, msgData)) {
                         this->handle_admin_message(subject, message);
                     } else {
                         ERROR_LOG("Failed to decode message: " << msgData);
-                        status = fp::MessageCodec::CorruptMessage;
+                        status = MessageCodec::CorruptMessage;
                     }
                 } else {
                     // otherwise pass it to our handler
@@ -124,7 +124,7 @@ namespace fp {
                 buffer.mark();
             } else {
                 ERROR_LOG("Message has null or zero length subject");
-                status = fp::MessageCodec::CorruptMessage;
+                status = MessageCodec::CorruptMessage;
             }
         } else {
             buffer.resetRead();
@@ -133,7 +133,7 @@ namespace fp {
         return status;
     }
 
-    void peer_connection::data_handler(fp::DataEvent *event, const fp::EventType eventType) noexcept {
+    void peer_connection::data_handler(DataEvent *event, const EventType eventType) noexcept {
 
         static const size_t MTU_SIZE = 1500;
 
@@ -141,34 +141,34 @@ namespace fp {
         bool complete = false;
         while (!complete) {
             DEBUG_LOG(this << " ------------");
-            fp::Socket::ReadResult result = m_socket->read(reinterpret_cast<const char *>(m_buffer.allocate(MTU_SIZE)), MTU_SIZE, size);
+            Socket::ReadResult result = m_socket->read(reinterpret_cast<const char *>(m_buffer.allocate(MTU_SIZE)), MTU_SIZE, size);
             DEBUG_LOG("Read " << size << " bytes [total buffer size: " << m_buffer.length() << "]");
             m_buffer.erase_back(MTU_SIZE - size);
             DEBUG_LOG("Removed trailing " << MTU_SIZE - size << " bytes [total buffer size: " << m_buffer.length() << "]");
-            if (result == fp::Socket::MoreData) {
-                const fp::MessageBuffer::ByteStorageType &storage = m_buffer.byteStorage();
+            if (result == Socket::MoreData) {
+                const MessageBuffer::ByteStorageType &storage = m_buffer.byteStorage();
 
-                fp::MessageCodec::MessageDecodeStatus status;
-                while ((status = this->process_buffer(storage)) == fp::MessageCodec::CompleteMessage);
+                MessageCodec::MessageDecodeStatus status;
+                while ((status = this->process_buffer(storage)) == MessageCodec::CompleteMessage);
 
                 switch (status) {
-                    case fp::MessageCodec::CompleteMessage:
+                    case MessageCodec::CompleteMessage:
                         break;
-                    case fp::MessageCodec::IncompleteMessage:
+                    case MessageCodec::IncompleteMessage:
                         DEBUG_LOG("Removing " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
                         m_buffer.erase_front(storage.bytesRead());
                         DEBUG_LOG("Removed " << storage.bytesRead() << " from front [" << m_buffer.length() << "] ");
                         break;
-                    case fp::MessageCodec::CorruptMessage:
+                    case MessageCodec::CorruptMessage:
                         m_socket->disconnect();
                         m_disconnectionHandler(this);
                         complete = true;
                         break;
                 }
 
-            } else if (result == fp::Socket::NoData) {
+            } else if (result == Socket::NoData) {
                 complete = true;
-            } else if (result == fp::Socket::Closed) {
+            } else if (result == Socket::Closed) {
                 DEBUG_LOG("Client Socket closed");
                 m_disconnectionHandler(this);
                 complete = true;
@@ -176,7 +176,7 @@ namespace fp {
         }
     }
 
-    bool peer_connection::sendBuffer(const fp::MessageBuffer::ByteStorageType &buffer) noexcept {
+    bool peer_connection::sendBuffer(const MessageBuffer::ByteStorageType &buffer) noexcept {
         DEBUG_LOG("Sending " << buffer.length() << " bytes to client");
         const byte *data;
         const size_t len = buffer.bytes(&data);

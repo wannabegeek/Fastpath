@@ -27,6 +27,7 @@
 #define FASTPATH_SHMTRANSPORT_H
 
 #include <future>
+#include <memory>
 
 #include "fastpath/status.h"
 #include "fastpath/messages/Message.h"

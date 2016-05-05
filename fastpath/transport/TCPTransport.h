@@ -41,7 +41,7 @@ namespace fp {
 
     class TCPTransport : public Transport {
     private:
-        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) override;
+        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept override;
         bool processData(const fp::MessageBuffer::ByteStorageType &storage, const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept;
     protected:
         std::unique_ptr<TCPSocketClient> m_peer;

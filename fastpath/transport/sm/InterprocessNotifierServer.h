@@ -35,6 +35,8 @@ namespace fp {
     class InterprocessNotifierServer : public InterprocessNotifier {
     private:
         std::function<void(std::unique_ptr<fp::notifier> &&notifier, int)> m_callback;
+
+        void receivedClientConnection(std::unique_ptr<UnixSocket> &connection);
     public:
         InterprocessNotifierServer(std::function<void(std::unique_ptr<fp::notifier> &&notifier, int)> callback);
 
