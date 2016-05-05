@@ -47,10 +47,13 @@ namespace fp {
         std::unique_ptr<SharedMemoryBuffer> m_recvQueue;
         std::unique_ptr<InterprocessNotifierClient> m_notifier;
 
+        std::atomic<bool> m_connected = ATOMIC_VAR_INIT(false);
         std::atomic<bool> m_shouldDisconnect;
         std::future<bool> m_connectionAttemptInProgress;
 
-        bool __connect() noexcept;
+        const url m_url;
+
+        bool __connect(std::function<void()> on_connect) noexcept;
         bool __disconnect() noexcept;
     public:
         // This should have the format dcf://localhost:1234

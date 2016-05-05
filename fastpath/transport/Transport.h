@@ -59,7 +59,6 @@ namespace fp {
         const EventManager *m_eventManager = nullptr;
     protected:
         MessagePoolType m_msg_pool;
-
         std::function<void(notification_type type, const char *reason)> m_notificationHandler;
 
         virtual std::unique_ptr<TransportIOEvent> createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) = 0;

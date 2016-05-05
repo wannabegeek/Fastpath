@@ -37,16 +37,23 @@ namespace fp {
     SHMTransport::SHMTransport(const char *url_ptr, const char *description) : SHMTransport(url(url_ptr), description) {
     }
 
-    SHMTransport::SHMTransport(const url &url, const char *description) : Transport(description), m_notifier(std::make_unique<InterprocessNotifierClient>()) {
-        if (m_notifier->connect()) {
-            m_smmanager = std::make_unique<SharedMemoryManager>("fprouter");
+    SHMTransport::SHMTransport(const url &url, const char *description) : Transport(description), m_notifier(std::make_unique<InterprocessNotifierClient>()), m_url(url) {
+
+        auto on_connect = [&]() {
+            const std::string sm_name = "fprouter_" + m_url.port();
+            m_smmanager = std::make_unique<SharedMemoryManager>(sm_name.c_str());
             m_sendQueue = std::make_unique<SharedMemoryBuffer>("ServerQueue", *m_smmanager);
 
             char queueName[32];
             ::sprintf(queueName, "ClientQueue_%i", ::getpid());
             m_recvQueue = std::make_unique<SharedMemoryBuffer>(queueName, *m_smmanager);
+            m_connected = true;
+        };
+
+        if (m_notifier->connect()) {
+            on_connect();
         } else {
-            m_connectionAttemptInProgress = std::async(std::launch::async, &SHMTransport::__connect, this);
+            m_connectionAttemptInProgress = std::async(std::launch::async, &SHMTransport::__connect, this, on_connect);
         }
 
 //        m_notifier->setConnectionStateHandler([&](bool connected) {
@@ -64,7 +71,7 @@ namespace fp {
         this->__disconnect();
     }
 
-    bool SHMTransport::__connect() noexcept {
+    bool SHMTransport::__connect(std::function<void()> on_connect) noexcept {
         BackoffStrategy strategy;
         while (!m_notifier->is_connected() && m_shouldDisconnect == false) {
             if (!m_notifier->connect()) {
@@ -73,15 +80,18 @@ namespace fp {
             }
         }
 
-        m_smmanager = std::make_unique<SharedMemoryManager>("fprouter");
-        m_sendQueue = std::make_unique<SharedMemoryBuffer>("ServerQueue", *m_smmanager);
+        if (!m_shouldDisconnect) {
+            on_connect();
+        }
         DEBUG_LOG("Either connected or given up");
         return true;
     }
 
     bool SHMTransport::__disconnect() noexcept {
+        m_connected = false;
         m_shouldDisconnect = true;
         m_notifier = std::make_unique<InterprocessNotifierClient>();
+        m_recvQueue = nullptr;
         m_sendQueue = nullptr;
         m_smmanager = nullptr;
 
@@ -89,7 +99,7 @@ namespace fp {
     }
 
     status SHMTransport::sendMessage(const Message &msg) noexcept {
-        if (m_notifier->is_connected()) {
+        if (m_connected.load(std::memory_order_relaxed) && m_notifier->is_connected()) {
             SharedMemoryBuffer::mutable_storage_type storage(2048, m_smmanager->allocator());
             MessageCodec::encode(&msg, storage);
 
@@ -112,7 +122,7 @@ namespace fp {
     }
 
     const bool SHMTransport::valid() const noexcept {
-        return m_notifier->is_connected();
+        return m_notifier->is_connected() && m_connected.load(std::memory_order_relaxed);
     }
 
     std::unique_ptr<TransportIOEvent> SHMTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {

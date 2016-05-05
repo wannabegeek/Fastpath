@@ -39,8 +39,8 @@ int main(int argc, char *argv[]) {
 
     LOG_LEVEL(tf::logger::debug);
 
-    boost::interprocess::shared_memory_object::remove("fprouter");
-    fp::SharedMemoryManager sm_manager("fprouter");
+    boost::interprocess::shared_memory_object::remove("fprouter_6969");
+    fp::SharedMemoryManager sm_manager("fprouter_6969");
 
     fp::SharedMemoryBuffer serverQueue("ServerQueue", sm_manager);
 
@@ -76,10 +76,12 @@ int main(int argc, char *argv[]) {
                 uint8_t flags = 0;
                 size_t msg_length = 0;
 
+                ptr.mark();
                 auto status = fp::MessageCodec::addressing_details(ptr, &subject_ptr, subject_length, flags, msg_length);
                 if (status == fp::MessageCodec::CompleteMessage) {
                     INFO_LOG("Subject is: " << std::string(subject_ptr, subject_length));
                 }
+                ptr.resetRead();
 
                 fp::Message *msg = pool.allocate();
                 fp::MessageCodec::decode(msg, ptr);

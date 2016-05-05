@@ -13,6 +13,7 @@
 #include "fastpath/SharedMemoryBuffer.h"
 #include "fastpath/messages/MutableMessage.h"
 #include "fastpath/transport/SHMTransport.h"
+#include "fastpath/transport/realm_transport.h"
 #include "fastpath/event/Subscriber.h"
 
 int main(int argc, char *argv[]) {
@@ -22,7 +23,7 @@ int main(int argc, char *argv[]) {
     fp::Session::initialise();
     fp::BlockingQueue m_queue;
 
-    fp::SHMTransport transport("http://tomfewster.com", "Sample");
+    auto transport = fp::make_realm_connection("shm://localhost:6969", "Sample");
 
     typedef tf::pool<fp::MutableMessage, tf::nulllock> PoolType;
     PoolType pool(3);
@@ -32,7 +33,7 @@ int main(int argc, char *argv[]) {
         bool shutdown = false;
         uint32_t counter = 0;
         m_queue.registerEvent(std::chrono::seconds(1), [&] (const fp::TimerEvent *event) {
-            if (transport.valid()) {
+            if (transport->valid()) {
                 auto msg = pool.allocate();
                 msg->setSubject("SOME.TEST.SUBJECT");
                 msg->addScalarField("TEST", counter++);
@@ -40,7 +41,7 @@ int main(int argc, char *argv[]) {
                 msg->addDataField("Name2", "Zac");
 
                 fp::status s;
-                if ((s = transport.sendMessage(*msg)) != fp::OK) {
+                if ((s = transport->sendMessage(*msg)) != fp::OK) {
                     ERROR_LOG("Failed to send messages: " << fp::str_status[s]);
                     shutdown = true;
                 }
@@ -50,7 +51,7 @@ int main(int argc, char *argv[]) {
             }
         });
 
-        m_queue.addSubscriber(fp::Subscriber(&transport, "SOME.TEST.REPLY", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
+        m_queue.addSubscriber(fp::Subscriber(transport, "SOME.TEST.REPLY", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
             INFO_LOG(*msg);
         }));
 
@@ -61,4 +62,6 @@ int main(int argc, char *argv[]) {
     } catch (const fp::socket_error &e) {
         std::cerr << "BOOM - it's broken" << std::endl;
     }
+    fp::Session::destroy();
+
 }
