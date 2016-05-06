@@ -30,11 +30,33 @@
 #include "InterprocessNotifierServer.h"
 
 namespace fp {
-    InterprocessNotifierServer::InterprocessNotifierServer(std::function<void(std::unique_ptr<fp::notifier> &&notifier)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>("test_unix")), m_callback(callback) {
+    InterprocessNotifierServer::InterprocessNotifierServer(const char *identifier, std::function<void(notifier_type, int)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>(identifier)), m_callback(callback) {
         m_socket->setOptions(SocketOptionsNonBlocking);
         if (!m_socket->connect(fp::SocketOptionsNone)) {
             ERROR_LOG("Failed to create connection");
             throw fp::exception("Failed to create server connection");
+        }
+    }
+
+    void InterprocessNotifierServer::receivedClientConnection(std::unique_ptr<UnixSocket> &connection) {
+        if (connection) {
+            INFO_LOG("Accepted connection");
+
+            int fd[256];
+            size_t max = 256;
+            int sending_pid = -1;
+            if (this->receive_fd(connection.get(), fd, max, sending_pid)) {
+                assert(max == 2);
+                m_callback(std::make_tuple(std::make_unique<fp::notifier>(fd[0], direction::pipe_read), std::make_unique<fp::notifier>(fd[1], direction::pipe_write)), sending_pid);
+
+                for (size_t i = 0; i < max; i++) {
+                    INFO_LOG("Received fd: " << fd[i] << " from process: " << sending_pid);
+                }
+            } else {
+                INFO_LOG("Received event not an fd");
+            }
+        } else {
+            ERROR_LOG("Something went wrong");
         }
     }
 
@@ -43,26 +65,7 @@ namespace fp {
             DEBUG_LOG("Something happened on socket");
 
             std::unique_ptr<UnixSocket> connection = reinterpret_cast<UnixSocketServer *>(m_socket.get())->acceptPendingConnection();
-
-            if (connection) {
-                INFO_LOG("Accepted connection");
-
-                int fd[256];
-                size_t max = 256;
-                int sending_pid = -1;
-                if (this->receive_fd(connection.get(), fd, max, sending_pid)) {
-                    assert(max == 2);
-                    m_callback(std::make_unique<fp::notifier>(fd));
-
-                    for (size_t i = 0; i < max; i++) {
-                        INFO_LOG("Received fd: " << fd[i] << " from process: " << sending_pid);
-                    }
-                } else {
-                    INFO_LOG("Received event not an fd");
-                }
-            } else {
-                ERROR_LOG("Something went wrong");
-            }
+            receivedClientConnection(connection);
         });
     }
 }

@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 04/03/2016
+    date                 : 04/05/2016
 
  ***************************************************************************/
 
@@ -23,33 +23,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_UNIXSOCKET_H
-#define FASTPATH_UNIXSOCKET_H
 
-#include <sys/un.h>
+#ifndef FASTPATH_TEMP_DIRECTORY_H
+#define FASTPATH_TEMP_DIRECTORY_H
 
-#include "fastpath/transport/socket/Socket.h"
+#include <cstdlib>
+#include <array>
 
-namespace fp {
-    class UnixSocket : public Socket {
-    protected:
-        struct sockaddr_un m_addr;
+namespace tf {
+    const char *get_temp_directory() noexcept {
+        static const std::array<const char *, 4> env_locations{
+                "TMPDIR",
+                "TMP",
+                "TEMP",
+                "TEMPDIR"
+        };
 
-    public:
+        char *location = nullptr;
+        for (auto &env: env_locations) {
+            if ((location = ::getenv(env)) != nullptr) {
+                return location;
+            }
+        }
 
-        UnixSocket(const std::string &path) throw(socket_error);
-        UnixSocket(const int socketFd, const bool connected) noexcept;
-
-        UnixSocket(UnixSocket &&other) noexcept;
-
-        virtual ~UnixSocket() noexcept;
-
-        void setOptions(int options) noexcept override;
-
-        bool send_ancillary(const struct msghdr *msg, int flags) noexcept;
-        const Socket::ReadResult read_ancillary(struct msghdr *msg) noexcept;
-    };
+        return "/tmp/";
+    }
 }
 
-
-#endif //FASTPATH_UNIXSOCKET_H
+#endif //FASTPATH_TEMP_DIRECTORY_H

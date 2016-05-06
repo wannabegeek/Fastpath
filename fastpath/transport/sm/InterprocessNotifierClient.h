@@ -37,12 +37,14 @@ namespace fp {
 
         bool m_connected = false;
     public:
-        InterprocessNotifierClient() noexcept;
+        InterprocessNotifierClient(const char *identifier) noexcept;
 
         inline bool is_connected() const noexcept { return m_connected; }
 
         bool connect() noexcept;
         bool notify() noexcept;
+
+        int signal_fd() const noexcept { return inbound_notification.read_handle() ; }
     };
 }
 

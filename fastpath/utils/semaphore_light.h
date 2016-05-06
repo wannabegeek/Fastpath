@@ -44,6 +44,7 @@ extern "C" {
 
 #elif defined(__unix__)
 #include <semaphore.h>
+#include <sys/eventfd.h>
 #endif
 
 #include <cassert>

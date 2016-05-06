@@ -13,6 +13,8 @@
 #include "fastpath/SharedMemoryBuffer.h"
 #include "fastpath/messages/MutableMessage.h"
 #include "fastpath/transport/SHMTransport.h"
+#include "fastpath/transport/realm_transport.h"
+#include "fastpath/event/Subscriber.h"
 
 int main(int argc, char *argv[]) {
 
@@ -21,7 +23,7 @@ int main(int argc, char *argv[]) {
     fp::Session::initialise();
     fp::BlockingQueue m_queue;
 
-    fp::SHMTransport transport("http://tomfewster.com", "Sample");
+    auto transport = fp::make_realm_connection("shm://localhost:6969", "Sample");
 
     typedef tf::pool<fp::MutableMessage, tf::nulllock> PoolType;
     PoolType pool(3);
@@ -29,9 +31,9 @@ int main(int argc, char *argv[]) {
     try {
 
         bool shutdown = false;
-        unsigned int counter = 0;
+        uint32_t counter = 0;
         m_queue.registerEvent(std::chrono::seconds(1), [&] (const fp::TimerEvent *event) {
-            if (transport.valid()) {
+            if (transport->valid()) {
                 auto msg = pool.allocate();
                 msg->setSubject("SOME.TEST.SUBJECT");
                 msg->addScalarField("TEST", counter++);
@@ -39,22 +41,27 @@ int main(int argc, char *argv[]) {
                 msg->addDataField("Name2", "Zac");
 
                 fp::status s;
-                if ((s = transport.sendMessage(*msg)) != fp::OK) {
+                if ((s = transport->sendMessage(*msg)) != fp::OK) {
                     ERROR_LOG("Failed to send messages: " << fp::str_status[s]);
                     shutdown = true;
                 }
-                DEBUG_LOG("Sent message");
                 pool.release(msg);
             } else {
                 INFO_LOG("Transport not valid - can't send");
             }
         });
 
+        m_queue.addSubscriber(fp::Subscriber(transport, "SOME.TEST.REPLY", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
+            INFO_LOG(*msg);
+        }));
 
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        while(!shutdown && m_queue.dispatch() == fp::OK);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        while(!shutdown && m_queue.dispatch() == fp::OK)
+            ;
         DEBUG_LOG("Event loop dropped out");
     } catch (const fp::socket_error &e) {
         std::cerr << "BOOM - it's broken" << std::endl;
     }
+    fp::Session::destroy();
+
 }

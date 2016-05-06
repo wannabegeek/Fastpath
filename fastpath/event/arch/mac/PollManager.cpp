@@ -142,10 +142,8 @@ namespace fp {
         if (m_events != 0) {
             struct kevent _events[maxDispatchSize];
             int result = kevent(m_fd, NULL, 0, _events, maxDispatchSize, nullptr);
-            if (result == -1) {
-                ERROR_LOG("kevent returned -1: " << strerror(errno));
-                return -1;
-            } else {
+            if (result > 0) {
+                m_err_count = 0;
                 for (int i = 0; i < result; ++i) {
                     int filter = 0;
                     if ((_events[i].filter & EVFILT_READ) == EVFILT_READ) {
@@ -162,6 +160,13 @@ namespace fp {
                         }
                     }
                 }
+            } else if (result == -1) {
+                if (errno == EINTR && m_err_count < 10) {
+                    ++m_err_count;
+                    return 0;
+                }
+                ERROR_LOG("kevent returned -1: " << strerror(errno));
+                return -1;
             }
         }
         return 0;

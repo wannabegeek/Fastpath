@@ -28,7 +28,7 @@
 #include "InterprocessNotifierClient.h"
 
 namespace fp {
-    InterprocessNotifierClient::InterprocessNotifierClient() noexcept : InterprocessNotifier(std::make_unique<UnixSocketClient>("test_unix")) {
+    InterprocessNotifierClient::InterprocessNotifierClient(const char *identifier) noexcept : InterprocessNotifier(std::make_unique<UnixSocketClient>(identifier)) {
     }
 
     bool InterprocessNotifierClient::connect() noexcept {

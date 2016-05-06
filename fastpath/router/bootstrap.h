@@ -36,14 +36,14 @@
 namespace fp{
     class bootstrap {
     private:
-        fp::InlineQueue m_dispatchQueue;
+        InlineQueue m_dispatchQueue;
 
-        fp::TCPSocketServer m_server;
+        TCPSocketServer m_server;
         bool m_shutdown = false;
 
         std::vector<std::unique_ptr<peer_connection>> m_connections;
 
-        void message_handler(peer_connection *source, const subject<> &subject, const fp::MessageBuffer::ByteStorageType &msgData) noexcept;
+        void message_handler(peer_connection *source, const subject<> &subject, const MessageBuffer::ByteStorageType &msgData) noexcept;
         void disconnection_handler(peer_connection *connection) noexcept;
     public:
         bootstrap(const std::string &interface, const std::string &service);
