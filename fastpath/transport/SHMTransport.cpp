@@ -25,11 +25,12 @@
 
 #include <cstring>
 
-#include <fastpath/messages/MessageCodec.h>
+#include "fastpath/messages/MessageCodec.h"
 #include "fastpath/transport/SHMTransport.h"
 #include "fastpath/transport/TransportIOEvent.h"
 #include "fastpath/transport/BackoffStrategy.h"
 #include "fastpath/SharedMemoryBuffer.h"
+#include "fastpath/utils/temp_directory.h"
 #include "fastpath/transport/sm/SharedMemoryManager.h"
 #include "fastpath/transport/sm/InterprocessNotifierClient.h"
 
@@ -37,7 +38,12 @@ namespace fp {
     SHMTransport::SHMTransport(const char *url_ptr, const char *description) : SHMTransport(url(url_ptr), description) {
     }
 
-    SHMTransport::SHMTransport(const url &url, const char *description) : Transport(description), m_notifier(std::make_unique<InterprocessNotifierClient>()), m_url(url) {
+    SHMTransport::SHMTransport(const url &url, const char *description) : Transport(description), m_url(url) {
+
+        std::string ipc_file = tf::get_temp_directory();
+        ipc_file.append("fprouter_");
+        ipc_file.append(m_url.port());
+        m_notifier = std::make_unique<InterprocessNotifierClient>(ipc_file.c_str());
 
         auto on_connect = [&, this]() {
             const std::string sm_name = "fprouter_" + this->m_url.port();
@@ -90,7 +96,6 @@ namespace fp {
     bool SHMTransport::__disconnect() noexcept {
         m_connected = false;
         m_shouldDisconnect = true;
-        m_notifier = std::make_unique<InterprocessNotifierClient>();
         m_recvQueue = nullptr;
         m_sendQueue = nullptr;
         m_smmanager = nullptr;

@@ -18,6 +18,7 @@
 #include "fastpath/messages/MessageCodec.h"
 #include "fastpath/utils/tfpool.h"
 #include "fastpath/utils/tfnulllock.h"
+#include "fastpath/utils/temp_directory.h"
 
 struct PeerConnection {
     fp::InterprocessNotifierServer::notifier_type m_notifier;
@@ -110,7 +111,11 @@ int main(int argc, char *argv[]) {
 
     try {
         INFO_LOG("Started");
-        fp::InterprocessNotifierServer notifier([&] (fp::InterprocessNotifierServer::notifier_type &&notifier, int process_id) {
+        std::string ipc_file = tf::get_temp_directory();
+        ipc_file.append("fprouter_");
+        ipc_file.append("6969");
+
+        fp::InterprocessNotifierServer notifier(ipc_file.c_str(), [&] (fp::InterprocessNotifierServer::notifier_type &&notifier, int process_id) {
             int fd = std::get<0>(notifier)->read_handle();
             DEBUG_LOG("Need to add callback for " << fd);
             m_notifiers.emplace_back(std::move(notifier), process_id, &sm_manager);

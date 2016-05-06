@@ -18,7 +18,7 @@ set(HEADER_FILES
 
 set(SOURCE_FILES
         daemon_process.cpp
-        allocator/generic_allocator.h allocator/std_allocator_resource.h allocator/allocator_resource.h)
+        allocator/generic_allocator.h allocator/std_allocator_resource.h allocator/allocator_resource.h temp_directory.h)
 
 add_library(utils OBJECT ${SOURCE_FILES} ${HEADER_FILES})
 INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath/utils)

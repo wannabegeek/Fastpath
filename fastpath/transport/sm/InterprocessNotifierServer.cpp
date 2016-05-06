@@ -30,7 +30,7 @@
 #include "InterprocessNotifierServer.h"
 
 namespace fp {
-    InterprocessNotifierServer::InterprocessNotifierServer(std::function<void(notifier_type, int)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>("/tmp/fprouter")), m_callback(callback) {
+    InterprocessNotifierServer::InterprocessNotifierServer(const char *identifier, std::function<void(notifier_type, int)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>(identifier)), m_callback(callback) {
         m_socket->setOptions(SocketOptionsNonBlocking);
         if (!m_socket->connect(fp::SocketOptionsNone)) {
             ERROR_LOG("Failed to create connection");

@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 04/03/2016
+    date                 : 04/05/2016
 
  ***************************************************************************/
 
@@ -23,28 +23,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_INTERPROCESSNOTIFIERSERVER_H
-#define FASTPATH_INTERPROCESSNOTIFIERSERVER_H
 
-#include <fastpath/event/EventType.h>
-#include <fastpath/transport/TransportIOEvent.h>
-#include "InterprocessNotifier.h"
-#include "fastpath/event/notifier.h"
+#ifndef FASTPATH_TEMP_DIRECTORY_H
+#define FASTPATH_TEMP_DIRECTORY_H
 
-namespace fp {
-    class InterprocessNotifierServer : public InterprocessNotifier {
-    public:
-        using notifier_type = std::tuple<std::unique_ptr<fp::notifier>, std::unique_ptr<fp::notifier>>;
-    private:
-        std::function<void(notifier_type &&, int)> m_callback;
+#include <cstdlib>
+#include <array>
 
-        void receivedClientConnection(std::unique_ptr<UnixSocket> &connection);
-    public:
-        InterprocessNotifierServer(const char *identifier, std::function<void(notifier_type, int)> callback);
+namespace tf {
+    const char *get_temp_directory() noexcept {
+        static const std::array<const char *, 4> env_locations{
+                "TMPDIR",
+                "TMP",
+                "TEMP",
+                "TEMPDIR"
+        };
 
-        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent();
-    };
+        char *location = nullptr;
+        for (auto &env: env_locations) {
+            if ((location = ::getenv(env)) != nullptr) {
+                return location;
+            }
+        }
+
+        return "/tmp/";
+    }
 }
 
-
-#endif //FASTPATH_INTERPROCESSNOTIFIERSERVER_H
+#endif //FASTPATH_TEMP_DIRECTORY_H
