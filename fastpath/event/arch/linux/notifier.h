@@ -50,8 +50,8 @@ namespace fp {
             }
         }
 
-        explicit notifier(int *fd) noexcept {
-            m_fd = fd[0];
+        explicit notifier(int fd, direction d) noexcept {
+            m_fd = fd;
         }
 
         notifier(notifier &&other) noexcept {

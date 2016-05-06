@@ -126,6 +126,7 @@ namespace fp {
     }
 
     std::unique_ptr<TransportIOEvent> SHMTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
+        INFO_LOG("Registering callback on: " << m_notifier->signal_fd());
         return std::make_unique<TransportIOEvent>(m_notifier->signal_fd(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
             m_recvQueue->retrieve([&](auto &ptr) {
                 MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();

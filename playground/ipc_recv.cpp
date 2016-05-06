@@ -20,13 +20,13 @@
 #include "fastpath/utils/tfnulllock.h"
 
 struct PeerConnection {
-    std::unique_ptr<fp::notifier> m_notifier;
+    fp::InterprocessNotifierServer::notifier_type m_notifier;
     int m_process_id;
 
     std::unique_ptr<fp::SharedMemoryBuffer> m_clientQueue;
 
-    PeerConnection(std::unique_ptr<fp::notifier> &&notifier, int process_id, fp::SharedMemoryManager *sm_manager)
-            : m_notifier(std::forward<std::unique_ptr<fp::notifier>>(notifier)),
+    PeerConnection(fp::InterprocessNotifierServer::notifier_type &&notifier, int process_id, fp::SharedMemoryManager *sm_manager)
+            : m_notifier(std::forward<fp::InterprocessNotifierServer::notifier_type>(notifier)),
               m_process_id(process_id) {
 
         char queueName[32];
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     auto notificationHandler = [&](fp::TransportIOEvent *event, const fp::EventType type, fp::notifier *notifier) noexcept {
         if (!notifier->reset()) {
             auto it = std::find_if(m_notifiers.begin(), m_notifiers.end(), [&notifier](const PeerConnection &p) {
-                return p.m_notifier.get() == notifier;
+                return std::get<1>(p.m_notifier).get() == notifier;
             });
             if (it != m_notifiers.end()) {
                 INFO_LOG("Client " << it->m_process_id << " disconnected " << event->fileDescriptor());
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 
                 std::for_each(m_notifiers.begin(), m_notifiers.end(), [&storage](const PeerConnection &p) {
                     p.m_clientQueue->notify(&storage);
-                    p.m_notifier->notify();
+                    std::get<1>(p.m_notifier)->notify();
                 });
 
                 pool.release(msg);
@@ -110,12 +110,12 @@ int main(int argc, char *argv[]) {
 
     try {
         INFO_LOG("Started");
-        fp::InterprocessNotifierServer notifier([&](std::unique_ptr<fp::notifier> &&notifier, int process_id) {
-            int fd = notifier->read_handle();
+        fp::InterprocessNotifierServer notifier([&] (fp::InterprocessNotifierServer::notifier_type &&notifier, int process_id) {
+            int fd = std::get<0>(notifier)->read_handle();
             DEBUG_LOG("Need to add callback for " << fd);
             m_notifiers.emplace_back(std::move(notifier), process_id, &sm_manager);
 
-            auto ptr = m_notifiers.back().m_notifier.get();
+            auto ptr = std::get<0>(m_notifiers.back().m_notifier).get();
             auto notification_handler = std::make_unique<fp::TransportIOEvent>(fd, fp::EventType::READ, std::bind(notificationHandler, std::placeholders::_1, std::placeholders::_2, ptr));
             evm.registerHandler(notification_handler.release());
         });

@@ -50,14 +50,14 @@ namespace fp {
 #endif
         }
 
-        explicit notifier(int *fd) noexcept {
-            m_fd[0] = fd[pipe_read];
-            m_fd[1] = fd[pipe_write];
+        explicit notifier(int fd, direction d) noexcept {
+            m_fd[d] = fd;
+            m_fd[!d] = -1;
         }
 
         notifier(notifier &&other) noexcept {
-            m_fd[0] = other.m_fd[pipe_read];
-            m_fd[1] = other.m_fd[pipe_write];
+            m_fd[pipe_read] = other.m_fd[pipe_read];
+            m_fd[pipe_write] = other.m_fd[pipe_write];
 
             other.m_fd[pipe_read] = -1;
             other.m_fd[pipe_write] = -1;
