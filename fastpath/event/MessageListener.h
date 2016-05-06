@@ -65,8 +65,6 @@ namespace fp {
             return instance;
         }
 
-        ~MessageListener();
-
         status addObserver(Queue *queue, const Subscriber &subscriber, EventManager *eventManager);
         status removeObserver(Queue *queue, const Subscriber &subscriber);
     };

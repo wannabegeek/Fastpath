@@ -49,8 +49,6 @@ namespace fp {
         transport->sendMessage(msg);
     }
 
-    MessageListener::~MessageListener() = default;
-
     const bool MessageListener::registerTransport(Transport *transport, EventManager *eventManager) {
         if (transport->m_eventManager == nullptr) {
             // lock
@@ -61,6 +59,37 @@ namespace fp {
                     eventManager->registerHandler(container->event.get());
                 }
                 m_transportConnections.push_back(std::move(container));
+
+                auto &transport_container = m_transportConnections.back();
+                transport->setNotificationHandler([&, this, transport, eventManager](Transport::notification_type type, const char *reason) {
+                    switch (type) {
+                        case Transport::CONNECTED: {
+                            DEBUG_LOG("We have just been connected to fprouter, need to re-subscribe");
+                            transport_container->event = transport->createReceiverEvent(std::bind(&MessageListener::handleMessage, this, std::placeholders::_1, std::placeholders::_2));
+                            if (transport_container->event) {
+                                eventManager->registerHandler(transport_container->event.get());
+                            }
+                            auto it = this->m_observers.find(transport);
+                            if (it != this->m_observers.end()) {
+                                const ObserversType &subscribers = it->second;
+                                for (const auto &message_event : subscribers) {
+                                    this->subscribe(transport, message_event->subscriber()->subject());
+                                }
+                            }
+                            break;
+                        }
+                        case Transport::DISCONNECTED:
+                            DEBUG_LOG("We have just been disconnected from fprouter");
+                            if (transport_container->event) {
+                                eventManager->unregisterHandler(transport_container->event.get());
+                                transport_container->event.reset();
+                            }
+                            break;
+                        default:
+                            // not handling CORRUPT_MESSAGE etc. here
+                            break;
+                    }
+                });
             }
             // unlock
             return true;
@@ -99,7 +128,9 @@ namespace fp {
                 ObserversType &subscribers = it->second;
                 subscribers.emplace_back(std::make_unique<MessageEvent>(queue, &subscriber));
             }
-            this->subscribe(subscriber.transport(), subscriber.subject());
+            if (subscriber.transport()->valid()) {
+                this->subscribe(subscriber.transport(), subscriber.subject());
+            }
         } else {
             return INVALID_TRANSPORT_STATE;
         }
