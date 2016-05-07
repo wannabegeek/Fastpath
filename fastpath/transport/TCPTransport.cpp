@@ -122,12 +122,19 @@ namespace fp {
             MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
             storage.mark();
 
-            if (MessageCodec::decode(message.get(), storage)) {
-                messageCallback(this, message);
-                return true;
-            } else {
-                storage.resetRead();
-                message = nullptr;
+            try {
+                if (MessageCodec::decode(message.get(), storage)) {
+                    messageCallback(this, message);
+                    return true;
+                } else {
+                    storage.resetRead();
+                    message = nullptr;
+                }
+            } catch (const fp::exception &e) {
+                if (m_notificationHandler) {
+                    m_notificationHandler(CORRUPT_MESSAGE, "");
+                }
+                this->__disconnect();
             }
         }
 
@@ -135,27 +142,31 @@ namespace fp {
     }
 
     std::unique_ptr<TransportIOEvent> TCPTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) noexcept {
-        return std::make_unique<TransportIOEvent>(m_peer->getSocket(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
-            static const size_t MTU_SIZE = 1500;
+        if (this->valid()) {
+            return std::make_unique<TransportIOEvent>(m_peer->getSocket(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
+                static const size_t MTU_SIZE = 1500;
 
-            ssize_t size = 0;
-            while (true) {
-                fp::Socket::ReadResult result = m_peer->read(reinterpret_cast<const char *>(m_readBuffer.allocate(MTU_SIZE)), MTU_SIZE, size);
-                m_readBuffer.erase_back(MTU_SIZE - size);
+                ssize_t size = 0;
+                while (true) {
+                    fp::Socket::ReadResult result = m_peer->read(reinterpret_cast<const char *>(m_readBuffer.allocate(MTU_SIZE)), MTU_SIZE, size);
+                    m_readBuffer.erase_back(MTU_SIZE - size);
 
-                if (result == fp::Socket::MoreData) {
-                    const fp::MessageBuffer::ByteStorageType &storage = m_readBuffer.byteStorage();
+                    if (result == fp::Socket::MoreData) {
+                        const fp::MessageBuffer::ByteStorageType &storage = m_readBuffer.byteStorage();
 
-                    while (this->processData(storage, messageCallback));
+                        while (this->processData(storage, messageCallback));
 
-                    m_readBuffer.erase_front(storage.bytesRead());
-                } else if (result == fp::Socket::NoData) {
-                    break;
-                } else if (result == fp::Socket::Closed) {
-                    DEBUG_LOG("Client Socket closed");
-                    break;
+                        m_readBuffer.erase_front(storage.bytesRead());
+                    } else if (result == fp::Socket::NoData) {
+                        break;
+                    } else if (result == fp::Socket::Closed) {
+                        DEBUG_LOG("Client Socket closed");
+                        break;
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            return nullptr;
+        }
     }
 }

@@ -30,6 +30,7 @@
 
 #include "fastpath/messages/subscription.h"
 #include "fastpath/transport/Transport.h"
+#include "fastpath/messages/Message.h"
 
 namespace fp {
     class Transport;
@@ -38,7 +39,7 @@ namespace fp {
     class Subscriber {
     private:
         Transport *m_transport;
-        std::unique_ptr<char[]> m_subject;
+        char m_subject[Message::max_subject_length];
         const std::function<void(const Subscriber *, Message *)> m_callback;
         subscription<> m_subscription;
 
@@ -46,16 +47,13 @@ namespace fp {
         Subscriber(std::unique_ptr<Transport> &transport, const char *subject, const std::function<void(const Subscriber *, Message *)> &callback) : Subscriber(transport.get(), subject, callback) { }
 
         Subscriber(Transport *transport, const char *subject, const std::function<void(const Subscriber *, Message *)> &callback) : m_transport(transport), m_callback(callback), m_subscription(subject) {
-            // TODO: we need to copy the string here
-            const size_t len = strlen(subject);
-            m_subject = std::unique_ptr<char[]>(new char[len + 1]);
-            std::copy_n(subject, len + 1, m_subject.get());
+            ::strncpy(m_subject, subject, Message::max_subject_length);
         }
 
         ~Subscriber() noexcept = default;
 
         Transport *transport() const noexcept { return m_transport; }
-        const char *subject() const noexcept { return m_subject.get(); }
+        const char *subject() const noexcept { return m_subject; }
 
         bool is_interested(const ::fp::subject<> subject) const;
 
