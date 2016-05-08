@@ -60,6 +60,7 @@ namespace fp {
     }
 
     TCPTransport::~TCPTransport() noexcept {
+        m_notificationHandler = nullptr;
         this->__disconnect();
     }
 
