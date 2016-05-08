@@ -142,15 +142,15 @@ namespace fp {
     status MessageListener::removeObserver(Queue *queue, const Subscriber &subscriber) {
         auto it = m_observers.find(subscriber.transport());
         if (it != m_observers.end()) {
-//            ObserversType &subscribers = it->second;
-//            auto it2 = std::find(subscribers.begin(), subscribers.end(), .......);
-//            if (it2 != subscribers.end()) {
-//                this->unsubscribe(subscriber.subject());
-//                subscribers.erase(it2);
-//                return OK;
-//            }
-//            this->unsubscribe(subscriber.transport(), subscriber.subject());
-
+            ObserversType &subscribers = it->second;
+            auto it2 = std::find_if(subscribers.begin(), subscribers.end(), [&subscriber] (const auto &s) {
+                return s->subscriber() == &subscriber;
+            });
+            if (it2 != subscribers.end()) {
+                this->unsubscribe(subscriber.transport(), subscriber.subject());
+                subscribers.erase(it2);
+                return OK;
+            }
         }
 
         return CANNOT_DESTROY;
