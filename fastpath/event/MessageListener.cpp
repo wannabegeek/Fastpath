@@ -32,7 +32,6 @@ namespace fp {
 
     TransportContainer::TransportContainer(Transport *t, std::unique_ptr<TransportIOEvent> &&e) : transport(t), event(std::move(e)) {}
 
-
     void MessageListener::subscribe(Transport *transport, const char *subject) noexcept {
         MutableMessage msg;
         msg.setSubject("_FP.REGISTER.OBSERVER");
@@ -81,7 +80,9 @@ namespace fp {
                         case Transport::DISCONNECTED:
                             DEBUG_LOG("We have just been disconnected from fprouter");
                             if (transport_container->event) {
-                                eventManager->unregisterHandler(transport_container->event.get());
+                                if (eventManager != nullptr) {
+                                    eventManager->unregisterHandler(transport_container->event.get());
+                                }
                                 transport_container->event.reset();
                             }
                             break;
@@ -116,7 +117,7 @@ namespace fp {
         }
     }
 
-    status MessageListener::addObserver(Queue *queue, const Subscriber &subscriber, EventManager *eventManager) {
+    status MessageListener::addObserver(Queue *queue, const Subscriber &subscriber, EventManager *eventManager) noexcept {
 
         if (this->registerTransport(subscriber.transport(), eventManager)) {
             auto it = m_observers.find(subscriber.transport());
@@ -139,7 +140,7 @@ namespace fp {
 
     }
 
-    status MessageListener::removeObserver(Queue *queue, const Subscriber &subscriber) {
+    status MessageListener::removeObserver(Queue *queue, const Subscriber &subscriber) noexcept {
         auto it = m_observers.find(subscriber.transport());
         if (it != m_observers.end()) {
             ObserversType &subscribers = it->second;

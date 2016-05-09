@@ -74,9 +74,11 @@ int main( int argc, char *argv[] )  {
         fp::BlockingQueue queue;
         auto transport = fp::make_realm_connection(url.c_str(), "");
 
-        queue.addSubscriber(fp::Subscriber(transport, subject.c_str(), [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
+        const fp::Subscriber subscriber(transport, subject.c_str(), [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
             INFO_LOG(*msg);
-        }));
+        });
+
+        queue.addSubscriber(subscriber);
 
         bool shutdown = false;
         auto terminate = [&](const fp::SignalEvent *event, const int signal) noexcept {
@@ -90,6 +92,7 @@ int main( int argc, char *argv[] )  {
             queue.dispatch();
         }
 
+        queue.removeSubscriber(subscriber);
         fp::Session::destroy();
     } catch (const std::exception &stde) {
         ERROR_LOG("Internal error: " << stde.what());

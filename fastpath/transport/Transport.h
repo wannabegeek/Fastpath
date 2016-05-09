@@ -69,7 +69,7 @@ namespace fp {
 
         status sendMessage(const MessageType &msg) noexcept {
             return sendMessage(*(msg.get()));
-        };
+        }
 
         virtual status sendMessage(const Message &msg) noexcept = 0;
         virtual status sendMessageWithResponse(const Message &request, Message &reply, std::chrono::duration<std::chrono::milliseconds> &timeout) noexcept = 0;
