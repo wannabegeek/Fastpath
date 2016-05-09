@@ -32,12 +32,12 @@
 
 namespace tf {
     const char *get_temp_directory() noexcept {
-        static const std::array<const char *, 4> env_locations{
+        static const std::array<const char *, 4> env_locations{{
                 "TMPDIR",
                 "TMP",
                 "TEMP",
                 "TEMPDIR"
-        };
+        }};
 
         char *location = nullptr;
         for (auto &env: env_locations) {

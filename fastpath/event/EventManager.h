@@ -35,6 +35,7 @@
 namespace fp {
     class TimerEvent;
     class IOEvent;
+    class SignalEvent;
     
 	class EventManager {
     public:
@@ -42,7 +43,8 @@ namespace fp {
 
 	private:
 		std::function<void(EventPollIOElement &&)> m_ioCallback;
-		std::function<void(EventPollTimerElement &&)> m_timerCallback;
+        std::function<void(EventPollTimerElement &&)> m_timerCallback;
+        std::function<void(EventPollSignalElement &&)> m_signalCallback;
     protected:
         EventPoll m_eventLoop;
 
@@ -50,9 +52,11 @@ namespace fp {
 
         virtual void serviceIOEvent(const EventPollIOElement &event) noexcept;
         virtual void serviceTimerEvent(const EventPollTimerElement &event) noexcept;
+        virtual void serviceSignalEvent(const EventPollSignalElement &event) noexcept;
 
         virtual void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const noexcept = 0;
         virtual void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const noexcept = 0;
+		virtual void foreach_signal_matching(const EventPollSignalElement &event, std::function<void(SignalEvent *)> callback) const noexcept = 0;
 
         virtual const bool haveHandlers() const noexcept = 0;
 
@@ -66,9 +70,13 @@ namespace fp {
 
         virtual void registerHandler(TimerEvent *eventRegistration) noexcept = 0;
 		virtual void registerHandler(IOEvent *eventRegistration) noexcept = 0;
+        virtual void registerHandler(SignalEvent *event) noexcept = 0;
+
         virtual void updateHandler(TimerEvent *eventRegistration) noexcept = 0;
+
 		virtual void unregisterHandler(TimerEvent *handler) noexcept = 0;
-		virtual void unregisterHandler(IOEvent *handler) noexcept = 0;
+        virtual void unregisterHandler(IOEvent *handler) noexcept = 0;
+        virtual void unregisterHandler(SignalEvent *handler) noexcept = 0;
 
 		virtual void notify(bool wait = false) noexcept = 0;
 

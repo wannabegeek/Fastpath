@@ -44,26 +44,24 @@ namespace fp {
     }
 
     bool EventPoll::add(const EventPollTimerElement &event) noexcept {
-        int filter = EVFILT_TIMER;
         struct kevent ke;
 
-        ++m_events;
-
-        EV_SET(&ke, event.identifier, filter, EV_ADD, NOTE_USECONDS, event.timeout.count(), NULL);
+        EV_SET(&ke, event.identifier, EVFILT_TIMER, EV_ADD, NOTE_USECONDS, event.timeout.count(), NULL);
 
         int i = kevent(m_fd, &ke, 1, NULL, 0, NULL);
         if (i == -1) {
             ERROR_LOG("Failed to add event to kevent: " << strerror(errno));
             return false;
         }
+        ++m_events;
+
         return true;
     }
 
     bool EventPoll::update(const EventPollTimerElement &event) noexcept {
-        int filter = EVFILT_TIMER;
         struct kevent ke;
 
-        EV_SET(&ke, event.identifier, filter, EV_ADD, NOTE_USECONDS, event.timeout.count(), NULL);
+        EV_SET(&ke, event.identifier, EVFILT_TIMER, EV_ADD, NOTE_USECONDS, event.timeout.count(), NULL);
 
         int i = kevent(m_fd, &ke, 1, NULL, 0, NULL);
         if (i == -1) {
@@ -74,18 +72,17 @@ namespace fp {
     }
 
     bool EventPoll::remove(const EventPollTimerElement &event) noexcept {
-        int filter = EVFILT_TIMER;
         struct kevent ke;
 
-        --m_events;
-
-        EV_SET(&ke, event.identifier, filter, EV_DELETE, 0, 0, NULL);
+        EV_SET(&ke, event.identifier, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
 
         int i = kevent(m_fd, &ke, 1, NULL, 0, NULL);
         if (i == -1) {
             ERROR_LOG("Failed to add event to kevent: " << strerror(errno));
             return false;
         }
+        --m_events;
+
         return true;
     }
 
@@ -99,7 +96,6 @@ namespace fp {
         if ((event.filter & EventType::WRITE) == EventType::WRITE) {
             filter |= EVFILT_WRITE;
         }
-        ++m_events;
 
         EV_SET(&ke, event.identifier, filter, EV_ADD | EV_CLEAR, 0, 0, NULL);
 
@@ -108,6 +104,8 @@ namespace fp {
             ERROR_LOG("Failed to add event to kevent: " << strerror(errno));
             return false;
         }
+        ++m_events;
+
         return true;
     }
 
@@ -122,7 +120,6 @@ namespace fp {
             filter |= EVFILT_WRITE;
         }
 
-        --m_events;
         EV_SET(&ke, event.identifier, filter, EV_DELETE, 0, 0, NULL);
 
         int i = kevent(m_fd, &ke, 1, NULL, 0, NULL);
@@ -134,10 +131,42 @@ namespace fp {
                 return false;
             }
         }
+        --m_events;
+
         return true;
     }
 
-    int EventPoll::run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events) noexcept {
+    bool EventPoll::add(const EventPollSignalElement &event) noexcept {
+        struct kevent ke;
+
+        EV_SET(&ke, event.signal, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+
+        int i = kevent(m_fd, &ke, 1, NULL, 0, NULL);
+        if (i == -1) {
+            ERROR_LOG("Failed to add event to kevent: " << strerror(errno));
+            return false;
+        }
+        ++m_events;
+
+        return true;
+    }
+
+    bool EventPoll::remove(const EventPollSignalElement &event) noexcept {
+        struct kevent ke;
+
+        EV_SET(&ke, event.identifier, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
+
+        int i = kevent(m_fd, &ke, 1, NULL, 0, NULL);
+        if (i == -1) {
+            ERROR_LOG("Failed to add event to kevent: " << strerror(errno));
+            return false;
+        }
+        --m_events;
+
+        return true;
+    }
+
+    int EventPoll::run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events, std::function<void(EventPollSignalElement &&)> signal_events) noexcept {
 
         if (m_events != 0) {
             struct kevent _events[maxDispatchSize];
@@ -157,6 +186,10 @@ namespace fp {
                     } else if ((_events[i].filter & EVFILT_TIMER) == EVFILT_TIMER) {
                         for (int64_t i = 0; i < _events[i].data; i++) {
                             timer_events(EventPollTimerElement(static_cast<int>(_events[i].ident)));
+                        }
+                    } else if ((_events[i].filter & EVFILT_SIGNAL) == EVFILT_SIGNAL) {
+                        for (int64_t i = 0; i < _events[i].data; i++) {
+                            signal_events(EventPollSignalElement(-1, static_cast<int>(_events[i].ident)));
                         }
                     }
                 }

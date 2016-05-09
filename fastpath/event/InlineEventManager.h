@@ -32,22 +32,23 @@
 #include "fastpath/event/EventManager.h"
 
 namespace fp {
-    class Timer;
-    class IOEvent;
 
     class InlineEventManager final : public EventManager {
     private:
         using IOEventTable = std::unordered_map<int, std::vector<IOEvent *>>;
         using TimerEventTable = std::unordered_map<int, TimerEvent *>;
+        using SignalEventTable = std::unordered_map<int, SignalEvent *>;
 
         IOEventTable m_ioHandlerLookup;
         TimerEventTable m_timerHandlerLookup;
+        SignalEventTable m_signalHandlerLookup;
 
         mutable bool m_servicingEvents;
 //        mutable bool m_servicingTimers;
 
         void foreach_event_matching(const EventPollIOElement &event, std::function<void(IOEvent *)> callback) const noexcept override;
         void foreach_timer_matching(const EventPollTimerElement &event, std::function<void(TimerEvent *)> callback) const noexcept override;
+        void foreach_signal_matching(const EventPollSignalElement &event, std::function<void(SignalEvent *)> callback) const noexcept override;
 
         const bool haveHandlers() const noexcept override;
     public:
@@ -58,9 +59,13 @@ namespace fp {
 
         void registerHandler(TimerEvent *event) noexcept override;
         void registerHandler(IOEvent *event) noexcept override;
+        void registerHandler(SignalEvent *event) noexcept override;
+
         void updateHandler(TimerEvent *event) noexcept override;
+
         void unregisterHandler(TimerEvent *event) noexcept override;
         void unregisterHandler(IOEvent *event) noexcept override;
+        void unregisterHandler(SignalEvent *event) noexcept override;
 
         void notify(bool wait = false) noexcept override {}
     };

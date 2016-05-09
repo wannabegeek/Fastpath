@@ -30,11 +30,13 @@
 #include <thread>
 #include <iostream>
 #include <cstring>
+#include <sys/signalfd.h>
 #include <sys/epoll.h>
 
 namespace fp {
 
     static const uint64_t TimerIdentifier = 1l << 33;
+    static const uint64_t SignalIdentifier = 2l << 33;
 
     EventPoll::EventPoll() {
         m_fd = epoll_create1(0);
@@ -47,15 +49,15 @@ namespace fp {
     bool EventPoll::add(const EventPollTimerElement &event) noexcept {
         struct epoll_event ev;
         memset(&ev, 0, sizeof(struct epoll_event));
-        ++m_events;
 
         ev.events = EPOLLIN;
         ev.data.u64 = event.identifier | TimerIdentifier;
 
         if (epoll_ctl(m_fd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
-            ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
+            ERROR_LOG("Failed to add timer event with epoll_ctl: " << strerror(errno));
             return false;
         }
+        ++m_events;
 
         return true;
     }
@@ -68,15 +70,15 @@ namespace fp {
     bool EventPoll::remove(const EventPollTimerElement &event) noexcept {
         struct epoll_event ev;
         memset(&ev, 0, sizeof(struct epoll_event));
-        --m_events;
 
         ev.events = EPOLLIN;
         ev.data.fd = event.identifier;
 
         if (epoll_ctl(m_fd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
-            ERROR_LOG("Failed to remove event with epoll_ctl: " << strerror(errno));
+            ERROR_LOG("Failed to remove timer event with epoll_ctl: " << strerror(errno));
             return false;
         }
+        --m_events;
 
         return true;
     }
@@ -92,15 +94,15 @@ namespace fp {
         if ((event.filter & EventType::WRITE) == EventType::WRITE) {
             filter |= EPOLLOUT;
         }
-        ++m_events;
 
         ev.events = filter;
         ev.data.fd = event.identifier;
 
         if (epoll_ctl(m_fd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
-            ERROR_LOG("Failed to add event with epoll_ctl: " << strerror(errno));
+            ERROR_LOG("Failed to add io event with epoll_ctl: " << strerror(errno));
             return false;
         }
+        ++m_events;
 
         return true;
     }
@@ -116,22 +118,54 @@ namespace fp {
         if ((event.filter & EventType::WRITE) == EventType::WRITE) {
             filter |= EPOLLOUT;
         }
-        --m_events;
 
         ev.events = filter;
         ev.data.fd = event.identifier;
 
         if (epoll_ctl(m_fd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
             if (errno != EBADF) { // probably the fd is already closed (& epoll with automatically remove it)
-                ERROR_LOG("Failed to remove event with epoll_ctl: " << strerror(errno));
+                ERROR_LOG("Failed to remove io event with epoll_ctl: " << strerror(errno));
                 return false;
             }
         }
+        --m_events;
 
         return true;
     }
 
-    int EventPoll::run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events) noexcept {
+    bool EventPoll::add(const EventPollSignalElement &event) noexcept {
+        struct epoll_event ev;
+        memset(&ev, 0, sizeof(struct epoll_event));
+
+        ev.events = EPOLLIN;
+        ev.data.u64 = event.identifier | SignalIdentifier;
+
+        if (epoll_ctl(m_fd, EPOLL_CTL_ADD, event.identifier, &ev) == -1) {
+            ERROR_LOG("Failed to add signal event with epoll_ctl: " << strerror(errno));
+            return false;
+        }
+        ++m_events;
+
+        return true;
+    }
+
+    bool EventPoll::remove(const EventPollSignalElement &event) noexcept {
+        struct epoll_event ev;
+        memset(&ev, 0, sizeof(struct epoll_event));
+
+        ev.events = EPOLLIN;
+        ev.data.fd = event.identifier;
+
+        if (epoll_ctl(m_fd, EPOLL_CTL_DEL, event.identifier, &ev) == -1) {
+            ERROR_LOG("Failed to remove signal event with epoll_ctl: " << strerror(errno));
+            return false;
+        }
+        --m_events;
+
+        return true;
+    }
+
+    int EventPoll::run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events, std::function<void(EventPollSignalElement &&)> signal_events) noexcept {
         int result = -1;
 
         if (m_events != 0) {
@@ -150,6 +184,11 @@ namespace fp {
 
                     if ((_events[j].data.u64 & TimerIdentifier) == TimerIdentifier) {
                         timer_events(EventPollTimerElement(_events[j].data.fd));
+                    } else if ((_events[j].data.u64 & SignalIdentifier) == SignalIdentifier) {
+                        struct signalfd_siginfo v;
+                        ::read(_events[j].data.fd, &v, sizeof(struct signalfd_siginfo));
+
+                        signal_events(EventPollSignalElement(_events[j].data.fd, v.ssi_signo));
                     } else if (filter != EventType::NONE) {
                         io_events(EventPollIOElement(_events[j].data.fd, filter));
                     }

@@ -51,10 +51,13 @@
 #include "fastpath/event/EventType.h"
 #include "fastpath/event/TimerEvent.h"
 #include "fastpath/event/IOEvent.h"
+#include "fastpath/event/SignalEvent.h"
 #include "fastpath/utils/logger.h"
 
 namespace fp {
-    EventManager::EventManager() : m_ioCallback(std::bind(&EventManager::serviceIOEvent, this, std::placeholders::_1)), m_timerCallback(std::bind(&EventManager::serviceTimerEvent, this, std::placeholders::_1)) {}
+    EventManager::EventManager() : m_ioCallback(std::bind(&EventManager::serviceIOEvent, this, std::placeholders::_1)),
+            m_timerCallback(std::bind(&EventManager::serviceTimerEvent, this, std::placeholders::_1)),
+            m_signalCallback(std::bind(&EventManager::serviceSignalEvent, this, std::placeholders::_1)) {}
 
 	bool isFileDescriptorValid(int fd) {
 		return (!(::fcntl(fd, F_GETFL) == -1 && errno != EBADF));
@@ -63,7 +66,7 @@ namespace fp {
     void EventManager::waitForEvent() noexcept {
 		int result = 0;
         m_in_event_wait.store(true); // not sure if this should be before the setTimeout() or below - lets be safe
-        result = m_eventLoop.run(m_ioCallback, m_timerCallback);
+        result = m_eventLoop.run(m_ioCallback, m_timerCallback, m_signalCallback);
         m_in_event_wait.store(false);
         if (tf::unlikely(result == -1)) {
             ERROR_LOG("We have an error: [errno: " << strerror(errno) << "(" << errno << ")]");
@@ -80,6 +83,12 @@ namespace fp {
 
     void EventManager::serviceTimerEvent(const EventPollTimerElement &event) noexcept {
         foreach_timer_matching(event, [&](TimerEvent *handler) noexcept {
+            handler->__notify(EventType::NONE);
+        });
+    }
+
+    void EventManager::serviceSignalEvent(const EventPollSignalElement &event) noexcept {
+        foreach_signal_matching(event, [&](SignalEvent *handler) noexcept {
             handler->__notify(EventType::NONE);
         });
     }

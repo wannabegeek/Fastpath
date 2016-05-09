@@ -27,6 +27,7 @@
 #include "fastpath/Exception.h"
 #include "fastpath/event/DataEvent.h"
 #include "fastpath/event/TimerEvent.h"
+#include "fastpath/event/SignalEvent.h"
 #include "fastpath/event/MessageListener.h"
 #include "fastpath/event/Subscriber.h"
 
@@ -73,7 +74,19 @@ namespace fp {
         return EVM_NOTRUNNING;
     }
 
-        status Queue::unregisterEvent(DataEvent *event) noexcept {
+    SignalEvent *Queue::registerEvent(const int signal, const std::function<void(SignalEvent *, int)> &callback) noexcept {
+        auto result = m_registeredEvents.emplace(make_set_unique<Event>(new SignalEvent(this, signal, callback)));
+        SignalEvent *event = reinterpret_cast<SignalEvent *>(result.first->get());
+        EventManager *em = this->eventManager();
+        if (em != nullptr) {
+            em->registerHandler(event);
+        } else {
+            throw fp::exception("Event manager not running");
+        }
+        return event;
+    }
+
+    status Queue::unregisterEvent(DataEvent *event) noexcept {
         // This will block any further callback to client code, which may still exist in the queue
         event->__setPendingRemoval(true);
         EventManager *em = this->eventManager();
@@ -85,6 +98,17 @@ namespace fp {
     }
 
     status Queue::unregisterEvent(TimerEvent *event) noexcept {
+        // This will block any further callback to client code, which may still exist in the queue
+        event->__setPendingRemoval(true);
+        EventManager *em = this->eventManager();
+        if (em != nullptr) {
+            em->unregisterHandler(event);
+            return OK;
+        }
+        return EVM_NOTRUNNING;
+    }
+
+    status Queue::unregisterEvent(SignalEvent *event) noexcept {
         // This will block any further callback to client code, which may still exist in the queue
         event->__setPendingRemoval(true);
         EventManager *em = this->eventManager();

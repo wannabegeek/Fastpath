@@ -32,9 +32,6 @@
 #include "fastpath/config.h"
 
 namespace fp {
-	using DistantFutureType = std::chrono::microseconds;
-	static constexpr DistantFutureType DistantFuture = DistantFutureType::max();
-
 	struct EventPollIOElement {
 		EventPollIOElement() noexcept {}
 		EventPollIOElement(const int _fd, const int _filter) noexcept : identifier(_fd), filter(_filter) {}
@@ -42,6 +39,14 @@ namespace fp {
 		int identifier = -1;
 		int filter = 0;
 	};
+
+    struct EventPollSignalElement {
+        EventPollSignalElement() noexcept {}
+        EventPollSignalElement(int _fd, const uint32_t _signal) noexcept : identifier(_fd), signal(_signal) {}
+
+        int identifier = -1;
+        int signal = -1;
+    };
 
 	struct EventPollTimerElement {
         EventPollTimerElement() noexcept {}
@@ -73,7 +78,10 @@ namespace fp {
         bool add(const EventPollIOElement &event) noexcept;
         bool remove(const EventPollIOElement &event) noexcept;
 
-        int run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events) noexcept;
+		bool add(const EventPollSignalElement &event) noexcept;
+		bool remove(const EventPollSignalElement &event) noexcept;
+
+		int run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events, std::function<void(EventPollSignalElement &&)> signal_events) noexcept;
     };
 }
 
