@@ -8,6 +8,7 @@ SET(HEADER_FILES
         PollManager_select.h
         TimerEvent.h
         IOEvent.h
+        SignalEvent.h
         BusySpinQueue.h
         BlockingQueue.h
         InlineQueue.h
@@ -30,6 +31,7 @@ SET(SOURCE_FILES
         EventManager.cpp
         TimerEvent.cpp
         IOEvent.cpp
+        SignalEvent.cpp
         GlobalEventManager.cpp
         InlineEventManager.cpp
         )

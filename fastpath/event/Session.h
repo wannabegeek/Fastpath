@@ -29,6 +29,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <signal.h>
 #include <condition_variable>
 
 #include "fastpath/status.h"
@@ -56,6 +57,13 @@ namespace fp {
             std::condition_variable condition;
 
             std::unique_lock<std::mutex> lock(mutex);
+
+            sigset_t mask;
+            sigfillset(&mask);
+            if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
+                ERROR_LOG("Failed to block default signal delivery to event dispatch thread");
+            }
+
             m_eventLoop = std::thread([&]() {
                 {
                     std::lock_guard<std::mutex> lock_guard(mutex);

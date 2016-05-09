@@ -130,11 +130,13 @@ namespace fp {
 
         DataEvent *registerEvent(const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback) noexcept;
         TimerEvent *registerEvent(const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback) noexcept;
+        SignalEvent *registerEvent(const int signal, const std::function<void(SignalEvent *, int)> &callback) noexcept;
 
         status updateEvent(TimerEvent *event) noexcept;
 
         status unregisterEvent(DataEvent *event) noexcept;
         status unregisterEvent(TimerEvent *event) noexcept;
+        status unregisterEvent(SignalEvent *event) noexcept;
 
         status addSubscriber(const Subscriber &subscriber) noexcept;
         status removeSubscriber(const Subscriber &subscriber) noexcept;

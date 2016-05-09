@@ -24,6 +24,7 @@
  ***************************************************************************/
 
 #include <iostream>
+#include <signal.h>
 
 #include "fastpath/utils/tfoptions.h"
 #include "fastpath/fastpath.h"
@@ -77,7 +78,15 @@ int main( int argc, char *argv[] )  {
             INFO_LOG(*msg);
         }));
 
-        while (true) {
+        bool shutdown = false;
+        auto terminate = [&](const fp::SignalEvent *event, const int signal) noexcept {
+            INFO_LOG("Shutdown signal caught...");
+            shutdown = true;
+        };
+        queue.registerEvent(SIGINT, terminate);
+        queue.registerEvent(SIGTERM, terminate);
+
+        while (!shutdown) {
             queue.dispatch();
         }
 
