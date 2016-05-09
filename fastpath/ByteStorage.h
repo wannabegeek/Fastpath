@@ -55,8 +55,9 @@ namespace fp {
     template <typename T, typename Allocator = std::allocator<T>> class ByteStorage {
     public:
         typedef enum {
-            COPY_ON_CONSTRUCT = 1 << 0,
-            TAKE_OWNERSHIP = 1 << 1
+            TRANSIENT = 1 << 0,
+            COPY_ON_CONSTRUCT = 1 << 1,
+            TAKE_OWNERSHIP = 1 << 2
         } storage_options;
 
     private:

@@ -166,7 +166,7 @@ namespace fp {
         return true;
     }
 
-    int EventPoll::run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events, std::function<void(EventPollSignalElement &&)> signal_events) noexcept {
+    int EventPoll::run(const std::function<void(EventPollIOElement &&)> &io_events, const std::function<void(EventPollTimerElement &&)> &timer_events, const std::function<void(EventPollSignalElement &&)> &signal_events) noexcept {
 
         if (m_events != 0) {
             struct kevent _events[maxDispatchSize];

@@ -101,7 +101,8 @@ TEST(Field, CreateDateTime) {
 
     std::chrono::time_point<std::chrono::system_clock> time_out;
     e.get(time_out);
-    ASSERT_EQ(time, time_out);
+    ASSERT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(time.time_since_epoch()).count(),
+                      std::chrono::duration_cast<std::chrono::microseconds>(time_out.time_since_epoch()).count());
 }
 
 
@@ -191,7 +192,7 @@ TEST(Field, SerializeDateTime) {
 
 TEST(Field, SerializeSubMessage) {
 
-    LOG_LEVEL(tf::logger::debug);
+    LOG_LEVEL(tf::logger::info);
 
     fp::MutableMessage msg;
     float32_t t = 22.0;

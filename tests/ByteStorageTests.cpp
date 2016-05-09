@@ -43,7 +43,7 @@ TEST(ByteStorage, StoreCopy) {
 TEST(ByteStorage, StoreNoCopy) {
     const char *data = "Hello World";
 
-    fp::ByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1, true);
+    fp::ByteStorage<byte> buffer(reinterpret_cast<const byte *>(data), strlen(data) + 1, fp::ByteStorage<byte>::TRANSIENT);
 
     ASSERT_EQ(strlen(data) + 1, buffer.length());
     ASSERT_FALSE(buffer.owns_copy());

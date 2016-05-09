@@ -14,9 +14,9 @@ CHECK_INCLUDE_FILES(pthread.h HAVE_PTHREAD_H)
 
 find_library(LIBRT_LIBRARIES rt)                                                                                                                                                                 
 
-if (LIBRT_LIBRARIES)
+IF (LIBRT_LIBRARIES)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LIBRT_LIBRARIES}")
-endif()
+ENDIF()
 
 IF (DEFINED HAVE_PTHREAD_H)
     list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)

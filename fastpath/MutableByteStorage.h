@@ -30,6 +30,7 @@
 #include <stddef.h>
 #include <utility>
 #include <limits>
+#include <cstring>
 
 #include "fastpath/utils/optimize.h"
 #include "fastpath/ByteStorage.h"
@@ -39,7 +40,7 @@ namespace fp {
     public:
 
         explicit MutableByteStorage(const size_t allocation = 256, const Allocator &allocator = Allocator()) noexcept : ByteStorage<T, Allocator>(allocation, allocator) {}
-        explicit MutableByteStorage(const T *bytes, size_t length, const Allocator &allocator = Allocator()) noexcept : ByteStorage<T, Allocator>(bytes, length, false, allocator) {}
+        explicit MutableByteStorage(const T *bytes, size_t length, const Allocator &allocator = Allocator()) noexcept : ByteStorage<T, Allocator>(bytes, length, ByteStorage<T, Allocator>::COPY_ON_CONSTRUCT | ByteStorage<T, Allocator>::TAKE_OWNERSHIP, allocator) {}
 
         MutableByteStorage(MutableByteStorage<T, Allocator> &&orig) noexcept : ByteStorage<T, Allocator>(std::move(orig)) {};
 
