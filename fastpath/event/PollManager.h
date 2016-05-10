@@ -81,7 +81,7 @@ namespace fp {
 		bool add(const EventPollSignalElement &event) noexcept;
 		bool remove(const EventPollSignalElement &event) noexcept;
 
-		int run(std::function<void(EventPollIOElement &&)> io_events, std::function<void(EventPollTimerElement &&)> timer_events, std::function<void(EventPollSignalElement &&)> signal_events) noexcept;
+		int run(const std::function<void(EventPollIOElement &&)> &io_events, const std::function<void(EventPollTimerElement &&)> &timer_events, const std::function<void(EventPollSignalElement &&)> &signal_events) noexcept;
     };
 }
 

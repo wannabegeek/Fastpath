@@ -1,11 +1,6 @@
 
 find_package(Threads)
 
-find_library(LIBRT_LIBRARIES rt)
-if (LIBRT_LIBRARIES)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LIBRT_LIBRARIES}")
-endif(LIBRT_LIBRARIES)
-
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 
@@ -29,5 +24,5 @@ add_executable(fprouter
         peer_connection.h
         )
 
-target_link_libraries(fprouter fastpath ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(fprouter fastpath ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_LIBRARIES})
 
