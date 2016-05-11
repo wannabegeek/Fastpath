@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     LOG_LEVEL(tf::logger::debug);
 
     fp::Session::initialise();
-    fp::BlockingQueue m_queue;
+    fp::BlockingQueue queue;
 
     auto transport = fp::make_realm_connection("shm://localhost:6969", "Sample");
 
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 
         bool shutdown = false;
         uint32_t counter = 0;
-        m_queue.registerEvent(std::chrono::seconds(1), [&] (const fp::TimerEvent *event) {
+        queue.registerEvent(std::chrono::milliseconds(1000), [&] (const fp::TimerEvent *event) {
             if (transport->valid()) {
                 auto msg = pool.allocate();
                 msg->setSubject("SOME.TEST.SUBJECT");
@@ -51,12 +51,23 @@ int main(int argc, char *argv[]) {
             }
         });
 
-        m_queue.addSubscriber(fp::Subscriber(transport, "SOME.TEST.REPLY", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
+        auto terminate = [&](const fp::SignalEvent *event, const int signal) noexcept {
+            INFO_LOG("Shutdown signal caught...");
+            shutdown = true;
+        };
+        queue.registerEvent(SIGINT, terminate);
+        queue.registerEvent(SIGTERM, terminate);
+
+        queue.addSubscriber(fp::Subscriber(transport, "SOME.TEST.REPLY", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
+            INFO_LOG(*msg);
+        }));
+
+        queue.addSubscriber(fp::Subscriber(transport, "SOME.TEST.SUBJECT", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
             INFO_LOG(*msg);
         }));
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        while(!shutdown && m_queue.dispatch() == fp::OK)
+        while(!shutdown && queue.dispatch() == fp::OK)
             ;
         DEBUG_LOG("Event loop dropped out");
     } catch (const fp::socket_error &e) {

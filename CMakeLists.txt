@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 project(fastpath)
 
 find_library(LIBRT_LIBRARIES rt)
+IF (NOT LIBRT_LIBRARIES)
+    SET(LIBRT_LIBRARIES "")
+ENDIF()
 
 set(GENERIC_COMPILER_FLAGS "-Wall -pedantic -std=c++14 -fPIC -mtune=native")
 IF (CMAKE_COMPILER_IS_GNUCXX)

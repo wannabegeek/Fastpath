@@ -39,29 +39,27 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/named_upgradable_mutex.hpp>
+#include <boost/interprocess/sync/upgradable_lock.hpp>
 #include <boost/interprocess/sync/sharable_lock.hpp>
 #include <fastpath/utils/allocator/generic_allocator.h>
-#include <fastpath/transport/sm/SharedMemoryManager.h>
-
+#include <boost/interprocess/smart_ptr/shared_ptr.hpp>
 #pragma GCC diagnostic pop
 
+#include "fastpath/transport/sm/SharedMemoryManager.h"
 #include "fastpath/transport/sm/shm_allocator.h"
 #include "types.h"
 
 namespace fp {
+
     class SharedMemoryBuffer {
     public:
         typedef MutableByteStorage<byte, SharedMemoryManager::allocator_type> mutable_storage_type;
         typedef ByteStorage<byte, SharedMemoryManager::allocator_type> storage_type;
 
     private:
-        //    typedef boost::interprocess::managed_shared_memory::handle_t SharedPtrType;
-        // This is only used to create the deque in shared memory
 
-        typedef std::pair<ptrdiff_t, std::size_t> txfr_type;
-
-        typedef boost::interprocess::allocator<txfr_type, boost::interprocess::managed_shared_memory::segment_manager> SmbAllocatorType;
-        typedef boost::interprocess::deque<txfr_type, SmbAllocatorType> ObjPtrListType;
+        typedef boost::interprocess::allocator<SharedMemoryManager::shared_ptr_type, boost::interprocess::managed_shared_memory::segment_manager> SmbAllocatorType;
+        typedef boost::interprocess::deque<SharedMemoryManager::shared_ptr_type, SmbAllocatorType> ObjPtrListType;
 
         typedef boost::interprocess::named_upgradable_mutex MutexType;
 
@@ -79,6 +77,7 @@ namespace fp {
                 m_mutex(boost::interprocess::open_or_create, (m_name + "_mutex").c_str()),
                 m_deque_allocator(sharedMemoryManager.segment().get_segment_manager()),
                 m_sharedMemoryManager(sharedMemoryManager) {
+
             m_objectList = m_sharedMemoryManager.segment().find_or_construct<ObjPtrListType>(m_name.c_str())(m_deque_allocator);
         }
 
@@ -87,38 +86,55 @@ namespace fp {
             m_sharedMemoryManager.segment().destroy<ObjPtrListType>(m_name.c_str());
         }
 
-        void notify(storage_type *buffer) {
-            //        boost::interprocess::scoped_lock<MutexType> lock(m_mutex);
-            const byte *d = nullptr;
-            const std::size_t length = buffer->bytes(&d);
-            const void *ptr = d;
-            txfr_type data = std::make_pair(m_sharedMemoryManager.segment().get_handle_from_address(ptr), length);
-            buffer->release_ownership();
-            m_objectList->push_back(data);
+//        void notify(storage_type *buffer) {
+//            boost::interprocess::scoped_lock<MutexType> lock(m_mutex);
+//            const byte *d = nullptr;
+//            const std::size_t length = buffer->bytes(&d);
+//            const void *ptr = d;
+//
+//            BufferContainer *ptr_container = m_sharedMemoryManager.segment().construct<BufferContainer>(boost::interprocess::anonymous_instance)(m_sharedMemoryManager.segment().get_handle_from_address(ptr), length);
+//            shared_ptr_type data = make_managed_shared_ptr(ptr_container, m_sharedMemoryManager.segment());
+//            assert(data.use_count() == 1);
+//
+//            buffer->release_ownership();
+//            INFO_LOG("Sending " << data->_ptr << " count: " << data.use_count());
+//            m_objectList->push_back(std::move(data));
+//        }
+
+        void notify(SharedMemoryManager::shared_ptr_type &ptr) {
+            boost::interprocess::scoped_lock<MutexType> lock(m_mutex);
+            DEBUG_LOG("Forwarding " << ptr->_ptr.get_offset() << " count: " << ptr.use_count());
+            m_objectList->push_back(ptr);
+        }
+
+        void notify(SharedMemoryManager::shared_ptr_type &&ptr) {
+            boost::interprocess::scoped_lock<MutexType> lock(m_mutex);
+            DEBUG_LOG("Forwarding move " << ptr->_ptr.get_offset() << " count: " << ptr.use_count());
+            m_objectList->push_back(std::move(ptr));
         }
 
         const size_t size() const {
-            //        boost::interprocess::sharable_lock<MutexType> lock(m_mutex);
+            boost::interprocess::sharable_lock<MutexType> lock(m_mutex);
             return m_objectList->size();
         }
 
-//        storage_type try_retrieve() {
-//            std::cout << "Size: " << this->size() << std::endl;
-//            if (this->size()) {
-//                return this->retrieve();
-//            }
-//            return storage_type(nullptr, 0, ByteStorage<byte>::TAKE_OWNERSHIP, m_sharedMemoryManager.allocator());
-//        }
-
-        void retrieve(std::function<void(const storage_type &)> callback) {
-            //        boost::interprocess::sharable_lock<MutexType> lock(m_mutex);
+        void retrieve(std::function<void(const storage_type &, SharedMemoryManager::shared_ptr_type &)> callback) {
+            boost::interprocess::upgradable_lock<MutexType> lock(m_mutex);
             while (!m_objectList->empty()) {
-                txfr_type ptr = m_objectList->front();
-                byte *data = reinterpret_cast<byte *>(m_sharedMemoryManager.segment().get_address_from_handle(ptr.first));
-                std::size_t len = ptr.second;
-                m_objectList->pop_front();
+                SharedMemoryManager::shared_ptr_type &ptr = m_objectList->front();
+                DEBUG_LOG("Recieved: " << ptr->_ptr.get_offset() << " count: " << ptr.use_count());
+                const byte *data = ptr->_ptr.get();
+                std::size_t len = ptr->_length;
 
-                callback(storage_type(data, len, fp::ByteStorage<byte>::TAKE_OWNERSHIP, m_sharedMemoryManager.allocator()));
+                callback(storage_type(data, len, fp::ByteStorage<byte>::TRANSIENT, m_sharedMemoryManager.allocator()), ptr);
+
+                boost::interprocess::scoped_lock<MutexType> slock(std::move(lock));
+                m_objectList->pop_front();
+//                if (ptr.use_count() == 0) {
+//                    INFO_LOG("Removing " << boost::interprocess::offset_ptr<const byte>(data).get_offset() << " free: " <<
+//                             m_sharedMemoryManager.segment().get_free_memory());
+//                    m_sharedMemoryManager.allocator().deallocate(const_cast<byte *>(data), len);
+//                }
             }
         }
     };
