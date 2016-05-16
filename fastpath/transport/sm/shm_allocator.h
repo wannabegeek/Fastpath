@@ -46,7 +46,9 @@ namespace tf {
         shm_allocator(const shm_allocator &other) noexcept : m_segment_manager(other.m_segment_manager) {}
 
         inline void *allocate(const std::size_t size) noexcept {
-            return m_segment_manager->allocate(size, std::nothrow);
+            void *p = m_segment_manager->allocate(size, std::nothrow);
+            assert(p != nullptr);
+            return p;
         }
 
         inline void deallocate(void* p, std::size_t size) noexcept {

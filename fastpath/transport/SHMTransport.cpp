@@ -108,7 +108,7 @@ namespace fp {
             SharedMemoryBuffer::mutable_storage_type storage(2048, m_smmanager->allocator());
             MessageCodec::encode(&msg, storage);
 
-            m_sendQueue->notify(&storage);
+            m_sendQueue->notify(m_smmanager->getInterprocessBuffer(&storage));
             if (m_notifier->notify()) {
                 return OK;
             } else {
@@ -133,7 +133,7 @@ namespace fp {
     std::unique_ptr<TransportIOEvent> SHMTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
         INFO_LOG("Registering callback on: " << m_notifier->signal_fd());
         return std::make_unique<TransportIOEvent>(m_notifier->signal_fd(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
-            m_recvQueue->retrieve([&](auto &ptr) {
+            m_recvQueue->retrieve([&](auto &ptr, fp::SharedMemoryManager::shared_ptr_type &shared_ptr) {
                 MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
 
                 if (MessageCodec::decode(message.get(), ptr)) {
@@ -141,8 +141,6 @@ namespace fp {
                 } else {
                     message = nullptr;
                 }
-
-                // if ref-counter == 0, deallocate the shared memory
             });
         });
     }

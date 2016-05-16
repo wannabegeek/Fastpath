@@ -100,7 +100,7 @@ namespace fp {
         template <typename T = ByteStorage<byte>> static const MessageDecodeStatus have_complete_message(const T &buffer, std::size_t &msg_length) noexcept {
             if (buffer.remainingReadLength() >= MsgAddressing::size()) {
                 const byte *bytes = buffer.readBytes();
-                MsgAddressing::addressing_start chk = readScalar<MsgAddressing::addressing_start>(buffer.readBytes());
+                const MsgAddressing::addressing_start chk = readScalar<MsgAddressing::addressing_start>(bytes);
                 if (chk != addressing_flag) {
                     return CorruptMessage;
                 }

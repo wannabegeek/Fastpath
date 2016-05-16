@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
             }
 
         } else {
-            serverQueue.retrieve([&](auto &ptr) {
+            serverQueue.retrieve([&](auto &ptr, fp::SharedMemoryManager::shared_ptr_type &shared_ptr) {
 
                 const char *subject_ptr = nullptr;
                 size_t subject_length = 0;
@@ -99,8 +99,11 @@ int main(int argc, char *argv[]) {
                 fp::SharedMemoryBuffer::mutable_storage_type storage(2048, sm_manager.allocator());
                 fp::MessageCodec::encode(&msg2, storage);
 
-                std::for_each(m_notifiers.begin(), m_notifiers.end(), [&storage](const PeerConnection &p) {
-                    p.m_clientQueue->notify(&storage);
+                // TODO: need a generic way of creating a shared_ptr, this should probably come from fp::SharedMemoryManager
+                fp::SharedMemoryManager::shared_ptr_type sending_buffer = sm_manager.getInterprocessBuffer(&storage);
+                std::for_each(m_notifiers.begin(), m_notifiers.end(), [&sending_buffer, &shared_ptr](const PeerConnection &p) {
+                    p.m_clientQueue->notify(shared_ptr);
+                    p.m_clientQueue->notify(sending_buffer);
                     std::get<1>(p.m_notifier)->notify();
                 });
 
