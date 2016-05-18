@@ -27,10 +27,12 @@
 #include <fastpath/utils/logger.h>
 #include <fastpath/Exception.h>
 #include <cassert>
+#include <future>
 #include "InterprocessNotifierServer.h"
+#include <fastpath/event/Queue.h>
 
 namespace fp {
-    InterprocessNotifierServer::InterprocessNotifierServer(const char *identifier, std::function<void(notifier_type, int)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>(identifier)), m_callback(callback) {
+    InterprocessNotifierServer::InterprocessNotifierServer(const char *identifier, std::function<void(notifier_type &&, std::unique_ptr<UnixSocket> &&, int)> callback) : InterprocessNotifier(std::make_unique<UnixSocketServer>(identifier)), m_callback(callback) {
         m_socket->setOptions(SocketOptionsNonBlocking);
         if (!m_socket->connect(fp::SocketOptionsNone)) {
             ERROR_LOG("Failed to create connection");
@@ -38,35 +40,30 @@ namespace fp {
         }
     }
 
-    void InterprocessNotifierServer::receivedClientConnection(std::unique_ptr<UnixSocket> &connection) {
+    void InterprocessNotifierServer::receivedClientConnection(std::unique_ptr<UnixSocket> &&connection) noexcept {
         if (connection) {
-            INFO_LOG("Accepted connection");
+            DEBUG_LOG("Accepted connection");
 
             int fd[256];
             size_t max = 256;
             int sending_pid = -1;
             if (this->receive_fd(connection.get(), fd, max, sending_pid)) {
                 assert(max == 2);
-                m_callback(std::make_tuple(std::make_unique<fp::notifier>(fd[0], direction::pipe_read), std::make_unique<fp::notifier>(fd[1], direction::pipe_write)), sending_pid);
-
-                for (size_t i = 0; i < max; i++) {
-                    INFO_LOG("Received fd: " << fd[i] << " from process: " << sending_pid);
-                }
+                m_callback(std::make_tuple(std::make_unique<fp::notifier>(fd[0], direction::pipe_read), std::make_unique<fp::notifier>(fd[1], direction::pipe_write)), std::move(connection), sending_pid);
             } else {
-                INFO_LOG("Received event not an fd");
+                ERROR_LOG("Received event not an fd");
             }
         } else {
             ERROR_LOG("Something went wrong");
         }
+        // if conneciton hasn't been moved to the callback, it will go out od scope here and get destructed
     }
 
-    std::unique_ptr<TransportIOEvent> InterprocessNotifierServer::createReceiverEvent() {
-        return std::make_unique<TransportIOEvent>(m_socket->getSocket(), EventType::READ, [&](TransportIOEvent *event, const EventType type) {
-            DEBUG_LOG("Something happened on socket");
-
-            std::unique_ptr<UnixSocket> connection = reinterpret_cast<UnixSocketServer *>(m_socket.get())->acceptPendingConnection();
-            receivedClientConnection(connection);
-        });
+    DataEvent *InterprocessNotifierServer::createReceiverEvent(Queue *queue) noexcept {
+            return queue->registerEvent(m_socket->getSocket(), EventType::READ, [&](DataEvent *event, const EventType type) {
+                    DEBUG_LOG("Something happened on socket");
+                    receivedClientConnection(reinterpret_cast<UnixSocketServer *>(m_socket.get())->acceptPendingConnection());
+                });
     }
 }
 
