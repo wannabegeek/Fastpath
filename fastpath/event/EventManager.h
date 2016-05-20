@@ -68,15 +68,15 @@ namespace fp {
 
         virtual ~EventManager() = default;
 
-        virtual void registerHandler(TimerEvent *eventRegistration) noexcept = 0;
-		virtual void registerHandler(IOEvent *eventRegistration) noexcept = 0;
-        virtual void registerHandler(SignalEvent *event) noexcept = 0;
+        virtual bool registerHandler(TimerEvent *eventRegistration) noexcept = 0;
+		virtual bool registerHandler(IOEvent *eventRegistration) noexcept = 0;
+        virtual bool registerHandler(SignalEvent *event) noexcept = 0;
 
-        virtual void updateHandler(TimerEvent *eventRegistration) noexcept = 0;
+        virtual bool updateHandler(TimerEvent *eventRegistration) noexcept = 0;
 
-		virtual void unregisterHandler(TimerEvent *handler) noexcept = 0;
-        virtual void unregisterHandler(IOEvent *handler) noexcept = 0;
-        virtual void unregisterHandler(SignalEvent *handler) noexcept = 0;
+		virtual bool unregisterHandler(TimerEvent *handler) noexcept = 0;
+        virtual bool unregisterHandler(IOEvent *handler) noexcept = 0;
+        virtual bool unregisterHandler(SignalEvent *handler) noexcept = 0;
 
 		virtual void notify(bool wait = false) noexcept = 0;
 

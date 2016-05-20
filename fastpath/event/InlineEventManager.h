@@ -57,15 +57,15 @@ namespace fp {
 
         ~InlineEventManager() noexcept;
 
-        void registerHandler(TimerEvent *event) noexcept override;
-        void registerHandler(IOEvent *event) noexcept override;
-        void registerHandler(SignalEvent *event) noexcept override;
+        bool registerHandler(TimerEvent *event) noexcept override;
+        bool registerHandler(IOEvent *event) noexcept override;
+        bool registerHandler(SignalEvent *event) noexcept override;
 
-        void updateHandler(TimerEvent *event) noexcept override;
+        bool updateHandler(TimerEvent *event) noexcept override;
 
-        void unregisterHandler(TimerEvent *event) noexcept override;
-        void unregisterHandler(IOEvent *event) noexcept override;
-        void unregisterHandler(SignalEvent *event) noexcept override;
+        bool unregisterHandler(TimerEvent *event) noexcept override;
+        bool unregisterHandler(IOEvent *event) noexcept override;
+        bool unregisterHandler(SignalEvent *event) noexcept override;
 
         void notify(bool wait = false) noexcept override {}
     };

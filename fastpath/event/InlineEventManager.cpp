@@ -32,6 +32,7 @@
 #include "fastpath/event/IOEvent.h"
 #include "fastpath/event/TimerEvent.h"
 #include "fastpath/event/SignalEvent.h"
+#include <signal.h>
 
 namespace fp {
 
@@ -41,17 +42,17 @@ namespace fp {
     InlineEventManager::~InlineEventManager() noexcept  {
     }
 
-    void InlineEventManager::registerHandler(TimerEvent *event) noexcept {
+    bool InlineEventManager::registerHandler(TimerEvent *event) noexcept {
         m_timerHandlerLookup.emplace(event->identifier(), event);
-        m_eventLoop.add(EventPollTimerElement(event->identifier(), event->timeout()));
+        return m_eventLoop.add(EventPollTimerElement(event->identifier(), event->timeout()));
     }
 
-    void InlineEventManager::registerHandler(SignalEvent *event) noexcept {
+    bool InlineEventManager::registerHandler(SignalEvent *event) noexcept {
         m_signalHandlerLookup.emplace(event->signal(), event);
-        m_eventLoop.add(EventPollSignalElement(event->identifier(), event->signal()));
+        return m_eventLoop.add(EventPollSignalElement(event->identifier(), event->signal()));
     }
 
-    void InlineEventManager::registerHandler(IOEvent *event) noexcept {
+    bool InlineEventManager::registerHandler(IOEvent *event) noexcept {
         if (event->fileDescriptor() <= 0) {
             ERROR_LOG("Failed to register invalid file descriptor: " << event->fileDescriptor());
             throw EventException("Invalid file descriptor");
@@ -66,30 +67,35 @@ namespace fp {
             m_ioHandlerLookup.emplace(event->fileDescriptor(), std::move(events));
         }
 
-        m_eventLoop.add(EventPollIOElement(event->fileDescriptor(), event->eventTypes()));
+        return m_eventLoop.add(EventPollIOElement(event->fileDescriptor(), event->eventTypes()));
     }
 
-    void InlineEventManager::updateHandler(TimerEvent *event) noexcept {
-        m_eventLoop.update(EventPollTimerElement(event->identifier(), event->timeout()));
+    bool InlineEventManager::updateHandler(TimerEvent *event) noexcept {
+        return m_eventLoop.update(EventPollTimerElement(event->identifier(), event->timeout()));
     }
 
-    void InlineEventManager::unregisterHandler(TimerEvent *event) noexcept {
+    bool InlineEventManager::unregisterHandler(TimerEvent *event) noexcept {
+        bool result = false;
         auto it = m_timerHandlerLookup.find(event->identifier());
         if (it != m_timerHandlerLookup.end()) {
             m_timerHandlerLookup.erase(it);
-            m_eventLoop.remove(EventPollTimerElement(event->identifier()));
+            result = m_eventLoop.remove(EventPollTimerElement(event->identifier()));
         }
+        return result;
     }
 
-    void InlineEventManager::unregisterHandler(SignalEvent *event) noexcept {
-        auto it = m_signalHandlerLookup.find(event->identifier());
+    bool InlineEventManager::unregisterHandler(SignalEvent *event) noexcept {
+        bool result = false;
+        auto it = m_signalHandlerLookup.find(event->signal());
         if (it != m_signalHandlerLookup.end()) {
             m_signalHandlerLookup.erase(it);
-            m_eventLoop.remove(EventPollSignalElement(event->identifier(), event->signal()));
+            result = m_eventLoop.remove(EventPollSignalElement(event->identifier(), event->signal()));
         }
+        return result;
     }
 
-    void InlineEventManager::unregisterHandler(IOEvent *event) noexcept {
+    bool InlineEventManager::unregisterHandler(IOEvent *event) noexcept {
+        bool result = false;
         auto it = m_ioHandlerLookup.find(event->fileDescriptor());
         if (it != m_ioHandlerLookup.end()) {
             auto registered_events = it->second;
@@ -98,10 +104,11 @@ namespace fp {
                 // We can only remove the FD from listening if no one else is registed
                 // for callbacks on it
                 if (registered_events.size() == 1) {
-                    m_eventLoop.remove(EventPollIOElement(event->fileDescriptor(), event->eventTypes()));
+                    result = m_eventLoop.remove(EventPollIOElement(event->fileDescriptor(), event->eventTypes()));
                     // upgrade read lock to write lock
                     m_ioHandlerLookup.erase(it);
                 } else {
+                    result = true;
                     // upgrade read lock to write lock
                     registered_events.erase(t);
                 }
@@ -111,6 +118,7 @@ namespace fp {
                 }
             }
         }
+        return result;
     }
 
     void InlineEventManager::foreach_event_matching(const EventPollIOElement &event,
@@ -139,7 +147,7 @@ namespace fp {
     }
 
     void InlineEventManager::foreach_signal_matching(const EventPollSignalElement &event, std::function<void(SignalEvent *)> callback) const noexcept {
-        auto it = m_signalHandlerLookup.find(event.identifier);
+        auto it = m_signalHandlerLookup.find(event.signal);
         if (it != m_signalHandlerLookup.end()) {
             m_servicingEvents = true;
             callback(it->second);

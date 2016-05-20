@@ -95,17 +95,22 @@ namespace fp {
         allocator_type m_allocator;
 
         const std::string m_name;
+        const bool m_owner;
 
     public:
-        SharedMemoryManager(const char *name, const size_t initial_size = 1024 * 1024 * 2)
+        SharedMemoryManager(const char *name, bool owner = false, const size_t initial_size = 1024 * 1024 * 2)
                 : m_segment(boost::interprocess::open_or_create, name, initial_size),
                   m_inner_allocator(m_segment.get_segment_manager()),
                   m_allocator(&m_inner_allocator),
-                  m_name(name) {
+                  m_name(name),
+                  m_owner(owner) {
+            DEBUG_LOG("Using shm object at " << name);
         }
 
         ~SharedMemoryManager() {
-            boost::interprocess::shared_memory_object::remove(m_name.c_str());
+            if (m_owner) {
+                boost::interprocess::shared_memory_object::remove(m_name.c_str());
+            }
         }
 
         inline allocator_type &allocator() noexcept {
@@ -121,7 +126,7 @@ namespace fp {
             const std::size_t length = buffer->bytes(&d);
 
             BufferContainer *ptr_container = m_segment.construct<BufferContainer>(boost::interprocess::anonymous_instance)(boost::interprocess::offset_ptr<const byte>(d), length);
-
+            INFO_LOG("Free: " << m_segment.get_segment_manager()->get_free_memory());
             shared_ptr_type data = shared_ptr_type(ptr_container, buffer_allocator_type(m_segment.get_segment_manager()), deleter_type(m_segment.get_segment_manager()));
             assert(data.use_count() == 1);
 
