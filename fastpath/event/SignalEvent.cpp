@@ -28,10 +28,10 @@
 #include "fastpath/config.h"
 
 #include <cassert>
+#include <signal.h>
 
 #if defined HAVE_EPOLL
 #   include <sys/signalfd.h>
-#   include <signal.h>
 #endif
 
 namespace fp {
@@ -39,6 +39,7 @@ namespace fp {
 #if defined HAVE_KQUEUE
     SignalEvent::SignalEvent(Queue *queue, const int signal, const std::function<void(SignalEvent *, int)> &callback)
             : Event(queue), m_callback(callback), m_signal(signal) {
+        ::signal(signal, SIG_IGN);
     }
 #elif defined HAVE_EPOLL
     SignalEvent::SignalEvent(Queue *queue, const int signal, const std::function<void(SignalEvent *, int)> &callback)
