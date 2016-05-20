@@ -79,7 +79,7 @@ namespace fp {
             m_fd[d] = -1;
         }
 
-        inline bool notify() noexcept {
+        inline bool notify() const noexcept {
             const char data = '=';
             return (::write(m_fd[pipe_write], &data, 1) != -1);
         }

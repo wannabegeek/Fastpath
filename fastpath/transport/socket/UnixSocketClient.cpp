@@ -34,12 +34,15 @@ namespace fp {
     }
 
     bool UnixSocketClient::connect(SocketOptions options) noexcept {
-        if (::connect(m_socket, reinterpret_cast<struct sockaddr *>(&m_addr), sizeof(struct sockaddr_un)) != 0) {
-            INFO_LOG("Failed to connect to IPC endpoint");
-            return false;
+        if (::connect(m_socket, reinterpret_cast<struct sockaddr *>(&m_addr), sizeof(struct sockaddr_un)) == 0) {
+            m_connected = true;
+            setOptions(options);
+
+            if (m_handler) {
+                m_handler(true);
+            }
         }
 
-        m_connected = true;
-        return true;
+        return m_connected;
     }
 }

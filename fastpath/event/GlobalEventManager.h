@@ -60,15 +60,15 @@ namespace fp {
         GlobalEventManager();
         ~GlobalEventManager();
 
-        void registerHandler(TimerEvent *eventRegistration) noexcept override;
-        void registerHandler(IOEvent *eventRegistration) noexcept override;
-        void registerHandler(SignalEvent *event) noexcept override;
+        bool registerHandler(TimerEvent *eventRegistration) noexcept override;
+        bool registerHandler(IOEvent *eventRegistration) noexcept override;
+        bool registerHandler(SignalEvent *event) noexcept override;
 
-        void updateHandler(TimerEvent *eventRegistration) noexcept override;
+        bool updateHandler(TimerEvent *eventRegistration) noexcept override;
 
-        void unregisterHandler(TimerEvent *handler) noexcept override;
-        void unregisterHandler(IOEvent *handler) noexcept override;
-        void unregisterHandler(SignalEvent *event) noexcept override;
+        bool unregisterHandler(TimerEvent *handler) noexcept override;
+        bool unregisterHandler(IOEvent *handler) noexcept override;
+        bool unregisterHandler(SignalEvent *event) noexcept override;
 
         void notify(bool wait = false) noexcept override;
     };
