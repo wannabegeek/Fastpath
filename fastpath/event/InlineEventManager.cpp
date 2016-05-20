@@ -86,7 +86,7 @@ namespace fp {
 
     bool InlineEventManager::unregisterHandler(SignalEvent *event) noexcept {
         bool result = false;
-        auto it = m_signalHandlerLookup.find(event->identifier());
+        auto it = m_signalHandlerLookup.find(event->signal());
         if (it != m_signalHandlerLookup.end()) {
             m_signalHandlerLookup.erase(it);
             result = m_eventLoop.remove(EventPollSignalElement(event->identifier(), event->signal()));
@@ -147,7 +147,7 @@ namespace fp {
     }
 
     void InlineEventManager::foreach_signal_matching(const EventPollSignalElement &event, std::function<void(SignalEvent *)> callback) const noexcept {
-        auto it = m_signalHandlerLookup.find(event.identifier);
+        auto it = m_signalHandlerLookup.find(event.signal);
         if (it != m_signalHandlerLookup.end()) {
             m_servicingEvents = true;
             callback(it->second);

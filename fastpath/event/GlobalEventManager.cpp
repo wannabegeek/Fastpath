@@ -73,7 +73,7 @@ namespace fp {
 
     bool GlobalEventManager::registerHandler(SignalEvent *event) noexcept {
         m_lock.lock();
-        m_signalHandlerLookup.emplace(event->identifier(), event);
+        m_signalHandlerLookup.emplace(event->signal(), event);
         m_lock.unlock();
         return m_eventLoop.add(EventPollSignalElement(event->identifier(), event->signal()));
     }
@@ -120,7 +120,7 @@ namespace fp {
     bool GlobalEventManager::unregisterHandler(SignalEvent *event) noexcept {
         bool result = false;
         m_lock.lock_shared();
-        auto it = m_signalHandlerLookup.find(event->identifier());
+        auto it = m_signalHandlerLookup.find(event->signal());
         if (it != m_signalHandlerLookup.end()) {
             m_signalHandlerLookup.erase(it);
             m_lock.lock_upgrade();
@@ -193,7 +193,7 @@ namespace fp {
 
     void GlobalEventManager::foreach_signal_matching(const EventPollSignalElement &event, std::function<void(SignalEvent *)> callback) const noexcept {
         m_lock.lock_shared();
-        auto it = m_signalHandlerLookup.find(event.identifier);
+        auto it = m_signalHandlerLookup.find(event.signal);
         if (it != m_signalHandlerLookup.end()) {
             callback(it->second);
         }
