@@ -64,24 +64,24 @@ namespace fp {
 //        }
 //    }
 
-    void GlobalEventManager::registerHandler(TimerEvent *event) noexcept {
+    bool GlobalEventManager::registerHandler(TimerEvent *event) noexcept {
         m_lock.lock();
         m_timerHandlerLookup.emplace(event->identifier(), event);
         m_lock.unlock();
-        m_eventLoop.add(EventPollTimerElement(event->identifier(), event->timeout()));
+        return m_eventLoop.add(EventPollTimerElement(event->identifier(), event->timeout()));
     }
 
-    void GlobalEventManager::registerHandler(SignalEvent *event) noexcept {
+    bool GlobalEventManager::registerHandler(SignalEvent *event) noexcept {
         m_lock.lock();
-        m_signalHandlerLookup.emplace(event->identifier(), event);
+        m_signalHandlerLookup.emplace(event->signal(), event);
         m_lock.unlock();
-        m_eventLoop.add(EventPollSignalElement(event->identifier(), event->signal()));
+        return m_eventLoop.add(EventPollSignalElement(event->identifier(), event->signal()));
     }
 
-    void GlobalEventManager::registerHandler(IOEvent *event) noexcept {
+    bool GlobalEventManager::registerHandler(IOEvent *event) noexcept {
         if (event->fileDescriptor() <= 0) {
             ERROR_LOG("Failed to register invalid file descriptor: " << event->fileDescriptor());
-            throw EventException("Invalid file descriptor");
+            return false;
         }
         m_lock.lock();
         auto it = m_ioHandlerLookup.find(event->fileDescriptor());
@@ -94,40 +94,45 @@ namespace fp {
         }
         m_lock.unlock();
 
-        m_eventLoop.add(EventPollIOElement(event->fileDescriptor(), event->eventTypes()));
+        return m_eventLoop.add(EventPollIOElement(event->fileDescriptor(), event->eventTypes()));
     }
 
-    void GlobalEventManager::updateHandler(TimerEvent *event) noexcept {
-        m_eventLoop.update(EventPollTimerElement(event->identifier(), event->timeout()));
+    bool GlobalEventManager::updateHandler(TimerEvent *event) noexcept {
+        return m_eventLoop.update(EventPollTimerElement(event->identifier(), event->timeout()));
     }
 
-    void GlobalEventManager::unregisterHandler(TimerEvent *event) noexcept {
+    bool GlobalEventManager::unregisterHandler(TimerEvent *event) noexcept {
+        bool result = false;
         // read lock
         m_lock.lock_shared();
         auto it = m_timerHandlerLookup.find(event->identifier());
         if (it != m_timerHandlerLookup.end()) {
-            m_eventLoop.remove(EventPollTimerElement(event->identifier()));
+            result = m_eventLoop.remove(EventPollTimerElement(event->identifier()));
             // upgrade read lock to write lock
             m_lock.lock_upgrade();
             m_timerHandlerLookup.erase(it);
             m_lock.unlock_upgrade();
         }
         m_lock.unlock_shared();
+        return result;
     }
 
-    void GlobalEventManager::unregisterHandler(SignalEvent *event) noexcept {
+    bool GlobalEventManager::unregisterHandler(SignalEvent *event) noexcept {
+        bool result = false;
         m_lock.lock_shared();
-        auto it = m_signalHandlerLookup.find(event->identifier());
+        auto it = m_signalHandlerLookup.find(event->signal());
         if (it != m_signalHandlerLookup.end()) {
             m_signalHandlerLookup.erase(it);
             m_lock.lock_upgrade();
-            m_eventLoop.remove(EventPollSignalElement(event->identifier(), event->signal()));
+            result = m_eventLoop.remove(EventPollSignalElement(event->identifier(), event->signal()));
             m_lock.unlock_upgrade();
         }
         m_lock.unlock_shared();
+        return result;
     }
 
-    void GlobalEventManager::unregisterHandler(IOEvent *event) noexcept {
+    bool GlobalEventManager::unregisterHandler(IOEvent *event) noexcept {
+        bool result = false;
         // read lock
         m_lock.lock_shared();
         auto it = m_ioHandlerLookup.find(event->fileDescriptor());
@@ -139,12 +144,13 @@ namespace fp {
                 // We can only remove the FD from listening if no one else is registered
                 // for callbacks on it
                 if (registered_events.size() == 1) {
-                    m_eventLoop.remove(EventPollIOElement(event->fileDescriptor(), event->eventTypes()));
+                    result = m_eventLoop.remove(EventPollIOElement(event->fileDescriptor(), event->eventTypes()));
                     // upgrade read lock to write lock
                     m_lock.lock_upgrade();
                     m_ioHandlerLookup.erase(it);
                     m_lock.unlock_upgrade();
                 } else {
+                    result = true;
                     m_lock.lock_upgrade();
                     registered_events.erase(t);
                     m_lock.unlock_upgrade();
@@ -156,6 +162,7 @@ namespace fp {
             }
         }
         m_lock.unlock_shared();
+        return result;
     }
 
     void GlobalEventManager::foreach_event_matching(const EventPollIOElement &event,
@@ -186,7 +193,7 @@ namespace fp {
 
     void GlobalEventManager::foreach_signal_matching(const EventPollSignalElement &event, std::function<void(SignalEvent *)> callback) const noexcept {
         m_lock.lock_shared();
-        auto it = m_signalHandlerLookup.find(event.identifier);
+        auto it = m_signalHandlerLookup.find(event.signal);
         if (it != m_signalHandlerLookup.end()) {
             callback(it->second);
         }

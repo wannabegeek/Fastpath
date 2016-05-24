@@ -44,6 +44,8 @@ namespace fp {
 
         bool send_fds(const int *fds, const size_t num_fds) noexcept;
         bool receive_fd(UnixSocket *socket, int *fd, size_t &num_fds, int &pid) noexcept;
+
+        UnixSocket *socket() const noexcept { return m_socket.get(); }
     };
 }
 

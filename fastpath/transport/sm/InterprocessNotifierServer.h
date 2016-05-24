@@ -32,17 +32,20 @@
 #include "fastpath/event/notifier.h"
 
 namespace fp {
+    class DataEvent;
+
     class InterprocessNotifierServer : public InterprocessNotifier {
     public:
         using notifier_type = std::tuple<std::unique_ptr<fp::notifier>, std::unique_ptr<fp::notifier>>;
     private:
-        std::function<void(notifier_type &&, int)> m_callback;
+        std::unique_ptr<TransportIOEvent> m_receiverEvent;
+        std::function<void(notifier_type &&, std::unique_ptr<UnixSocket> &&, int)> m_callback;
 
-        void receivedClientConnection(std::unique_ptr<UnixSocket> &connection);
+        void receivedClientConnection(std::unique_ptr<UnixSocket> &&connection) noexcept;
     public:
-        InterprocessNotifierServer(const char *identifier, std::function<void(notifier_type, int)> callback);
+        InterprocessNotifierServer(const char *identifier, std::function<void(notifier_type &&, std::unique_ptr<UnixSocket> &&, int)> callback);
 
-        virtual std::unique_ptr<TransportIOEvent> createReceiverEvent();
+        virtual DataEvent *createReceiverEvent(Queue *queue) noexcept;
     };
 }
 

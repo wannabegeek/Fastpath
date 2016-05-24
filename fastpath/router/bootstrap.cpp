@@ -49,6 +49,13 @@ namespace fp {
             // TODO:
             // Start heartbeat thread
             // Start broadcast transport
+            auto fn = [&] (fp::SignalEvent *event, int signal) {
+                ERROR_LOG("Shutdown signal caught");
+                m_shutdown = true;
+            };
+
+            m_dispatchQueue.registerEvent(SIGINT, fn);
+            m_dispatchQueue.registerEvent(SIGTERM, fn);
 
             while (!m_shutdown) {
                 m_dispatchQueue.dispatch();
