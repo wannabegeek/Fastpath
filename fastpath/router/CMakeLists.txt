@@ -26,3 +26,4 @@ add_executable(fprouter
 
 target_link_libraries(fprouter fastpath ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_LIBRARIES})
 
+INSTALL(TARGETS fprouter DESTINATION ${FASTPATH_INSTALL_BIN_DIR})
