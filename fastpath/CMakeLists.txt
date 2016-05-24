@@ -90,5 +90,5 @@ add_subdirectory(transport)
 add_subdirectory(router)
 add_subdirectory(tools)
 
-INSTALL(TARGETS fastpath DESTINATION lib/fastpath)
-INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath)
+INSTALL(TARGETS fastpath DESTINATION ${FASTPATH_INSTALL_LIB_DIR})
+INSTALL(FILES ${HEADER_FILES} DESTINATION ${FASTPATH_INSTALL_INCLUDE_DIR})

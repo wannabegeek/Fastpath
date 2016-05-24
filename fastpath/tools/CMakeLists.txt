@@ -27,3 +27,5 @@ target_link_libraries(fpperf_source fastpath ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_L
 
 add_executable(fpperf_sink performance_sink.cpp)
 target_link_libraries(fpperf_sink fastpath ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_LIBRARIES})
+
+INSTALL(TARGETS fpsend fplisten DESTINATION ${FASTPATH_INSTALL_BIN_DIR})

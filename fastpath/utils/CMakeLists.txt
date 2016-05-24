@@ -14,11 +14,17 @@ set(HEADER_FILES
         fast_linear_allocator.h
         short_alloc.h
         stringhash.h
-        allocate_polymorphic.h)
+        allocate_polymorphic.h
+        allocator/generic_allocator.h
+        allocator/std_allocator_resource.h
+        allocator/allocator_resource.h
+        temp_directory.h
+)
 
 set(SOURCE_FILES
         daemon_process.cpp
-        allocator/generic_allocator.h allocator/std_allocator_resource.h allocator/allocator_resource.h temp_directory.h)
+)
 
 add_library(utils OBJECT ${SOURCE_FILES} ${HEADER_FILES})
-INSTALL(FILES ${HEADER_FILES} DESTINATION include/fastpath/utils)
+INSTALL(FILES ${HEADER_FILES} DESTINATION ${FASTPATH_INSTALL_INCLUDE_DIR}/utils)
+INSTALL(DIRECTORY allocator DESTINATION ${FASTPATH_INSTALL_INCLUDE_DIR}/utils)

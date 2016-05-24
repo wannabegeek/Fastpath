@@ -28,6 +28,7 @@
 
 #include <functional>
 #include <atomic>
+#include <cassert>
 
 #include "fastpath/event/EventType.h"
 #include "fastpath/event/Session.h"
@@ -55,6 +56,7 @@ namespace fp {
 
     public:
         Event(Queue *queue) noexcept : m_queue(queue) {
+            assert(m_queue != nullptr);
         }
 
         Event(Event &&other) noexcept : m_queue(other.m_queue), m_pendingRemoval(other.m_pendingRemoval) {
