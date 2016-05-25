@@ -126,7 +126,6 @@ namespace fp {
             const std::size_t length = buffer->bytes(&d);
 
             BufferContainer *ptr_container = m_segment.construct<BufferContainer>(boost::interprocess::anonymous_instance)(boost::interprocess::offset_ptr<const byte>(d), length);
-            INFO_LOG("Free: " << m_segment.get_segment_manager()->get_free_memory());
             shared_ptr_type data = shared_ptr_type(ptr_container, buffer_allocator_type(m_segment.get_segment_manager()), deleter_type(m_segment.get_segment_manager()));
             assert(data.use_count() == 1);
 

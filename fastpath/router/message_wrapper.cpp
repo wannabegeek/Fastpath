@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 04/03/2016
+    date                 : 26/03/2016
 
  ***************************************************************************/
 
@@ -23,39 +23,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_BOOTSTRAP_H
-#define FASTPATH_BOOTSTRAP_H
+#include "message_wrapper.h"
 
-#include <iosfwd>
-#include <memory>
-#include <vector>
+namespace fp {
 
-#include "fastpath/event/InlineQueue.h"
-#include "fastpath/messages/subject.h"
-#include "fastpath/router/message_wrapper.h"
+    message_wrapper::message_wrapper(const MessageBuffer::ByteStorageType &buffer) noexcept : m_byte_storage(buffer) {
+    }
 
-namespace fp{
-    class peer_connection;
+    message_wrapper::message_wrapper(const MessageBuffer::ByteStorageType &buffer, const SharedMemoryManager::shared_ptr_type &shared_ptr) noexcept
+            : m_byte_storage(buffer), m_shared_ptr(shared_ptr) {
+    }
 
-    class bootstrap {
-    private:
-        const std::string m_interface;
-        const std::string m_service;
+    const SharedMemoryManager::shared_ptr_type &message_wrapper::getSharedPtrBuffer() const noexcept {
+        if (m_shared_ptr) {
+            return m_shared_ptr;
+        } else {
+            ERROR_LOG("We need to create a shared ptr buffer");
+            return m_shared_ptr;
+        }
+    }
 
-        InlineQueue m_dispatchQueue;
-
-        bool m_shutdown = false;
-
-        std::vector<std::unique_ptr<peer_connection>> m_connections;
-
-        void message_handler(peer_connection *source, const subject<> &subject, const message_wrapper &msgData) noexcept;
-        void disconnection_handler(peer_connection *connection) noexcept;
-    public:
-        bootstrap(const std::string &interface, const std::string &service);
-        ~bootstrap();
-
-        void run();
-    };
 }
-
-#endif //FASTPATH_BOOTSTRAP_H

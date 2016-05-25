@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 04/03/2016
+    date                 : 26/03/2016
 
  ***************************************************************************/
 
@@ -23,39 +23,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_BOOTSTRAP_H
-#define FASTPATH_BOOTSTRAP_H
+#ifndef FASTPATH_SHM_SERVER_TRANSPORT_H
+#define FASTPATH_SHM_SERVER_TRANSPORT_H
 
-#include <iosfwd>
-#include <memory>
-#include <vector>
+#include "fastpath/router/server_transport.h"
+#include "fastpath/SharedMemoryBuffer.h"
+#include "fastpath/transport/sm/InterprocessNotifierServer.h"
 
-#include "fastpath/event/InlineQueue.h"
-#include "fastpath/messages/subject.h"
-#include "fastpath/router/message_wrapper.h"
+namespace fp {
+    class UnixSocket;
+    class DataEvent;
 
-namespace fp{
-    class peer_connection;
+    class shm_server_transport : public server_transport {
 
-    class bootstrap {
-    private:
-        const std::string m_interface;
-        const std::string m_service;
+        SharedMemoryManager m_manager;
+        std::unique_ptr<InterprocessNotifierServer> m_notification_server;
 
-        InlineQueue m_dispatchQueue;
+        DataEvent *m_globalConnectionHandler = nullptr;
 
-        bool m_shutdown = false;
-
-        std::vector<std::unique_ptr<peer_connection>> m_connections;
-
-        void message_handler(peer_connection *source, const subject<> &subject, const message_wrapper &msgData) noexcept;
-        void disconnection_handler(peer_connection *connection) noexcept;
+        void connectionHandler(const ConnectionCallback &connectionCallback, InterprocessNotifierServer::notifier_type &&notifier, std::unique_ptr<UnixSocket> &&socket, int process_id);
     public:
-        bootstrap(const std::string &interface, const std::string &service);
-        ~bootstrap();
-
-        void run();
+        shm_server_transport(Queue *queue, const ConnectionCallback &connectionCallback, const std::string &interface, const std::string &service) noexcept;
+        ~shm_server_transport();
     };
 }
 
-#endif //FASTPATH_BOOTSTRAP_H
+#endif //FASTPATH_SHM_SERVER_TRANSPORT_H

@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 04/03/2016
+    date                 : 26/03/2016
 
  ***************************************************************************/
 
@@ -29,48 +29,46 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <functional>
 
-#include "fastpath/messages/MessageCodec.h"
-#include "fastpath/event/IOEvent.h"
-#include "fastpath/messages/Message.h"
-#include "fastpath/MessageBuffer.h"
 #include "fastpath/messages/subscription.h"
+#include "fastpath/messages/Message.h"
 
 namespace fp {
-    class Socket;
     class Queue;
-}
+    class message_wrapper;
 
-namespace fp {
     class peer_connection {
+    public:
+        typedef std::function<void(peer_connection *, const subject<> &, const message_wrapper &)> MessageHandlerType;
+        typedef std::function<void(peer_connection *)> DisconnectionHandlerType;
     private:
         // TODO: these need to be calculated up-front
         static subject<> RegisterObserver() { return subject<>("_FP.REGISTER.OBSERVER"); }
         static subject<> UnregisterObserver() { return subject<>("_FP.UNREGISTER.OBSERVER"); }
 
         std::vector<subscription<>> m_subscriptions;
+
+    protected:
         Queue *m_queue;
-        std::unique_ptr<Socket> m_socket;
-        DataEvent *m_socketEvent;
 
-        MessageBuffer m_buffer;
-        const std::function<void(peer_connection *, const subject<> &, const MessageBuffer::ByteStorageType &)> m_messageHandler;
-        const std::function<void(peer_connection *)> m_disconnectionHandler;
-
-        void data_handler(DataEvent *event, const EventType eventType) noexcept;
-        MessageCodec::MessageDecodeStatus process_buffer(const MessageBuffer::ByteStorageType &buffer) noexcept;
+        MessageHandlerType m_messageHandler;
+        DisconnectionHandlerType m_disconnectionHandler;
 
         void handle_admin_message(const subject<> subject, Message &message) noexcept;
     public:
-        peer_connection(Queue *queue, std::unique_ptr<Socket> socket, const std::function<void(peer_connection *, const subject<> &, const MessageBuffer::ByteStorageType &)> messageHandler, const std::function<void(peer_connection *)> &disconnectionHandler);
+        peer_connection(Queue *queue);
         peer_connection(peer_connection &&other) noexcept;
-        ~peer_connection() noexcept;
+        virtual ~peer_connection() noexcept;
+
+        void setMessageHandler(const MessageHandlerType &messageHandler);
+        void setDisconnectionHandler(const DisconnectionHandlerType &disconnectionHandler);
 
         void add_subscription(const char *subject) noexcept;
         void remove_subscription(const char *subject) noexcept;
         bool is_interested(const subject<> &subject) const noexcept;
 
-        bool sendBuffer(const MessageBuffer::ByteStorageType &buffer) noexcept;
+        virtual bool sendBuffer(const message_wrapper &buffer) noexcept = 0;
     };
 }
 

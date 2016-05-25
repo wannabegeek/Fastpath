@@ -23,39 +23,42 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_BOOTSTRAP_H
-#define FASTPATH_BOOTSTRAP_H
+#ifndef FASTPATH_TCP_PEER_CONNECTION_H
+#define FASTPATH_TCP_PEER_CONNECTION_H
 
-#include <iosfwd>
-#include <memory>
+#include <string>
 #include <vector>
+#include <memory>
 
-#include "fastpath/event/InlineQueue.h"
-#include "fastpath/messages/subject.h"
-#include "fastpath/router/message_wrapper.h"
+#include "fastpath/messages/MessageCodec.h"
+#include "fastpath/event/IOEvent.h"
+#include "fastpath/messages/Message.h"
+#include "fastpath/MessageBuffer.h"
+#include "fastpath/messages/subscription.h"
+#include "fastpath/router/peer_connection.h"
 
-namespace fp{
-    class peer_connection;
+namespace fp {
+    class Socket;
+}
 
-    class bootstrap {
+namespace fp {
+    class tcp_peer_connection final : public peer_connection {
     private:
-        const std::string m_interface;
-        const std::string m_service;
+        std::unique_ptr<Socket> m_socket;
+        DataEvent *m_socketEvent;
 
-        InlineQueue m_dispatchQueue;
+        MessageBuffer m_buffer;
 
-        bool m_shutdown = false;
+        void data_handler(DataEvent *event, const EventType eventType) noexcept;
+        MessageCodec::MessageDecodeStatus process_buffer(const MessageBuffer::ByteStorageType &buffer) noexcept;
 
-        std::vector<std::unique_ptr<peer_connection>> m_connections;
-
-        void message_handler(peer_connection *source, const subject<> &subject, const message_wrapper &msgData) noexcept;
-        void disconnection_handler(peer_connection *connection) noexcept;
     public:
-        bootstrap(const std::string &interface, const std::string &service);
-        ~bootstrap();
+        tcp_peer_connection(Queue *queue, std::unique_ptr<Socket> socket);
+        tcp_peer_connection(tcp_peer_connection &&other) noexcept;
+        ~tcp_peer_connection() noexcept;
 
-        void run();
+        bool sendBuffer(const message_wrapper &buffer) noexcept override;
     };
 }
 
-#endif //FASTPATH_BOOTSTRAP_H
+#endif //FASTPATH_PEER_CONNECTION_H

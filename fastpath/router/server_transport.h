@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 04/03/2016
+    date                 : 26/03/2016
 
  ***************************************************************************/
 
@@ -23,39 +23,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_BOOTSTRAP_H
-#define FASTPATH_BOOTSTRAP_H
+#ifndef FASTPATH_SERVER_TRANSPORT_H
+#define FASTPATH_SERVER_TRANSPORT_H
 
-#include <iosfwd>
-#include <memory>
-#include <vector>
+#include "fastpath/router/peer_connection.h"
 
-#include "fastpath/event/InlineQueue.h"
-#include "fastpath/messages/subject.h"
-#include "fastpath/router/message_wrapper.h"
+namespace fp {
+    class Queue;
 
-namespace fp{
-    class peer_connection;
-
-    class bootstrap {
-    private:
-        const std::string m_interface;
-        const std::string m_service;
-
-        InlineQueue m_dispatchQueue;
-
-        bool m_shutdown = false;
-
-        std::vector<std::unique_ptr<peer_connection>> m_connections;
-
-        void message_handler(peer_connection *source, const subject<> &subject, const message_wrapper &msgData) noexcept;
-        void disconnection_handler(peer_connection *connection) noexcept;
+    class server_transport {
+    protected:
+        Queue *m_queue;
     public:
-        bootstrap(const std::string &interface, const std::string &service);
-        ~bootstrap();
+        typedef std::function<void(server_transport *, std::unique_ptr<peer_connection> &&)> ConnectionCallback;
 
-        void run();
+        server_transport(Queue *queue) noexcept : m_queue(queue) {}
+        virtual ~server_transport() noexcept = default;
     };
 }
 
-#endif //FASTPATH_BOOTSTRAP_H
+#endif //FASTPATH_SERVERTRANSPORT_H

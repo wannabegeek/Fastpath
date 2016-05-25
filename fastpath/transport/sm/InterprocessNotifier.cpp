@@ -69,7 +69,6 @@ namespace fp {
         cmhp->cmsg_level = SOL_SOCKET;
         cmhp->cmsg_type = SCM_RIGHTS;
         for (size_t i = 0; i < num_fds; i++) {
-            INFO_LOG("Sending fd " << fds[i]);
             ((int *)CMSG_DATA(cmhp))[i] = fds[i];
         }
 
