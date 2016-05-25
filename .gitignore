@@ -31,3 +31,4 @@
 config.h
 docs
 build
+libfastpath.pc

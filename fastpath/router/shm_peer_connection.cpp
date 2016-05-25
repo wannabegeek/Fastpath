@@ -14,16 +14,17 @@
 #include "fastpath/router/message_wrapper.h"
 
 namespace fp {
-    shm_peer_connection::shm_peer_connection(Queue *queue, InterprocessNotifierServer::notifier_type &&notifier, std::unique_ptr<UnixSocket> &&socket, int process_id, SharedMemoryManager *manager, const std::function<void(const std::function<void(const subject<> &, const message_wrapper &)>)> &message_reader)
+    shm_peer_connection::shm_peer_connection(Queue *queue, InterprocessNotifierServer::notifier_type &&notifier, std::unique_ptr<UnixSocket> &&socket, int process_id, SharedMemoryManager *manager)
             : peer_connection(queue),
               m_notifier(std::forward<InterprocessNotifierServer::notifier_type>(notifier)),
               m_socket(std::forward<std::unique_ptr<UnixSocket>>(socket)),
-              m_process_id(process_id),
-              m_message_reader(message_reader) {
+              m_process_id(process_id) {
 
         char queueName[32];
         ::sprintf(queueName, "ClientQueue_%i", process_id);
         m_clientQueue = std::make_unique<SharedMemoryBuffer>(queueName, *manager);
+        ::sprintf(queueName, "ServerQueue_%i", process_id);
+        m_serverQueue = std::make_unique<SharedMemoryBuffer>(queueName, *manager);
 
         this->socketEvent();
         this->notificationEvent();
@@ -33,11 +34,11 @@ namespace fp {
             : peer_connection(std::move(other)),
               m_notifier(std::move(other.m_notifier)),
               m_clientQueue(std::move(other.m_clientQueue)),
+              m_serverQueue(std::move(other.m_serverQueue)),
               m_socket(std::move(other.m_socket)),
               m_process_id(std::move(other.m_process_id)),
               m_socketEvent(std::move(other.m_socketEvent)),
-              m_notifierEvent(std::move(other.m_notifierEvent)),
-              m_message_reader(std::move(other.m_message_reader)) {
+              m_notifierEvent(std::move(other.m_notifierEvent)) {
 
     }
 
@@ -49,15 +50,45 @@ namespace fp {
 
     void shm_peer_connection::notificationHandler(DataEvent *event, const fp::EventType type) noexcept {
         auto &notifier = std::get<0>(m_notifier);
-        if (!notifier->reset()) {
+        if (tf::unlikely(!notifier->reset())) {
             ERROR_LOG("BOOM - Client disconnected: " << m_process_id);
             if (m_disconnectionHandler) {
                 m_disconnectionHandler(this);
             }
         } else {
-            INFO_LOG("We have been notified of a message: " << m_process_id);
-            // TODO - this is horrible & shouldn't be creating this on every message
-            m_message_reader(std::bind(m_messageHandler, this, std::placeholders::_1, std::placeholders::_2));
+            DEBUG_LOG("We have been notified of a message from: " << m_process_id);
+            m_serverQueue->retrieve([&](auto &ptr, SharedMemoryManager::shared_ptr_type &shared_ptr) {
+
+                const char *subject_ptr = nullptr;
+                size_t subject_length = 0;
+                uint8_t flags = 0;
+                size_t msg_length = 0;
+
+                ptr.mark();
+                auto status = MessageCodec::addressing_details(ptr, &subject_ptr, subject_length, flags, msg_length);
+                if (status == MessageCodec::CompleteMessage) {
+                    DEBUG_LOG("Subject is: " << std::string(subject_ptr, subject_length));
+                } else {
+                    ERROR_LOG("Somehow SHM has given us an incomplete message");
+                    return;
+                }
+                ptr.resetRead();
+
+                subject<> subject(subject_ptr);
+                if (tf::unlikely(subject.is_admin())) {
+                    Message message;
+                    if (MessageCodec::decode(&message, ptr)) {
+                        DEBUG_LOG("Received admin message: " << message);
+                        this->handle_admin_message(subject, message);
+                    } else {
+                        ERROR_LOG("Failed to decode message: " << ptr);
+                        status = MessageCodec::CorruptMessage;
+                    }
+                } else {
+                    message_wrapper mw(ptr, shared_ptr);
+                    m_messageHandler(this, subject, mw);
+                }
+            });
         }
     }
 
@@ -97,7 +128,7 @@ namespace fp {
 
     bool shm_peer_connection::sendBuffer(const message_wrapper &wrapper) noexcept {
         auto &send_buffer = wrapper.getSharedPtrBuffer();
-        INFO_LOG("Sending to: " << m_process_id);
+        DEBUG_LOG("Sending to: " << m_process_id);
 
         m_clientQueue->notify(send_buffer);
         std::get<1>(m_notifier)->notify();

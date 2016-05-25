@@ -35,7 +35,7 @@ namespace fp {
 
     Queue::~Queue() noexcept {
         std::for_each(m_registeredEvents.begin(), m_registeredEvents.end(), [&](auto &event) noexcept {
-            DEBUG_LOG("Destroying event " << event.get());
+            DEBUG_LOG("Destroying event " << event.get() << " pending removal: " << std::boolalpha << event->__pendingRemoval());
             event->__destroy();
         });
     }

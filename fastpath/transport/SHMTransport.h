@@ -56,6 +56,8 @@ namespace fp {
 
         bool __connect(std::function<void()> on_connect) noexcept;
         bool __disconnect() noexcept;
+
+        int m_pid;
     public:
         // This should have the format dcf://localhost:1234
         SHMTransport(const char *url, const char *description);
