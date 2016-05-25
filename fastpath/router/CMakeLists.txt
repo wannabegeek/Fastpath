@@ -20,8 +20,19 @@ add_executable(fprouter
         fprouter.cpp
         bootstrap.cpp
         bootstrap.h
+        tcp_peer_connection.cpp
+        tcp_peer_connection.h
+        shm_peer_connection.cpp
+        shm_peer_connection.h
         peer_connection.cpp
         peer_connection.h
+        message_wrapper.cpp
+        message_wrapper.h
+        server_transport.h
+        tcp_server_transport.h
+        tcp_server_transport.cpp
+        shm_server_transport.h
+        shm_server_transport.cpp
         )
 
 target_link_libraries(fprouter fastpath ${CMAKE_THREAD_LIBS_INIT} ${LIBRT_LIBRARIES})
