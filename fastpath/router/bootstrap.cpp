@@ -26,10 +26,13 @@
 #include "fastpath/event/IOEvent.h"
 #include "fastpath/messages/Message.h"
 #include "fastpath/router/bootstrap.h"
+#include "fastpath/router/tcp_peer_connection.h"
+#include "fastpath/router/shm_peer_connection.h"
+#include "fastpath/router/tcp_server_transport.h"
+#include "fastpath/router/shm_server_transport.h"
 
 namespace fp {
-    bootstrap::bootstrap(const std::string &interface, const std::string &service) : m_server(interface, service) {
-        INFO_LOG("Waiting for TCP connections on " << interface << ":" << service);
+    bootstrap::bootstrap(const std::string &interface, const std::string &service) : m_interface(interface), m_service(service) {
     }
 
     bootstrap::~bootstrap() {
@@ -37,36 +40,35 @@ namespace fp {
 
     void bootstrap::run() {
         // Start server socket listening
-        if (m_server.connect(SocketOptionsDisableNagle | SocketOptionsDisableSigPipe | SocketOptionsNonBlocking)) {
-            DataEvent *connectionAttempt = m_dispatchQueue.registerEvent(m_server.getSocket(), EventType::READ, [&](DataEvent *event, const EventType eventType) {
-                INFO_LOG("Someone has tried to connect");
-                m_connections.emplace_back(std::make_unique<peer_connection>(&m_dispatchQueue,
-                                                                             m_server.acceptPendingConnection(),
-                                                                             std::bind(&bootstrap::message_handler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-                                                                             std::bind(&bootstrap::disconnection_handler, this, std::placeholders::_1)));
-            });
 
-            // TODO:
-            // Start heartbeat thread
-            // Start broadcast transport
-            auto fn = [&] (fp::SignalEvent *event, int signal) {
-                ERROR_LOG("Shutdown signal caught");
-                m_shutdown = true;
-            };
+        auto peer_connection_handler = [&](server_transport *transport, std::unique_ptr<peer_connection> &&peer) noexcept {
+            peer->setMessageHandler(std::bind(&bootstrap::message_handler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+            peer->setDisconnectionHandler(std::bind(&bootstrap::disconnection_handler, this, std::placeholders::_1));
+            m_connections.push_back(std::move(peer));
+        };
 
-            m_dispatchQueue.registerEvent(SIGINT, fn);
-            m_dispatchQueue.registerEvent(SIGTERM, fn);
+        auto tcp_transport = std::make_unique<tcp_server_transport>(&m_dispatchQueue, peer_connection_handler, m_interface, m_service);
+        auto shm_transport = std::make_unique<shm_server_transport>(&m_dispatchQueue, peer_connection_handler, m_interface, m_service);
 
-            while (!m_shutdown) {
-                m_dispatchQueue.dispatch();
-            }
+        // TODO:
+        // Start heartbeat thread
+        // Start broadcast transport
+        auto fn = [&] (fp::SignalEvent *event, int signal) {
+            ERROR_LOG("Shutdown signal caught");
+            m_shutdown = true;
+        };
 
-            m_dispatchQueue.unregisterEvent(connectionAttempt);
+        m_dispatchQueue.registerEvent(SIGINT, fn);
+        m_dispatchQueue.registerEvent(SIGTERM, fn);
+
+        while (!m_shutdown) {
+            m_dispatchQueue.dispatch();
         }
+
         DEBUG_LOG("Shutting down");
     }
 
-    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const MessageBuffer::ByteStorageType &msgData) noexcept {
+    void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const message_wrapper &msgData) noexcept {
         DEBUG_LOG("Processing message");
         // send the message out to all local client who are interested
         std::for_each(m_connections.begin(), m_connections.end(), [&](auto &connection) noexcept {

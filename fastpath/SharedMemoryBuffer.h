@@ -93,7 +93,7 @@ namespace fp {
             }
         }
 
-        void notify(SharedMemoryManager::shared_ptr_type &ptr) {
+        void notify(const SharedMemoryManager::shared_ptr_type &ptr) {
             boost::interprocess::scoped_lock<MutexType> lock(m_mutex);
             DEBUG_LOG("Forwarding " << ptr->_ptr << " count: " << ptr.use_count() << " to: " << m_name);
             m_objectList->push_back(ptr);

@@ -73,6 +73,7 @@ namespace fp {
         INVALID_SUBJECT,
         INVALID_NAME,
         INVALID_QUEUE,
+        INVALID_EVENT,
         INVALID_TRANSPORT,
         INVALID_TRANSPORT_STATE,
 
