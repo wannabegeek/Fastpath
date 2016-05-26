@@ -13,7 +13,7 @@ add_executable(SubjectTest SubjectTest.cpp)
 add_executable(AllocatorPlayground AllocatorPlayground.cpp ../fastpath/transport/sm/SharedMemoryManager.h)
 add_executable(KeyIndexTest KeyIndexTest.cpp)
 add_executable(ipc_send ipc_send.cpp)
-add_executable(ipc_recv ipc_recv.cpp)
+add_executable(ipc_recv ipc_recv.cpp ../fastpath/router/shm_peer_connection.cpp ../fastpath/router/peer_connection.cpp ../fastpath/router/message_wrapper.cpp)
 
 #add_executable(ipc_send_mac arch/mac/ipc_send_mac.cpp)
 #add_executable(ipc_recv ipc_recv.cpp arch/mac/ipc_send_mac.cpp)

@@ -44,6 +44,7 @@
 #include <fastpath/utils/allocator/generic_allocator.h>
 #include <boost/interprocess/smart_ptr/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
 #pragma GCC diagnostic pop
 
 #include "fastpath/transport/sm/SharedMemoryManager.h"
@@ -59,60 +60,45 @@ namespace fp {
 
     private:
 
-        typedef boost::interprocess::allocator<SharedMemoryManager::shared_ptr_type, boost::interprocess::managed_shared_memory::segment_manager> SmbAllocatorType;
-        typedef boost::interprocess::deque<SharedMemoryManager::shared_ptr_type, SmbAllocatorType> ObjPtrListType;
+        typedef boost::lockfree::spsc_queue<
+                SharedMemoryManager::shared_ptr_type,
+                boost::lockfree::capacity<1024>
+        > ObjPtrListType;
 
-        typedef boost::interprocess::named_upgradable_mutex MutexType;
 
         const std::string m_name;
-
-        mutable MutexType m_mutex;
-        SmbAllocatorType m_deque_allocator;
         ObjPtrListType *m_objectList;
-
         SharedMemoryManager &m_sharedMemoryManager;
-
         bool m_shared_queue;
 
     public:
         SharedMemoryBuffer(const char *name, SharedMemoryManager &sharedMemoryManager, bool shared_queue = false) :
                 m_name(name),
-                m_mutex(boost::interprocess::open_or_create, (m_name + "_mutex").c_str()),
-                m_deque_allocator(sharedMemoryManager.segment().get_segment_manager()),
                 m_sharedMemoryManager(sharedMemoryManager),
                 m_shared_queue(shared_queue) {
 
-            m_objectList = m_sharedMemoryManager.segment().find_or_construct<ObjPtrListType>(m_name.c_str())(m_deque_allocator);
+            m_objectList = m_sharedMemoryManager.segment().find_or_construct<ObjPtrListType>(m_name.c_str())();
         }
 
         ~SharedMemoryBuffer() {
             if (!m_shared_queue) {
-                DEBUG_LOG("Removing mutex and queue for " << m_name);
-                boost::interprocess::named_mutex::remove((m_name + "_mutex").c_str());
+                DEBUG_LOG("Removing queue for " << m_name);
                 m_sharedMemoryManager.segment().destroy_ptr(m_objectList);
             }
         }
 
         void notify(const SharedMemoryManager::shared_ptr_type &ptr) {
-            boost::interprocess::scoped_lock<MutexType> lock(m_mutex);
             DEBUG_LOG("Forwarding " << ptr->_ptr << " count: " << ptr.use_count() << " to: " << m_name);
-            m_objectList->push_back(ptr);
+            m_objectList->push(ptr);
         }
 
         void notify(SharedMemoryManager::shared_ptr_type &&ptr) {
-            boost::interprocess::scoped_lock<MutexType> lock(m_mutex);
             DEBUG_LOG("Forwarding move " << ptr->_ptr << " count: " << ptr.use_count() << " to: " << m_name);
-            m_objectList->push_back(std::move(ptr));
-        }
-
-        const size_t size() const {
-            boost::interprocess::sharable_lock<MutexType> lock(m_mutex);
-            return m_objectList->size();
+            m_objectList->push(std::move(ptr));
         }
 
         std::size_t retrieve(std::function<void(const storage_type &, SharedMemoryManager::shared_ptr_type &)> callback) {
             std::size_t count = 0;
-            boost::interprocess::upgradable_lock<MutexType> lock(m_mutex);
             while (!m_objectList->empty()) {
                 SharedMemoryManager::shared_ptr_type &ptr = m_objectList->front();
                 DEBUG_LOG("Recieved: " << ptr->_ptr << " count: " << ptr.use_count() << " from: " << m_name);
@@ -121,8 +107,7 @@ namespace fp {
 
                 callback(storage_type(data, len, fp::ByteStorage<byte>::TRANSIENT, m_sharedMemoryManager.allocator()), ptr);
 
-                boost::interprocess::scoped_lock<MutexType> slock(std::move(lock));
-                m_objectList->pop_front();
+                m_objectList->pop();
                 count++;
             }
 
