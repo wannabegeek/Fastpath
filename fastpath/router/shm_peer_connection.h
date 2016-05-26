@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 04/03/2016
+    date                 : 26/03/2016
 
  ***************************************************************************/
 
@@ -23,39 +23,47 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_BOOTSTRAP_H
-#define FASTPATH_BOOTSTRAP_H
+#ifndef FASTPATH_SHM_PEER_CONNECTION_H
+#define FASTPATH_SHM_PEER_CONNECTION_H
 
-#include <iosfwd>
-#include <memory>
-#include <vector>
+#include "fastpath/router/peer_connection.h"
+#include "fastpath/transport/sm/InterprocessNotifierServer.h"
 
-#include "fastpath/event/InlineQueue.h"
-#include "fastpath/messages/subject.h"
-#include "fastpath/router/message_wrapper.h"
+namespace fp {
+    class Queue;
+    class SharedMemoryBuffer;
+    class UnixSocket;
+    class DataEvent;
+    class SharedMemoryManager;
 
-namespace fp{
-    class peer_connection;
+    class shm_peer_connection : public peer_connection {
+        InterprocessNotifierServer::notifier_type m_notifier;
 
-    class bootstrap {
-    private:
-        const std::string m_interface;
-        const std::string m_service;
+        std::unique_ptr<SharedMemoryBuffer> m_clientQueue;
+        std::unique_ptr<SharedMemoryBuffer> m_serverQueue;
 
-        InlineQueue m_dispatchQueue;
+        std::unique_ptr<UnixSocket> m_socket;
+        int m_process_id;
 
-        bool m_shutdown = false;
+        DataEvent *m_socketEvent = nullptr;
+        DataEvent *m_notifierEvent = nullptr;
 
-        std::vector<std::unique_ptr<peer_connection>> m_connections;
+//        std::function<void(PeerConnection *connection)> m_callback;
+//        std::function<void(PeerConnection *connection)> m_msg_callback;
+        void socketEvent();
+        void notificationEvent();
 
-        void message_handler(peer_connection *source, const subject<> &subject, const message_wrapper &msgData) noexcept;
-        void disconnection_handler(peer_connection *connection) noexcept;
+        void notificationHandler(fp::DataEvent *event, const fp::EventType type) noexcept;
     public:
-        bootstrap(const std::string &interface, const std::string &service);
-        ~bootstrap();
 
-        void run();
+        shm_peer_connection(Queue *queue, InterprocessNotifierServer::notifier_type &&notifier, std::unique_ptr<UnixSocket> &&socket, int process_id, SharedMemoryManager *manager);
+        shm_peer_connection(shm_peer_connection &&other) noexcept;
+        ~shm_peer_connection() noexcept;
+
+        bool sendBuffer(const message_wrapper &buffer) noexcept override;
+
+        int get_process_id() const noexcept { return m_process_id; }
     };
 }
 
-#endif //FASTPATH_BOOTSTRAP_H
+#endif //FASTPATH_SHM_PEER_CONNECTION_H

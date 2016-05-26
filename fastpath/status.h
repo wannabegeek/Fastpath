@@ -42,6 +42,7 @@ namespace fp {
             "Message invalid and cannot be constructed",
             "The subject is not valid for this message",
             "The queue is invalid",
+            "Teh event is not valid",
             "The transport is invalid",
             "The callack is invalid",
             "Field not found in message",
@@ -73,6 +74,7 @@ namespace fp {
         INVALID_SUBJECT,
         INVALID_NAME,
         INVALID_QUEUE,
+        INVALID_EVENT,
         INVALID_TRANSPORT,
         INVALID_TRANSPORT_STATE,
 

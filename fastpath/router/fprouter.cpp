@@ -25,19 +25,17 @@
 
 #include <iostream>
 
+#include "fastpath/config.h"
 #include "fastpath/utils/logger.h"
 #include "fastpath/utils/tfoptions.h"
 #include "fastpath/utils/daemon_process.h"
 #include "fastpath/router/bootstrap.h"
 
 
-#define VERSION_MAJOR 0
-#define VERSION_MINOR 1
-
 static const char *banner = "\n+------------------------------------------------------------------------------+\n"
                                     "|   Fast Path Routing Server                                                   |\n"
                                     "|                                                                              |\n"
-                                    "|   Version: %2d.%-2d                                                             |\n"
+                                    "|   Version: %-66s|\n"
                                     "|                                                                              |\n"
                                     "|   (c) Tom Fewster <tom@wannabegeek.com> 2003-%4d                            |\n"
                                     "|   This software is covered by the GNU Public Licence, see http://www.gnu.org |\n"
@@ -85,7 +83,7 @@ int main( int argc, char *argv[] )  {
 
     if (!o.get("nobanner", false)) {
         char output[1024];
-        sprintf(output, banner, VERSION_MAJOR, VERSION_MINOR, 2016);
+        sprintf(output, banner, PROJECT_VERSION, 2016);
         tf::logger::instance().log(tf::logger::info, output);
     }
 

@@ -38,7 +38,7 @@ namespace fp {
     SHMTransport::SHMTransport(const char *url_ptr, const char *description) : SHMTransport(url(url_ptr), description) {
     }
 
-    SHMTransport::SHMTransport(const url &url, const char *description) : Transport(description), m_url(url) {
+    SHMTransport::SHMTransport(const url &url, const char *description) : Transport(description), m_url(url), m_pid(::getpid()) {
 
         std::string ipc_file = tf::get_temp_directory();
         ipc_file.append("fprouter_");
@@ -48,14 +48,15 @@ namespace fp {
         auto on_connect = [&, this]() {
             const std::string sm_name = "fprouter_" + this->m_url.port();
             m_smmanager = std::make_unique<SharedMemoryManager>(sm_name.c_str());
-            m_sendQueue = std::make_unique<SharedMemoryBuffer>("ServerQueue", *m_smmanager, true);
 
             char queueName[32];
-            ::sprintf(queueName, "ClientQueue_%i", ::getpid());
+            ::sprintf(queueName, "ClientQueue_%i", m_pid);
             m_recvQueue = std::make_unique<SharedMemoryBuffer>(queueName, *m_smmanager);
+            ::sprintf(queueName, "ServerQueue_%i", m_pid);
+            m_sendQueue = std::make_unique<SharedMemoryBuffer>(queueName, *m_smmanager);
             m_connected = true;
 
-            INFO_LOG("Connected via socket " << m_notifier->socket()->getSocket());
+            DEBUG_LOG("Connected via socket " << m_notifier->socket()->getSocket());
         };
 
         if (m_notifier->connect()) {
@@ -63,16 +64,6 @@ namespace fp {
         } else {
             m_connectionAttemptInProgress = std::async(std::launch::async, &SHMTransport::__connect, this, on_connect);
         }
-
-//        m_notifier->setConnectionStateHandler([&](bool connected) {
-//            DEBUG_LOG("Transport connected: " << std::boolalpha << connected);
-//            if (m_notificationHandler) {
-//                m_notificationHandler(connected ? CONNECTED : DISCONNECTED, "");
-//            }
-//            if (!connected && !m_shouldDisconnect) {
-//                this->__connect();
-//            }
-//        });
     }
 
     SHMTransport::~SHMTransport() noexcept {
@@ -134,10 +125,9 @@ namespace fp {
     }
 
     std::unique_ptr<TransportIOEvent> SHMTransport::createReceiverEvent(const std::function<void(const Transport *, MessageType &)> &messageCallback) {
-        INFO_LOG("Registering callback on: " << m_notifier->signal_fd());
         return std::make_unique<TransportIOEvent>(m_notifier->signal_fd(), EventType::READ, [&, messageCallback](TransportIOEvent *event, const EventType type) {
             DEBUG_LOG("Received notification of message");
-            std::size_t c = m_recvQueue->retrieve([&](auto &ptr, fp::SharedMemoryManager::shared_ptr_type &shared_ptr) {
+            m_recvQueue->retrieve([&](auto &ptr, fp::SharedMemoryManager::shared_ptr_type &shared_ptr) {
                 MessagePoolType::shared_ptr_type message = m_msg_pool.allocate_shared_ptr();
 
                 if (MessageCodec::decode(message.get(), ptr)) {
@@ -146,7 +136,6 @@ namespace fp {
                     message = nullptr;
                 }
             });
-            DEBUG_LOG("Received a batch of " << c << " messages");
         });
     }
 }

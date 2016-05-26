@@ -3,7 +3,7 @@
                           -------------------
     copyright            : Copyright (c) 2004-2016 Tom Fewster
     email                : tom@wannabegeek.com
-    date                 : 04/03/2016
+    date                 : 26/03/2016
 
  ***************************************************************************/
 
@@ -23,39 +23,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA *
  ***************************************************************************/
 
-#ifndef FASTPATH_BOOTSTRAP_H
-#define FASTPATH_BOOTSTRAP_H
+#include "tcp_server_transport.h"
+#include "fastpath/event/Queue.h"
+#include "fastpath/event/DataEvent.h"
+#include "fastpath/router/tcp_peer_connection.h"
 
-#include <iosfwd>
-#include <memory>
-#include <vector>
+namespace fp {
+    tcp_server_transport::tcp_server_transport(Queue *queue, const ConnectionCallback &connectionCallback, const std::string &interface, const std::string &service) noexcept
+            : server_transport(queue), m_server(interface, service) {
 
-#include "fastpath/event/InlineQueue.h"
-#include "fastpath/messages/subject.h"
-#include "fastpath/router/message_wrapper.h"
+        if (m_server.connect(SocketOptionsDisableNagle | SocketOptionsDisableSigPipe | SocketOptionsNonBlocking)) {
+            m_connectionAttempt = m_queue->registerEvent(m_server.getSocket(), EventType::READ, [&](DataEvent *event, const EventType eventType) {
+                INFO_LOG("Someone has tried to connect");
+                connectionCallback(this, std::unique_ptr<peer_connection>(new tcp_peer_connection(m_queue, m_server.acceptPendingConnection())));
+            });
+        }
+        INFO_LOG("Waiting for TCP connections on " << interface << ":" << service);
+    }
 
-namespace fp{
-    class peer_connection;
-
-    class bootstrap {
-    private:
-        const std::string m_interface;
-        const std::string m_service;
-
-        InlineQueue m_dispatchQueue;
-
-        bool m_shutdown = false;
-
-        std::vector<std::unique_ptr<peer_connection>> m_connections;
-
-        void message_handler(peer_connection *source, const subject<> &subject, const message_wrapper &msgData) noexcept;
-        void disconnection_handler(peer_connection *connection) noexcept;
-    public:
-        bootstrap(const std::string &interface, const std::string &service);
-        ~bootstrap();
-
-        void run();
-    };
+    tcp_server_transport::~tcp_server_transport() noexcept {
+        m_server.disconnect();
+        if (m_connectionAttempt != nullptr) {
+            m_queue->unregisterEvent(m_connectionAttempt);
+        }
+    }
 }
-
-#endif //FASTPATH_BOOTSTRAP_H

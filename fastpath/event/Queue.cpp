@@ -35,7 +35,7 @@ namespace fp {
 
     Queue::~Queue() noexcept {
         std::for_each(m_registeredEvents.begin(), m_registeredEvents.end(), [&](auto &event) noexcept {
-            DEBUG_LOG("Destroying event " << event.get());
+            DEBUG_LOG("Destroying event " << event.get() << " pending removal: " << std::boolalpha << event->__pendingRemoval());
             event->__destroy();
         });
     }
@@ -66,12 +66,15 @@ namespace fp {
     }
 
     status Queue::updateEvent(TimerEvent *event) noexcept {
-        EventManager *em = this->eventManager();
-        if (em != nullptr) {
-            em->updateHandler(event);
-            return OK;
+        if (event) {
+            EventManager *em = this->eventManager();
+            if (em != nullptr) {
+                em->updateHandler(event);
+                return OK;
+            }
+            return EVM_NOTRUNNING;
         }
-        return EVM_NOTRUNNING;
+        return INVALID_EVENT;
     }
 
     SignalEvent *Queue::registerEvent(const int signal, const std::function<void(SignalEvent *, int)> &callback) noexcept {
@@ -87,36 +90,45 @@ namespace fp {
     }
 
     status Queue::unregisterEvent(DataEvent *event) noexcept {
-        // This will block any further callback to client code, which may still exist in the queue
-        event->__setPendingRemoval(true);
-        EventManager *em = this->eventManager();
-        if (em != nullptr) {
-            em->unregisterHandler(event);
-            return OK;
+        if (event) {
+            // This will block any further callback to client code, which may still exist in the queue
+            event->__setPendingRemoval(true);
+            EventManager *em = this->eventManager();
+            if (em != nullptr) {
+                em->unregisterHandler(event);
+                return OK;
+            }
+            return EVM_NOTRUNNING;
         }
-        return EVM_NOTRUNNING;
+        return INVALID_EVENT;
     }
 
     status Queue::unregisterEvent(TimerEvent *event) noexcept {
-        // This will block any further callback to client code, which may still exist in the queue
-        event->__setPendingRemoval(true);
-        EventManager *em = this->eventManager();
-        if (em != nullptr) {
-            em->unregisterHandler(event);
-            return OK;
+        if (event) {
+            // This will block any further callback to client code, which may still exist in the queue
+            event->__setPendingRemoval(true);
+            EventManager *em = this->eventManager();
+            if (em != nullptr) {
+                em->unregisterHandler(event);
+                return OK;
+            }
+            return EVM_NOTRUNNING;
         }
-        return EVM_NOTRUNNING;
+        return INVALID_EVENT;
     }
 
     status Queue::unregisterEvent(SignalEvent *event) noexcept {
-        // This will block any further callback to client code, which may still exist in the queue
-        event->__setPendingRemoval(true);
-        EventManager *em = this->eventManager();
-        if (em != nullptr) {
-            em->unregisterHandler(event);
-            return OK;
+        if (event) {
+            // This will block any further callback to client code, which may still exist in the queue
+            event->__setPendingRemoval(true);
+            EventManager *em = this->eventManager();
+            if (em != nullptr) {
+                em->unregisterHandler(event);
+                return OK;
+            }
+            return EVM_NOTRUNNING;
         }
-        return EVM_NOTRUNNING;
+        return INVALID_EVENT;
     }
 
     status Queue::addSubscriber(const Subscriber &subscriber) noexcept {
