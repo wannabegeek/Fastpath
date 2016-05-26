@@ -55,8 +55,8 @@ int main(int argc, char *argv[]) {
             INFO_LOG("Shutdown signal caught...");
             shutdown = true;
         };
-        queue.registerEvent(SIGINT, terminate);
-        queue.registerEvent(SIGTERM, terminate);
+        auto e1 = queue.registerEvent(SIGINT, terminate);
+        auto e2 = queue.registerEvent(SIGTERM, terminate);
 
         queue.addSubscriber(fp::Subscriber(transport, "SOME.TEST.REPLY", [&](const fp::Subscriber *event, const fp::Message *msg) noexcept {
             INFO_LOG(*msg);
@@ -70,6 +70,8 @@ int main(int argc, char *argv[]) {
         while(!shutdown && queue.dispatch() == fp::OK)
             ;
         DEBUG_LOG("Event loop dropped out");
+        queue.unregisterEvent(e1);
+        queue.unregisterEvent(e2);
     } catch (const fp::socket_error &e) {
         std::cerr << "BOOM - it's broken" << std::endl;
     }
