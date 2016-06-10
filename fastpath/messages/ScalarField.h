@@ -54,7 +54,7 @@ namespace fp {
         }
 
         virtual std::ostream& output(std::ostream& out) const override {
-            out << m_identifier << ":" << StorageTypeDescription[m_type] << "=";
+            out << m_identifier << ":" << StorageTypeDescription[m_type] << "=" << std::fixed;
             switch (m_type) {
                 case storage_type::boolean:
                     out << std::boolalpha << get<bool>();
@@ -84,10 +84,10 @@ namespace fp {
                     out << get<int64_t>();
                     break;
                 case storage_type::float32:
-                    out << get<float32_t>();
+                    out << std::setprecision(std::numeric_limits<float32_t>::digits10 + 1) << get<float32_t>();
                     break;
                 case storage_type::float64:
-                    out << get<float64_t>();
+                    out << std::setprecision(std::numeric_limits<float64_t>::digits10 + 1) << get<float64_t>();
                     break;
                 default:
                     // we can't handle any other message type

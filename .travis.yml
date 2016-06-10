@@ -3,8 +3,9 @@
 # This file can be validated on:
 # http://lint.travis-ci.org/
 
-sudo: required
 dist: trusty
+sudo: false
+language: cpp
 
 install:
   # /usr/bin/gcc is 4.6 always, but gcc-X.Y is available.
@@ -18,40 +19,29 @@ install:
 
 addons:
   apt:
-    # List of whitelisted in travis packages for ubuntu-precise can be found here:
-    #   https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
-    # List of whitelisted in travis apt-sources:
-    #   https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json
     sources:
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.7
-    - george-edison55-precise-backports # cmake 3.2.3
+      - ubuntu-toolchain-r-test
+      - george-edison55-precise-backports # cmake 3.2.3
     packages:
-    - gcc5
-    - g++-5
-    - clang-3.7
-    - valgrind
-    - cmake
-    - cmake-data
+      - gcc5
+      - g++-5
+      - valgrind
+      - cmake
+      - cmake-data
 
-os:
-  - linux
-#  - osx
+matrix:
+  include:
+    - os: linux
+      compiler: g++
+      env: CC="gcc-5" CXX="g++-5" BUILD_TYPE=Debug CXX_FLAGS=-std=c++14
 
-language: cpp
-compiler:
-  - g++
-  - clang
+# compiler:
+#   - g++
+#   - clang
 
-script: ./travis.sh
-env:
-  matrix:
-    - BUILD_TYPE=Debug CXX_FLAGS=-std=c++14
-# for some reason the release build doesnt build with clang
-#    - BUILD_TYPE=Release CXX_FLAGS=-std=c++14
+script:
+  - ./travis.sh
 
 notifications:
   email: false
   slack: veloxcapital:YLypZanCflsuwci44VOggtGS
-
-sudo: false

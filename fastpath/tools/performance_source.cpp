@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <future>
+#include <cmath>
 
 #include "fastpath/utils/tfoptions.h"
 #include "fastpath/fastpath.h"
@@ -157,7 +158,7 @@ int main( int argc, char *argv[] )  {
         });
 
         auto find_p = [&](size_t p) {
-            size_t index = floor((static_cast<double>(100 - p) / 100.0) * latencies.size());
+            size_t index = std::floor((static_cast<double>(100 - p) / 100.0) * latencies.size());
             std::nth_element(latencies.begin(), latencies.begin() + index, latencies.end(), std::greater<std::chrono::microseconds>());
             return latencies[index];
         };
