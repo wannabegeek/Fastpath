@@ -78,7 +78,7 @@ namespace fp {
         virtual bool unregisterHandler(IOEvent *handler) noexcept = 0;
         virtual bool unregisterHandler(SignalEvent *handler) noexcept = 0;
 
-		virtual void notify(bool wait = false) noexcept = 0;
+		virtual void notify() noexcept = 0;
 
 		void waitForEvent() noexcept;
 	};
