@@ -71,7 +71,6 @@ namespace fp {
     void shm_peer_connection::notificationHandler(DataEvent *event, const fp::EventType type) noexcept {
         auto &notifier = std::get<0>(m_notifier);
         if (tf::unlikely(!notifier->reset())) {
-            ERROR_LOG("BOOM - Client disconnected: " << m_process_id);
             if (m_disconnectionHandler) {
                 m_disconnectionHandler(this);
             }
@@ -125,7 +124,6 @@ namespace fp {
                         case fp::Socket::NoData:
                             break;
                         case fp::Socket::Closed: {
-                            ERROR_LOG("BOOM - Client disconnected: " << m_process_id);
                             if (m_disconnectionHandler) {
                                 m_disconnectionHandler(this);
                             }

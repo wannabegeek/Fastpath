@@ -218,3 +218,33 @@ TEST(Field, SerializeSubMessage) {
     DEBUG_LOG("OUT: " << out);
     EXPECT_EQ(in, out);
 }
+
+TEST(Field, PrintFloat64) {
+    float64_t t = 123.45678901234;
+    fp::ScalarField e("field", t);
+
+    std::ostringstream os;
+    os << e;
+    const std::string expected = "123.4567890123";
+    EXPECT_EQ(expected, os.str().substr(14, expected.length()));
+}
+
+TEST(Field, PrintFloat32) {
+    float32_t t = 123.45678;
+    fp::ScalarField e("field", t);
+
+    std::ostringstream os;
+    os << e;
+    const std::string expected = "123.4567";
+    EXPECT_EQ(std::string(expected), os.str().substr(14, expected.length()));
+}
+
+TEST(Field, PrintInt64) {
+    float64_t t = 100000000000;
+    fp::ScalarField e("field", t);
+
+    std::ostringstream os;
+    os << e;
+    const std::string expected = "100000000000.000000000";
+    EXPECT_EQ(expected, os.str().substr(14, expected.length()));
+}
