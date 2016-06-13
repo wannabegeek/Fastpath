@@ -40,7 +40,6 @@ namespace fp {
     class notifier {
     private:
         int m_fd;
-        std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
 
     public:
         explicit notifier() {
@@ -77,14 +76,7 @@ namespace fp {
             return (::write(m_fd, &data, sizeof(uint64_t)) != -1);
         }
 
-        inline void notify_and_wait() noexcept {
-            m_locked.test_and_set(std::memory_order_acquire);
-            this->notify();
-            while(!m_locked.test_and_set(std::memory_order_acquire));
-        }
-
         inline bool reset() noexcept {
-            m_locked.clear(std::memory_order_release);
             uint64_t data;
             return (::read(m_fd, &data, sizeof(uint64_t)) != -1);
         }

@@ -46,13 +46,9 @@ namespace fp {
         m_eventLoop.remove(m_actionNotifier.pollElement());
     }
 
-    void GlobalEventManager::notify(bool wait) noexcept {
+    void GlobalEventManager::notify() noexcept {
         if (m_in_event_wait.load()) {
-            if (wait) {
-                m_actionNotifier.notify_and_wait();
-            } else {
-                m_actionNotifier.notify();
-            }
+            m_actionNotifier.notify();
         }
     }
 

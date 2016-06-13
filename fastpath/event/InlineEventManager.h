@@ -67,7 +67,7 @@ namespace fp {
         bool unregisterHandler(IOEvent *event) noexcept override;
         bool unregisterHandler(SignalEvent *event) noexcept override;
 
-        void notify(bool wait = false) noexcept override {}
+        void notify() noexcept override {}
     };
 }
 
