@@ -26,6 +26,8 @@
 #ifndef FASTPATH_SHAREDQUEUE_H
 #define FASTPATH_SHAREDQUEUE_H
 
+#include <algorithm>
+
 #include "fastpath/utils/tfringbuffer.h"
 #include "fastpath/event/TimerEvent.h"
 #include "fastpath/event/Queue.h"
@@ -50,9 +52,10 @@ namespace fp {
             Event *event = dispatcher.event;
             dispatcher.function();
             if (event->__pendingRemoval() && !event->__awaitingDispatch()) {
-                auto it = m_registeredEvents.find(make_find_set_unique(event));
+                auto it = std::find(m_registeredEvents.begin(), m_registeredEvents.end(), event);
                 assert(it != m_registeredEvents.end());
                 m_registeredEvents.erase(it);
+                delete *it;
             }
             dispatcher.clear();
         }

@@ -127,7 +127,7 @@ namespace fp {
             // EBADF is ok here - probably just means the FD has been closed
             // Once a fd is closed the kernel automatically removes it from the kevent queue
             if (errno != EBADF) {
-                ERROR_LOG("Failed to remove event to kevent: " << strerror(errno));
+                ERROR_LOG("Failed to remove event from kevent: " << strerror(errno));
                 return false;
             }
         }
@@ -154,11 +154,11 @@ namespace fp {
     bool EventPoll::remove(const EventPollSignalElement &event) noexcept {
         struct kevent ke;
 
-        EV_SET(&ke, event.identifier, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
+        EV_SET(&ke, event.signal, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
 
         int i = kevent(m_fd, &ke, 1, NULL, 0, NULL);
         if (i == -1) {
-            ERROR_LOG("Failed to add event to kevent: " << strerror(errno));
+            ERROR_LOG("Failed to remove event from kevent: " << strerror(errno));
             return false;
         }
         --m_events;

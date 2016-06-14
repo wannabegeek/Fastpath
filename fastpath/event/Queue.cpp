@@ -34,16 +34,18 @@
 namespace fp {
 
     Queue::~Queue() noexcept {
-        std::for_each(m_registeredEvents.begin(), m_registeredEvents.end(), [&](auto &event) noexcept {
-            DEBUG_LOG("Destroying event " << event.get() << " pending removal: " << std::boolalpha << event->__pendingRemoval());
-            event->__destroy();
-        });
+        auto it = m_registeredEvents.begin();
+        while (it != m_registeredEvents.end()) {
+            auto temp_it = m_registeredEvents.erase(it);
+            const_cast<Event *>(*it)->__destroy();
+            it = temp_it;
+        }
     }
 
     DataEvent *Queue::registerEvent(const int fd, const EventType eventType, const std::function<void(DataEvent *, const EventType)> &callback) noexcept {
-        auto result = m_registeredEvents.emplace(make_set_unique<Event>(new DataEvent(this, fd, eventType, callback)));
+        auto result = m_registeredEvents.emplace(new DataEvent(this, fd, eventType, callback));
         assert(result.second == true);
-        DataEvent *event = reinterpret_cast<DataEvent *>(result.first->get());
+        DataEvent *event = reinterpret_cast<DataEvent *>(*result.first);
         EventManager *em = this->eventManager();
         if (em != nullptr) {
             em->registerHandler(event);
@@ -54,8 +56,8 @@ namespace fp {
     }
 
     TimerEvent *Queue::registerEvent(const std::chrono::microseconds &timeout, const std::function<void(TimerEvent *)> &callback) noexcept {
-        auto result = m_registeredEvents.emplace(make_set_unique<Event>(new TimerEvent(this, timeout, callback)));
-        TimerEvent *event = reinterpret_cast<TimerEvent *>(result.first->get());
+        auto result = m_registeredEvents.emplace(new TimerEvent(this, timeout, callback));
+        TimerEvent *event = reinterpret_cast<TimerEvent *>(*result.first);
         EventManager *em = this->eventManager();
         if (em != nullptr) {
             em->registerHandler(event);
@@ -78,8 +80,8 @@ namespace fp {
     }
 
     SignalEvent *Queue::registerEvent(const int signal, const std::function<void(SignalEvent *, int)> &callback) noexcept {
-        auto result = m_registeredEvents.emplace(make_set_unique<Event>(new SignalEvent(this, signal, callback)));
-        SignalEvent *event = reinterpret_cast<SignalEvent *>(result.first->get());
+        auto result = m_registeredEvents.emplace(new SignalEvent(this, signal, callback));
+        SignalEvent *event = reinterpret_cast<SignalEvent *>(*result.first);
         EventManager *em = this->eventManager();
         if (em != nullptr) {
             em->registerHandler(event);
@@ -90,45 +92,84 @@ namespace fp {
     }
 
     status Queue::unregisterEvent(DataEvent *event) noexcept {
+        status result = INVALID_EVENT;
+
         if (event) {
-            // This will block any further callback to client code, which may still exist in the queue
-            event->__setPendingRemoval(true);
             EventManager *em = this->eventManager();
             if (em != nullptr) {
                 em->unregisterHandler(event);
-                return OK;
+                result = OK;
+
+                // This will block any further callback to client code, which may still exist in the queue
+                auto it = std::find(m_registeredEvents.begin(), m_registeredEvents.end(), event);
+                if (it != m_registeredEvents.end()) {
+                    if (event->__awaitingDispatch()) {
+                        event->__setPendingRemoval(true);
+                    } else {
+                        m_registeredEvents.erase(it);
+                        delete event;
+                    }
+                }
+            } else {
+                result = EVM_NOTRUNNING;
             }
-            return EVM_NOTRUNNING;
+
         }
-        return INVALID_EVENT;
+        return result;
     }
 
     status Queue::unregisterEvent(TimerEvent *event) noexcept {
+        status result = INVALID_EVENT;
+
         if (event) {
-            // This will block any further callback to client code, which may still exist in the queue
-            event->__setPendingRemoval(true);
             EventManager *em = this->eventManager();
             if (em != nullptr) {
                 em->unregisterHandler(event);
-                return OK;
+                result = OK;
+
+                // This will block any further callback to client code, which may still exist in the queue
+                auto it = std::find(m_registeredEvents.begin(), m_registeredEvents.end(), event);
+                if (it != m_registeredEvents.end()) {
+                    if (event->__awaitingDispatch()) {
+                        event->__setPendingRemoval(true);
+                    } else {
+                        m_registeredEvents.erase(it);
+                        delete event;
+                    }
+                }
+            } else {
+                result = EVM_NOTRUNNING;
             }
-            return EVM_NOTRUNNING;
+
         }
-        return INVALID_EVENT;
+        return result;
     }
 
     status Queue::unregisterEvent(SignalEvent *event) noexcept {
+        status result = INVALID_EVENT;
+
         if (event) {
-            // This will block any further callback to client code, which may still exist in the queue
-            event->__setPendingRemoval(true);
             EventManager *em = this->eventManager();
             if (em != nullptr) {
                 em->unregisterHandler(event);
-                return OK;
+                result = OK;
+
+                // This will block any further callback to client code, which may still exist in the queue
+                auto it = std::find(m_registeredEvents.begin(), m_registeredEvents.end(), event);
+                if (it != m_registeredEvents.end()) {
+                    if (event->__awaitingDispatch()) {
+                        event->__setPendingRemoval(true);
+                    } else {
+                        m_registeredEvents.erase(it);
+                        delete event;
+                    }
+                }
+            } else {
+                result = EVM_NOTRUNNING;
             }
-            return EVM_NOTRUNNING;
+
         }
-        return INVALID_EVENT;
+        return result;
     }
 
     status Queue::addSubscriber(const Subscriber &subscriber) noexcept {

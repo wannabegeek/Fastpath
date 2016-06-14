@@ -164,6 +164,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
     bool callbackFired = false;
 
     LOG_LEVEL(tf::logger::info);
+
     fp::Session::initialise();
 
     std::thread server([&]() {
@@ -205,7 +206,7 @@ TEST(Socket, NonBlockingServerReadWrite) {
 
         fp::DataEvent *clientHandler = nullptr;
 
-        /*fp::DataEvent *handler = */queue.registerEvent(svr.getSocket(), fp::EventType::READ, [&](const fp::DataEvent *event, int eventType) {
+        fp::DataEvent *handler = queue.registerEvent(svr.getSocket(), fp::EventType::READ, [&](const fp::DataEvent *event, int eventType) {
             EXPECT_EQ(fp::EventType::READ, eventType);
             DEBUG_LOG("entering accept");
             connection = svr.acceptPendingConnection();
@@ -223,6 +224,9 @@ TEST(Socket, NonBlockingServerReadWrite) {
             queue.dispatch(std::chrono::milliseconds(1000));
             DEBUG_LOG("...serviced event");
         }
+
+        queue.unregisterEvent(handler);
+        queue.unregisterEvent(clientHandler);
     });
 
     fp::BusySpinQueue queue;
