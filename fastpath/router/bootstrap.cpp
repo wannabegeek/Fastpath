@@ -58,14 +58,16 @@ namespace fp {
             m_shutdown = true;
         };
 
-        m_dispatchQueue.registerEvent(SIGINT, fn);
-        m_dispatchQueue.registerEvent(SIGTERM, fn);
+        auto sigint_ev = m_dispatchQueue.registerEvent(SIGINT, fn);
+        auto sigterm_ev = m_dispatchQueue.registerEvent(SIGTERM, fn);
 
         while (!m_shutdown) {
             m_dispatchQueue.dispatch();
         }
 
         DEBUG_LOG("Shutting down");
+        m_dispatchQueue.unregisterEvent(sigint_ev);
+        m_dispatchQueue.unregisterEvent(sigterm_ev);
     }
 
     void bootstrap::message_handler(peer_connection *source, const subject<> &subject, const message_wrapper &msgData) noexcept {

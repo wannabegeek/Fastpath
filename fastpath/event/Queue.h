@@ -96,7 +96,7 @@ namespace fp {
 
     class Queue {
     protected:
-        std::unordered_set<set_unique_ptr<Event>> m_registeredEvents;
+        std::unordered_set<Event *> m_registeredEvents;
 
         // The default implementation returns the global event manager
         virtual inline EventManager *eventManager() noexcept {

@@ -85,13 +85,15 @@ int main( int argc, char *argv[] )  {
             INFO_LOG("Shutdown signal caught...");
             shutdown = true;
         };
-        queue.registerEvent(SIGINT, terminate);
-        queue.registerEvent(SIGTERM, terminate);
+        auto sigint_handler = queue.registerEvent(SIGINT, terminate);
+        auto sigterm_handler = queue.registerEvent(SIGTERM, terminate);
 
         while (!shutdown) {
             queue.dispatch();
         }
 
+        queue.unregisterEvent(sigint_handler);
+        queue.unregisterEvent(sigterm_handler);
         queue.removeSubscriber(subscriber);
         fp::Session::destroy();
     } catch (const std::exception &stde) {
