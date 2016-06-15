@@ -29,6 +29,7 @@
 #include "fastpath/event/TimerEvent.h"
 #include "fastpath/event/BusySpinQueue.h"
 #include "fastpath/event/BlockingQueue.h"
+#include "fastpath/event/InlineQueue.h"
 
 TEST(BusySpinQueue, Timeout) {
 
@@ -57,5 +58,22 @@ TEST(BlockingQueue, Timeout) {
     EXPECT_GE(actual.count(), 100);
     EXPECT_LT(actual.count(), 200);
 
+    EXPECT_EQ(fp::OK, queue.dispatch(std::chrono::seconds(5)));
+
     EXPECT_EQ(fp::OK, fp::Session::destroy());
+}
+
+TEST(InlineQueue, RemoveEventInCallback) {
+
+    LOG_LEVEL(tf::logger::debug);
+
+    fp::InlineQueue queue;
+
+    fp::TimerEvent *evt = nullptr;
+    evt = queue.registerEvent(std::chrono::milliseconds(100), [&](const fp::TimerEvent *event) {
+        DEBUG_LOG("*** in callback ***");
+        queue.unregisterEvent(evt);
+    });
+
+    EXPECT_EQ(fp::OK, queue.dispatch());
 }
