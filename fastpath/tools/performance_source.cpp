@@ -73,6 +73,11 @@ int main( int argc, char *argv[] )  {
         std::vector<ResultsType> m_times(count);
 
         fp::Session::initialise();
+        if (std::thread::hardware_concurrency() >= 4) {
+            fp::Session::assign_to_cpu({2, 3});
+        } else if (std::thread::hardware_concurrency() >= 2) {
+            fp::Session::assign_to_cpu({0, 1});
+        }
 
         const std::string url = o.getWithDefault("url", "");
 
