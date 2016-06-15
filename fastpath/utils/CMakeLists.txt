@@ -19,6 +19,7 @@ set(HEADER_FILES
         allocator/std_allocator_resource.h
         allocator/allocator_resource.h
         temp_directory.h
+        tfthread_utils.h
 )
 
 set(SOURCE_FILES

@@ -45,76 +45,23 @@ namespace fp {
 
         std::thread m_eventLoop;
 
-        Session() : m_started(false) {}
+        Session();
+        const status start();
+        const status stop();
+        bool _assign_to_cpu(std::initializer_list<int> cpu_core_ids) throw(exception);
 
-        const status start() {
-            if (m_started) {
-                return OK;
-            }
-
-            m_eventManager = std::make_unique<GlobalEventManager>();
-            std::mutex mutex;
-            std::condition_variable condition;
-
-            std::unique_lock<std::mutex> lock(mutex);
-
-            sigset_t mask;
-            sigfillset(&mask);
-            if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
-                ERROR_LOG("Failed to block default signal delivery to event dispatch thread");
-            }
-
-            m_eventLoop = std::thread([&]() {
-                {
-                    std::lock_guard<std::mutex> lock_guard(mutex);
-                    condition.notify_all();
-                }
-                while (!m_shutdown.load()) {
-                    m_eventManager->waitForEvent();
-                }
-
-                m_shutdown.store(false);
-                m_eventManager.reset(nullptr);
-                DEBUG_LOG("Event loop exit");
-            });
-
-            condition.wait(lock);
-            m_started = true;
-
-            return OK;
-        }
-
-        const status stop() {
-            if (!m_started) {
-                return EVM_NOTRUNNING;
-            }
-
-            m_shutdown.store(true);
-            m_eventManager->notify();
-            if (m_eventLoop.joinable()) {
-                m_eventLoop.join();
-            }
-
-            m_started = false;
-            return OK;
-        }
-
-        static Session &instance() {
-            static Session s_instance;
-            return s_instance;
-        }
+        static Session &instance();
 
     public:
-        static status initialise() {
-            return Session::instance().start();
-        }
-
-        static status destroy() {
-            return Session::instance().stop();
-        }
+        static status initialise();
+        static status destroy();
 
         static inline bool is_started() noexcept {
             return Session::instance().m_started;
+        }
+
+        static bool assign_to_cpu(std::initializer_list<int> cpu_core_ids) throw(exception) {
+            return Session::instance()._assign_to_cpu(cpu_core_ids);
         }
 
         friend class Queue;

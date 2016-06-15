@@ -36,6 +36,7 @@ SET(SOURCE_FILES
         SignalEvent.cpp
         GlobalEventManager.cpp
         InlineEventManager.cpp
+        Session.cpp
         )
 
 IF (HAVE_EPOLL EQUAL 1)
